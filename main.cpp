@@ -88,22 +88,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	hr = device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue));
 	// コマンドキュー生成確認
 	assert(SUCCEEDED(hr));
-
+	Log("CreateCommandQueue\n");
 	// コマンドアロケータ生成
 	ID3D12CommandAllocator *commandAllocator = nullptr;
 	hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
 	// コマンドアロケータ生成確認
 	assert(SUCCEEDED(hr));
-
+	Log("CreateCommandAllocator\n");
 	// コマンドリスト生成
 	ID3D12GraphicsCommandList *commandList = nullptr;
 	hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator, nullptr, IID_PPV_ARGS(&commandList));
 	// コマンドリスト生成確認
 	assert(SUCCEEDED(hr));
+	Log("CreateCommandList\n");
 #pragma endregion
 #pragma region SwapChain Create
 	// スワップチェーン生成
-	IDXGISwapChain *swapChain = nullptr;
+	IDXGISwapChain4 *swapChain = nullptr;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChainDesc.Width = WinApp::kWindoWidth;
 	swapChainDesc.Height = WinApp::kWindoHeight;
@@ -113,9 +114,46 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	swapChainDesc.BufferCount = 2;									// ダブルバッファ
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// 画面に移したら内容破棄
 	// コマンドキュー、オウィンドウハンドル、設定渡して生成
-	hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue, winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(&swapChain));
+	hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue, winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1 **>(&swapChain));
 	// スワップチェイン生成確認
 	assert(SUCCEEDED(hr));
+	Log("CreateSwapChain\n");
+#pragma endregion
+#pragma region DescriptorHeap Initialize
+	ID3D12DescriptorHeap *rtvDescriptorHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc{};
+	// RTV用で用意
+	rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	// ダブルバッファ用に2つ
+	rtvDescriptorHeapDesc.NumDescriptors = 2;
+	hr = device->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
+	// ディスクリプタヒープ生成確認
+	assert(SUCCEEDED(hr));
+	Log("CreateRTVDecritorHeap\n");
+#pragma endregion
+#pragma region GetResourcesFromSwapChain
+	ID3D12Resource *swapChainResources[2] = { nullptr };
+	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&swapChainResources[0]));
+	assert(SUCCEEDED(hr));
+	hr = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResources[1]));
+	assert(SUCCEEDED(hr));
+	Log("GetResourcesFromSwapChain\n");
+#pragma endregion
+#pragma region CreateRenderTargetView
+	// RTVSettings
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+	rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;		// 出力結果をSRGBにして書き込み
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// 2Dテクスチャとして書き込み
+	// RTVを2つ作成するためディスクリプタも2つ用意
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+	// ディスクリプタの先頭に1つ目を作成
+	rtvHandles[0] = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CreateRenderTargetView(swapChainResources[0], &rtvDesc, rtvHandles[0]);
+	// 先頭からディスクリプタのサイズ分移動した場所のハンドルを取得
+	rtvHandles[1].ptr = rtvHandles[0].ptr + device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	// 2つ目を作成
+	device->CreateRenderTargetView(swapChainResources[1], &rtvDesc, rtvHandles[1]);
+
 #pragma endregion
 #pragma endregion
 
@@ -123,5 +161,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 
 	}
+	swapChainResources[1]->Release();
+	swapChainResources[0]->Release();
+	rtvDescriptorHeap->Release();
+	swapChain->Release();
+	commandList->Release();
+	commandAllocator->Release();
+	commandQueue->Release();
+	device->Release();
+	useAdapter->Release();
+	dxgiFactory->Release();
 	return 0;
 }
