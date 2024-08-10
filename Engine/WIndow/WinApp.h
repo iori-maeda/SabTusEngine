@@ -19,6 +19,7 @@ public:
 
 	void Initialize();
 	bool PoccesMessage();
+	void Finalize();
 
 	// getter
 	HWND GetHWND();

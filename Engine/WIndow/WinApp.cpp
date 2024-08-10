@@ -105,6 +105,11 @@ bool WinApp::PoccesMessage()
 	return false;
 }
 
+void WinApp::Finalize()
+{
+	CloseWindow(hwnd_);
+}
+
 HWND WinApp::GetHWND()
 {
 	return hwnd_;
