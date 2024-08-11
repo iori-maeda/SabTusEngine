@@ -14,7 +14,10 @@
 // ShaderComplier
 #include <dxcapi.h>
 #pragma comment(lib, "dxcompiler.lib")
-
+// ImGui
+#include "externals/imgui/imgui.h"
+#include "externals/imgui/imgui_impl_dx12.h"
+#include "externals/imgui/imgui_impl_win32.h"
 
 
 #include "Engine/WIndow/WinApp.h"
@@ -34,6 +37,7 @@ struct  Transform {
 #pragma region functoins
 IDxcBlob* CompileShader(const std::wstring&, const wchar_t*, IDxcUtils*, IDxcCompiler3*, IDxcIncludeHandler*);
 ID3D12Resource* CreataeBufferResource(ID3D12Device*, size_t);
+ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device*, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -182,16 +186,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Log("CreateSwapChain\n");
 #pragma endregion
 #pragma region DescriptorHeap Initialize
-	ID3D12DescriptorHeap* rtvDescriptorHeap = nullptr;
-	D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc{};
-	// RTV用で用意
-	rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	// ダブルバッファ用に2つ
-	rtvDescriptorHeapDesc.NumDescriptors = 2;
-	hr = device->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
-	// ディスクリプタヒープ生成確認
-	assert(SUCCEEDED(hr));
-	Log("CreateRTVDecritorHeap\n");
+	ID3D12DescriptorHeap* rtvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
+	ID3D12DescriptorHeap* srvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+	
 #pragma endregion
 #pragma region Get Resources From SwapChain
 	ID3D12Resource* swapChainResources[2] = { nullptr };
@@ -445,6 +442,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	scissorRect.top = 0;
 	scissorRect.bottom = WinApp::kWindoHeight;
 #pragma endregion
+#pragma region ImGui Initialize
+	// こういうもん
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(winApp->GetHWND());
+	ImGui_ImplDX12_Init(
+		device,
+		swapChainDesc.BufferCount,
+		rtvDesc.Format, srvDescriptorHeap,
+		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+#pragma endregion
 #pragma region 変数宣言
 	Transform mainCameraTransform = {};
 	mainCameraTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
@@ -459,11 +469,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 	while (!winApp->PoccesMessage())
 	{
+#pragma region Begin Frame
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+#pragma endregion
 
 #pragma region GameUpdate
 		triangleTransform.rotate.y += 0.01f;
 		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
 		*wvpData = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+#pragma endregion
+
+#pragma region Imgui Update
+		ImGui::ShowDemoWindow();
+
+
+		ImGui::Render();
 #pragma endregion
 
 #pragma region PreDraw
@@ -482,6 +504,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 		// 画面全体をクリア
 		commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+
+		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
+		commandList->SetDescriptorHeaps(1, descriptorHeaps);
 #pragma endregion
 
 
@@ -498,6 +523,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->DrawInstanced(3, 1, 0, 0);
 
 #pragma region PostDraw
+#pragma region ImGui Set
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+#pragma endregion
 
 #pragma region TransitionBarrier Change To State
 		// Windor Drawing Step
@@ -544,6 +572,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	}
 #pragma region Finalize
 	CloseHandle(fenceEvent);
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 	materialResource->Unmap(0, nullptr);
 	materialResource->Release();
 	wvpResource->Unmap(0, nullptr);
@@ -563,6 +594,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	dxcCompiler->Release();
 	dxcUtils->Release();
 	fence->Release();
+	srvDescriptorHeap->Release();
 	rtvDescriptorHeap->Release();
 	swapChainResources[1]->Release();
 	swapChainResources[0]->Release();
@@ -684,4 +716,26 @@ ID3D12Resource* CreataeBufferResource(ID3D12Device* device, size_t sizeInBytes)
 	assert(SUCCEEDED(hr));
 	Log("CreateVertexResource\n");
 	return resource;
+}
+
+/// <summary>
+/// デスクリプタヒープ作成関数
+/// </summary>
+/// <param name="device">作成してくれるデバイス</param>
+/// <param name="heapType">作成するタイプ</param>
+/// <param name="numDescriptors">デスクリプタ個数</param>
+/// <param name="shaderVisible"></param>
+/// <returns></returns>
+ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
+{
+	ID3D12DescriptorHeap* descriptorHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+	descriptorHeapDesc.Type = heapType;
+	descriptorHeapDesc.NumDescriptors = numDescriptors;
+	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
+	// ディスクリプタヒープ生成確認
+	assert(SUCCEEDED(hr));
+	Log("CreateDecritorHeap\n");
+	return descriptorHeap;
 }

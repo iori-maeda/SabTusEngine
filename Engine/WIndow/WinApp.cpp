@@ -1,8 +1,15 @@
 #include "WinApp.h"
 #include <format>
 
+#include "../../externals/imgui/imgui.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+
 LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wparam, lparam))
+	{
+		return true;
+	}
 	switch (message)
 	{
 	case WM_DESTROY:
