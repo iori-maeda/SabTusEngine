@@ -1,4 +1,11 @@
 
+struct Material
+{
+	float4 color;
+};
+
+ConstantBuffer<Material> gMaterial : register(b0);
+
 struct Output
 {
 	float4 color : SV_TARGET0;
@@ -7,6 +14,6 @@ struct Output
 Output main()
 {
 	Output output;
-	output.color = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	output.color = gMaterial.color;
 	return output;
 }

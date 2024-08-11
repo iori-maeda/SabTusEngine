@@ -1,4 +1,11 @@
 
+struct TransformationMatrix
+{
+	float4x4 wvp;
+};
+
+ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+
 struct Output
 {
 	float4 position : SV_POSITION;
@@ -13,6 +20,6 @@ struct Input
 Output main( Input input)
 {
 	Output output;
-	output.position = input.position;
+	output.position = mul(input.position, gTransformationMatrix.wvp);
 	return output;
 }

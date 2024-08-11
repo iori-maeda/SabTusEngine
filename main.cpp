@@ -20,12 +20,20 @@
 #include "Engine/WIndow/WinApp.h"
 // Math
 #include "Engine/Math/Vector4.h"
+#include "Engine/Math/Matrix4x4.h"
 
 using namespace std;
 
+// 後々フォルダとh用意する
+struct  Transform {
+	Vector3 scale{};
+	Vector3 rotate{};
+	Vector3 translate{};
+};
 
 #pragma region functoins
 IDxcBlob* CompileShader(const std::wstring&, const wchar_t*, IDxcUtils*, IDxcCompiler3*, IDxcIncludeHandler*);
+ID3D12Resource* CreataeBufferResource(ID3D12Device*, size_t);
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -308,10 +316,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	assert(SUCCEEDED(hr));
 #pragma endregion
 #pragma region PipeLine Settings
+#pragma region RootParameter Create
+	D3D12_ROOT_PARAMETER rootParameters[2] = {};
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[0].Descriptor.ShaderRegister = 0;
 
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParameters[1].Descriptor.ShaderRegister = 0;
+#pragma endregion
 #pragma region RootSignature Create
 	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
 	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	descriptorRootSignature.pParameters = rootParameters;
+	descriptorRootSignature.NumParameters = _countof(rootParameters);
 	// シリアライズしてバイナリ化
 	ID3DBlob* signatureBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
@@ -380,37 +399,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma endregion
-#pragma region VertexResource Create
-	D3D12_HEAP_PROPERTIES uploadHeapPoperties{};
-	uploadHeapPoperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-	D3D12_RESOURCE_DESC vertexResourceDesc{};
-	vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	vertexResourceDesc.Width = sizeof(Vector4) * 3;
-	/// バッファのここはテンプレ
-	vertexResourceDesc.Height = 1;
-	vertexResourceDesc.DepthOrArraySize = 1;
-	vertexResourceDesc.MipLevels = 1;
-	vertexResourceDesc.SampleDesc.Count = 1;
-	vertexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	/// ここまでテンプレ
-	ID3D12Resource* vertexResource = nullptr;
-	hr = device->CreateCommittedResource(&uploadHeapPoperties, D3D12_HEAP_FLAG_NONE, &vertexResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertexResource));
-	assert(SUCCEEDED(hr));
-	Log("CreateVertexResource\n");
+#pragma region Resources Create
+	ID3D12Resource* vertexResource = CreataeBufferResource(device, sizeof(Vector4) * 3);
+	ID3D12Resource* wvpResource = CreataeBufferResource(device, sizeof(Matrix4x4) * 3);
+	ID3D12Resource* materialResource = CreataeBufferResource(device, sizeof(Vector4));
+#pragma endregion
+#pragma region Resources Writing
+	Vector4* vertexData = nullptr;
+	// 書き込み先アドレス取得
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+	vertexData[0] = { -0.5f, -0.5, 0.0f, 1.0f };	// left bottom
+	vertexData[1] = { 0.0f, 0.5, 0.0f, 1.0f };		// right top
+	vertexData[2] = { 0.5f, -0.5, 0.0f, 1.0f };		// right bottom
+
+	Matrix4x4* wvpData = nullptr;
+	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+	*wvpData = MakeIdentityMatrix();
+
+	Vector4* materialData = nullptr;
+	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
+	*materialData = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
+
 #pragma endregion
 #pragma region VertexBufferView Create
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
 	vertexBufferView.SizeInBytes = sizeof(Vector4) * 3;
 	vertexBufferView.StrideInBytes = sizeof(Vector4);
-#pragma endregion
-#pragma region VertexResource Writing
-	Vector4* vertexData = nullptr;
-	// 書き込み先アドレス取得
-	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
-	vertexData[0] = { -0.5f, -0.5, 0.0f, 1.0f };	// left bottom
-	vertexData[1] = { 0.0f, 0.5, 0.0f, 1.0f };		// right top
-	vertexData[2] = { 0.5f, -0.5, 0.0f, 1.0f };	// right bottom
 #pragma endregion
 #pragma region Viewport & Scissor
 	D3D12_VIEWPORT viewport{};
@@ -430,9 +445,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	scissorRect.top = 0;
 	scissorRect.bottom = WinApp::kWindoHeight;
 #pragma endregion
+#pragma region 変数宣言
+	Transform mainCameraTransform = {};
+	mainCameraTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	mainCameraTransform.translate.z = -10.0f;
+	Matrix4x4 mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
+	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
+	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
 
+	Transform triangleTransform = {};
+	triangleTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	Matrix4x4 triangleWorldMatrix = MakeIdentityMatrix();
+#pragma endregion
 	while (!winApp->PoccesMessage())
 	{
+
+#pragma region GameUpdate
+		triangleTransform.rotate.y += 0.01f;
+		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
+		*wvpData = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+#pragma endregion
+
 #pragma region PreDraw
 		// バックバッファのインデックス取得
 		backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -458,6 +491,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->SetPipelineState(graphicsPipelineState);
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// CBuffer Set
+		commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 		// いざ描画
 		commandList->DrawInstanced(3, 1, 0, 0);
 
@@ -508,6 +544,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	}
 #pragma region Finalize
 	CloseHandle(fenceEvent);
+	materialResource->Unmap(0, nullptr);
+	materialResource->Release();
+	wvpResource->Unmap(0, nullptr);
+	wvpResource->Release();
 	vertexResource->Unmap(0, nullptr);
 	vertexResource->Release();
 	graphicsPipelineState->Release();
@@ -617,4 +657,31 @@ IDxcBlob* CompileShader(const std::wstring& filePath, const wchar_t* profile, ID
 	shaderResult->Release();
 #pragma endregion
 	return shaderBlob;
+}
+
+/// <summary>
+/// リソース作成関数
+/// </summary>
+/// <param name="device">作成してくれるデバイス</param>
+/// <param name="sizeInBytes">使用サイズ</param>
+/// <returns></returns>
+ID3D12Resource* CreataeBufferResource(ID3D12Device* device, size_t sizeInBytes)
+{
+	D3D12_HEAP_PROPERTIES uploadHeapPoperties{};
+	uploadHeapPoperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	resourceDesc.Width = sizeInBytes;
+	/// バッファのここはテンプレ
+	resourceDesc.Height = 1;
+	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.MipLevels = 1;
+	resourceDesc.SampleDesc.Count = 1;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	/// ここまでテンプレ
+	ID3D12Resource* resource = nullptr;
+	HRESULT hr = device->CreateCommittedResource(&uploadHeapPoperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
+	assert(SUCCEEDED(hr));
+	Log("CreateVertexResource\n");
+	return resource;
 }
