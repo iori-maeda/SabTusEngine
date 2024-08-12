@@ -19,6 +19,7 @@
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 
+#include "externals/DirectXTex/DirectXTex.h"
 
 #include "Engine/WIndow/WinApp.h"
 // Math
@@ -38,11 +39,17 @@ struct  Transform {
 IDxcBlob* CompileShader(const std::wstring&, const wchar_t*, IDxcUtils*, IDxcCompiler3*, IDxcIncludeHandler*);
 ID3D12Resource* CreataeBufferResource(ID3D12Device*, size_t);
 ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device*, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
+
+// Texture用
+DirectX::ScratchImage LoadTexture(const std::string&);
+ID3D12Resource* CreateTextureResource(ID3D12Device*, const DirectX::TexMetadata&);
+void UploadTextureData(ID3D12Resource*, const DirectX::ScratchImage&);
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-
+	// Texture読み込みのためCOMを初期化
+	CoInitializeEx(0, COINIT_MULTITHREADED);
 	unique_ptr<WinApp> winApp = make_unique<WinApp>();
 	winApp->Initialize();
 
@@ -418,6 +425,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	*materialData = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
 
 #pragma endregion
+#pragma region TextureResource Create
+	// Textureを読み込んで転送
+	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/uvChecker.png");
+	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
+	ID3D12Resource* textureResource = CreateTextureResource(device, metaData);
+	UploadTextureData(textureResource, mipImages);
+#pragma endregion
 #pragma region VertexBufferView Create
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
@@ -609,6 +623,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	debugController->Release();
 #endif // _DEBUG
 	winApp->Finalize();
+	// COM終了
+	CoUninitialize();
 #pragma endregion
 
 	// Resources Leak Check
@@ -738,4 +754,78 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTO
 	assert(SUCCEEDED(hr));
 	Log("CreateDecritorHeap\n");
 	return descriptorHeap;
+}
+/// <summary>
+/// ミップマップ付きデータの取得
+/// </summary>
+/// <param name="filePath"></param>
+/// <returns></returns>
+DirectX::ScratchImage LoadTexture(const std::string& filePath)
+{
+	// TextureFileえおプログラム用に読み込む
+	DirectX::ScratchImage image{};
+	std::wstring filePathW = ConvertToWString(filePath);
+	HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
+	assert(SUCCEEDED(hr));
+	Log("Texture Load\n");
+
+	DirectX::ScratchImage mipImage{};
+	hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImage);
+	Log("MipMap Create\n");
+	return mipImage;
+}
+
+ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMetadata& metaData)
+{
+	// metaDataからResourceの設定を取得
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = static_cast<UINT>(metaData.width);
+	resourceDesc.Height = static_cast<UINT>(metaData.height);
+	resourceDesc.MipLevels = static_cast<UINT16>(metaData.mipLevels);
+	resourceDesc.DepthOrArraySize = static_cast<UINT16>(metaData.arraySize);
+	resourceDesc.Format = metaData.format;
+	resourceDesc.SampleDesc.Count = 1; // サンプリングカウント1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION(metaData.dimension);
+
+	// Heap設定
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;							// 詳細設定
+	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// writeBackポリシーでcpuアクセス許可
+	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// プロセッサの近くに配置
+
+	// Resource生成
+	ID3D12Resource* resource = nullptr;
+	HRESULT hr = device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, // Textureは基本読み込みだけ
+		nullptr,
+		IID_PPV_ARGS(&resource)
+	);
+	assert(SUCCEEDED(hr));
+	Log("TextureResource Created\n");
+	return resource;
+}
+
+void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImage)
+{
+	// meta取得
+	const DirectX::TexMetadata metaData = mipImage.GetMetadata();
+	// 全MipMapを検索
+	for (size_t mipLevel = 0; mipLevel < metaData.mipLevels; ++mipLevel)
+	{
+		// MipMapLevelを指定して各Imageの取得
+		const DirectX::Image* img = mipImage.GetImage(mipLevel, 0, 0);
+		// Textureに転送
+		HRESULT hr = texture->WriteToSubresource(
+			static_cast<UINT>(mipLevel),		
+			nullptr,							// 全領域へコピー
+			img->pixels,						// 元データアドレス
+			static_cast<UINT>(img->rowPitch),	// 1ラインのサイズ
+			static_cast<UINT>(img->slicePitch)	// 1枚のサイズ
+		);
+		assert(SUCCEEDED(hr));
+	}
+	Log("MipMap Upload To Texture\n");
 }

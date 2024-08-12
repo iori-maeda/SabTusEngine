@@ -10,22 +10,30 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Profile|x64 = Profile|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Debug|x64.ActiveCfg = Debug|x64
 		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Debug|x64.Build.0 = Debug|x64
+		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Profile|x64.ActiveCfg = Release|x64
+		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Profile|x64.Build.0 = Release|x64
 		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Release|x64.ActiveCfg = Release|x64
 		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96}.Release|x64.Build.0 = Release|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.ActiveCfg = Debug|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.Build.0 = Debug|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.ActiveCfg = Profile|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.Build.0 = Profile|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|x64.ActiveCfg = Release|x64
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{FE76530C-0AB0-40FC-9BC7-065DA0AE0C96} = {9A63DEFD-EE9A-4CFB-85EB-D6F0DFE4650F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7DBE2187-24B8-47E0-B8D0-FFD1712A6E34}
