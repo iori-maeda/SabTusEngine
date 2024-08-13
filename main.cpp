@@ -53,6 +53,8 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device*, D3D12_DESCRIPTOR_HEAP_
 DirectX::ScratchImage LoadTexture(const std::string&);
 ID3D12Resource* CreateTextureResource(ID3D12Device*, const DirectX::TexMetadata&);
 ID3D12Resource* UploadTextureData(ID3D12Resource*, const DirectX::ScratchImage&, ID3D12Device*, ID3D12GraphicsCommandList*);
+// DepthStencil用
+ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device*, int32_t, int32_t);
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -203,7 +205,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region DescriptorHeap Initialize
 	ID3D12DescriptorHeap* rtvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	ID3D12DescriptorHeap* srvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
-
+	ID3D12DescriptorHeap* dsvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 #pragma endregion
 
 #pragma region Get Resources From SwapChain
@@ -233,6 +235,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
+#pragma region DipthStencil Resource & View Create
+	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, WinApp::kWindoWidth, WinApp::kWindoHeight);
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// 基本Resouceにあわせる
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	// DSVHeapの先頭に作成
+	device->CreateDepthStencilView(depthStencilResource, &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+#pragma endregion
+
 #pragma region Get & Writing To BackBuffer
 	// バックバッファのインデックス取得
 	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -259,6 +271,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// 画面全体をクリア
 	float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
 	commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+#pragma endregion
+
+#pragma region DepthStencilHandle Create
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	//commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
 #pragma endregion
 
 #pragma region TransitionBarrier Change To State
@@ -425,6 +442,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	IDxcBlob* pixelShaderBlob = CompileShader(ConvertToWString(shaderDirectoryPath + "Basic3DPS.hlsl"), L"ps_6_0", dxcUtils, dxcCompiler, includeHandler);
 	assert(pixelShaderBlob != nullptr);
 #pragma endregion
+#pragma region DepthStencilState Settings
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+	depthStencilDesc.DepthEnable = true;							// 深度機能有効化
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;	// 書き込みする
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;	// Depthの値が小さい方が描画される
+#pragma endregion
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
 	graphicsPipelineStateDec.pRootSignature = rootSignature;
@@ -441,6 +464,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// 色の打ち込み方設定
 	graphicsPipelineStateDec.SampleDesc.Count = 1;
 	graphicsPipelineStateDec.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+	// 深度情報設定
+	graphicsPipelineStateDec.DepthStencilState = depthStencilDesc;
+	graphicsPipelineStateDec.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 生成
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDec, IID_PPV_ARGS(&graphicsPipelineState));
@@ -451,8 +477,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region Resources Create
-	ID3D12Resource* vertexResource = CreataeBufferResource(device, sizeof(VertexData) * 3);
-	ID3D12Resource* wvpResource = CreataeBufferResource(device, sizeof(Matrix4x4) * 3);
+	ID3D12Resource* vertexResource = CreataeBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* wvpResource = CreataeBufferResource(device, sizeof(Matrix4x4));
 	ID3D12Resource* materialResource = CreataeBufferResource(device, sizeof(Vector4));
 #pragma endregion
 
@@ -466,6 +492,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vertexData[1].uv = { 0.5f, 0.0f };
 	vertexData[2].position = { 0.5f, -0.5, 0.0f, 1.0f };		// right bottom
 	vertexData[2].uv = { 1.0f, 1.0f };
+
+	vertexData[3].position = { -0.5f, -0.5, 0.5f, 1.0f };		// left bottom 2
+	vertexData[3].uv = { 0.0f, 1.0f };
+	vertexData[4].position = { 0.0f, 0.0, 0.0f, 1.0f };			// top 2
+	vertexData[4].uv = { 0.5f, 0.0f };
+	vertexData[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
+	vertexData[5].uv = { 1.0f, 1.0f };
 
 	Matrix4x4* wvpData = nullptr;
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
@@ -536,7 +569,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region VertexBufferView Create
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 3;
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 #pragma endregion
 
@@ -629,6 +662,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// 画面全体をクリア
 		commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 
+		commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
+		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
 		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
 		commandList->SetDescriptorHeaps(1, descriptorHeaps);
 #pragma endregion
@@ -645,7 +681,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
 		// いざ描画
-		commandList->DrawInstanced(3, 1, 0, 0);
+		commandList->DrawInstanced(6, 1, 0, 0);
 
 #pragma region PostDraw
 #pragma region ImGui Set
@@ -700,6 +736,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+	depthStencilResource->Release();
 	textureResource->Release();
 	materialResource->Unmap(0, nullptr);
 	materialResource->Release();
@@ -959,4 +996,48 @@ ID3D12Resource* UploadTextureData(ID3D12Resource* texture, const DirectX::Scratc
 	commandList->ResourceBarrier(1, &barrier);
 	Log("MipMap Upload To Texture\n");
 	return intermediateResource;
+}
+
+/// <summary>
+/// 深度バッファ用リソースの作成
+/// </summary>
+/// <param name="device"></param>
+/// <param name="width"></param>
+/// <param name="height"></param>
+/// <returns></returns>
+ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t width, int32_t height)
+{
+	// metaDataからResourceの設定を取得
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = width;
+	resourceDesc.Height = height;
+	resourceDesc.MipLevels = 1;
+	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	resourceDesc.SampleDesc.Count = 1; // サンプリングカウント1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	// Heap設定
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	// 深度値のクリア設定
+	CD3DX12_CLEAR_VALUE depthClearValue{};
+	depthClearValue.DepthStencil.Depth = 1.0f;				// 最大値でクリア
+	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// Resourceとあわせる
+
+	// Resource生成
+	ID3D12Resource* resource = nullptr;
+	HRESULT hr = device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, // データ転送設定
+		nullptr,
+		IID_PPV_ARGS(&resource)
+	);
+	assert(SUCCEEDED(hr));
+	Log("TextureResource Created\n");
+	return resource;
 }
