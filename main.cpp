@@ -52,7 +52,7 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device*, D3D12_DESCRIPTOR_HEAP_
 // Texture用
 DirectX::ScratchImage LoadTexture(const std::string&);
 ID3D12Resource* CreateTextureResource(ID3D12Device*, const DirectX::TexMetadata&);
-void UploadTextureData(ID3D12Resource*, const DirectX::ScratchImage&);
+ID3D12Resource* UploadTextureData(ID3D12Resource*, const DirectX::ScratchImage&, ID3D12Device*, ID3D12GraphicsCommandList*);
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -203,7 +203,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region DescriptorHeap Initialize
 	ID3D12DescriptorHeap* rtvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	ID3D12DescriptorHeap* srvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
-	
+
 #pragma endregion
 
 #pragma region Get Resources From SwapChain
@@ -482,8 +482,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/uvChecker.png");
 	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
 	ID3D12Resource* textureResource = CreateTextureResource(device, metaData);
-	UploadTextureData(textureResource, mipImages);
+	ID3D12Resource* intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
 #pragma endregion
+#pragma region テクスチャ転送待ち CommandList Close & Kick & Reset
+	// コマンドリスト積込み終了
+	hr = commandList->Close();
+	assert(SUCCEEDED(hr));
+
+	// GPUにコマンドリストの実行依頼
+	commandLists[0] = commandList;
+	commandQueue->ExecuteCommandLists(1, commandLists);
+	// GPUとOSに画面の交換を依頼を通知
+	swapChain->Present(1, 0);
+
+	// Fence Value Update
+	fenceValue++;
+	// GPUが実行完了したら指定した値の書き込みをするよう依頼するSignalの送信
+	commandQueue->Signal(fence, fenceValue);
+
+	// Fence Value Check
+	if (fence->GetCompletedValue() < fenceValue)
+	{
+		// Not Completed Wait Event Setting
+		fence->SetEventOnCompletion(fenceValue, fenceEvent);
+		// Wait Event
+		WaitForSingleObject(fenceEvent, INFINITE);
+	}
+
+	// 次の準備
+	hr = commandAllocator->Reset();
+	assert(SUCCEEDED(hr));
+	hr = commandList->Reset(commandAllocator, nullptr);
+#pragma endregion
+	// 転送完了したので解放
+	intermediateResource->Release();
 
 #pragma region textureSRV Create
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -566,7 +598,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region Imgui Update
 		ImGui::Begin("Debug");
-		ImGui::DragFloat4("Tex Color", &texColor.x,0.001f, 0.0f, 1.0f);
+		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
 		ImGui::End();
 
 		ImGui::Render();
@@ -835,6 +867,7 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTO
 	Log("CreateDecritorHeap\n");
 	return descriptorHeap;
 }
+
 /// <summary>
 /// ミップマップ付きデータの取得
 /// </summary>
@@ -855,6 +888,12 @@ DirectX::ScratchImage LoadTexture(const std::string& filePath)
 	return mipImage;
 }
 
+/// <summary>
+/// テクスチャリソースの作成
+/// </summary>
+/// <param name="device">作成してくれるデバイス</param>
+/// <param name="metaData">作成元データ</param>
+/// <returns></returns>
 ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMetadata& metaData)
 {
 	// metaDataからResourceの設定を取得
@@ -869,9 +908,9 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 
 	// Heap設定
 	D3D12_HEAP_PROPERTIES heapProperties{};
-	heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;							// 詳細設定
-	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// writeBackポリシーでcpuアクセス許可
-	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// プロセッサの近くに配置
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+	//heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// writeBackポリシーでcpuアクセス許可
+	//heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// プロセッサの近くに配置
 
 	// Resource生成
 	ID3D12Resource* resource = nullptr;
@@ -879,7 +918,7 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, // Textureは基本読み込みだけ
+		D3D12_RESOURCE_STATE_COPY_DEST, // データ転送設定
 		nullptr,
 		IID_PPV_ARGS(&resource)
 	);
@@ -888,24 +927,31 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 	return resource;
 }
 
-void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImage)
+/// <summary>
+/// 中間リソースの作成とアップロード
+/// </summary>
+/// <param name="texture">中間リソースを作成するリソース</param>
+/// <param name="mipImage">元データ</param>
+/// <param name="device">作成してくれるデバイス</param>
+/// <param name="commandList">アップロードコマンド積込みと実行用</param>
+/// <returns>中間リソース転送完了まで破棄しないこと</returns>
+[[nodiscard]]
+ID3D12Resource* UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImage, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-	// meta取得
-	const DirectX::TexMetadata metaData = mipImage.GetMetadata();
-	// 全MipMapを検索
-	for (size_t mipLevel = 0; mipLevel < metaData.mipLevels; ++mipLevel)
-	{
-		// MipMapLevelを指定して各Imageの取得
-		const DirectX::Image* img = mipImage.GetImage(mipLevel, 0, 0);
-		// Textureに転送
-		HRESULT hr = texture->WriteToSubresource(
-			static_cast<UINT>(mipLevel),		
-			nullptr,							// 全領域へコピー
-			img->pixels,						// 元データアドレス
-			static_cast<UINT>(img->rowPitch),	// 1ラインのサイズ
-			static_cast<UINT>(img->slicePitch)	// 1枚のサイズ
-		);
-		assert(SUCCEEDED(hr));
-	}
+	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+	DirectX::PrepareUpload(device, mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
+	uint64_t intermediateSize = GetRequiredIntermediateSize(texture, 0, static_cast<UINT>(subresources.size()));
+	ID3D12Resource* intermediateResource = CreataeBufferResource(device, intermediateSize);
+	UpdateSubresources(commandList, texture, intermediateResource, 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
+	// 転送後、コピーからリードへ変更
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = texture;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+	commandList->ResourceBarrier(1, &barrier);
 	Log("MipMap Upload To Texture\n");
+	return intermediateResource;
 }
