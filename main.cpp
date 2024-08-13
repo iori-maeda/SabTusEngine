@@ -938,11 +938,16 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 [[nodiscard]]
 ID3D12Resource* UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImage, ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device, mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture, 0, static_cast<UINT>(subresources.size()));
 	ID3D12Resource* intermediateResource = CreataeBufferResource(device, intermediateSize);
+
+	// どうやったらこの関数の使用をやめれる？
 	UpdateSubresources(commandList, texture, intermediateResource, 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
+
+	// プロシージャかなんかで裏で待機させたいよね
 	// 転送後、コピーからリードへ変更
 	D3D12_RESOURCE_BARRIER barrier{};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
