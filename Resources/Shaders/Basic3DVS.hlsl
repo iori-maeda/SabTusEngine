@@ -1,3 +1,4 @@
+#include "Basic3D.hlsli"
 
 struct TransformationMatrix
 {
@@ -6,20 +7,17 @@ struct TransformationMatrix
 
 ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
 
-struct Output
-{
-	float4 position : SV_POSITION;
-};
-
 struct Input
 {
 	float4 position : POSITION0;
+	float2 uv : TEXCOORD0;
 };
 
 
-Output main( Input input)
+VertexOutput main(Input input)
 {
-	Output output;
+	VertexOutput output;
 	output.position = mul(input.position, gTransformationMatrix.wvp);
+	output.uv = input.uv;
 	return output;
 }
