@@ -683,7 +683,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region GameUpdate
-		* materialDataTriangle = texColor;
+		*materialDataTriangle = texColor;
 
 		triangleTransform.rotate.y += 0.01f;
 		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
@@ -803,8 +803,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	wvpResourceSprite->Unmap(0, nullptr);
 	wvpResourceSprite->Release();
 	vertexResourceTriangle->Unmap(0, nullptr);
-	vertexResourceSprite->Unmap(0, nullptr);
 	vertexResourceTriangle->Release();
+	vertexResourceSprite->Unmap(0, nullptr);
 	vertexResourceSprite->Release();
 	graphicsPipelineState->Release();
 	vertexShaderBlob->Release();
@@ -819,6 +819,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	dxcCompiler->Release();
 	dxcUtils->Release();
 	fence->Release();
+	dsvDescriptorHeap->Release();
 	srvDescriptorHeap->Release();
 	rtvDescriptorHeap->Release();
 	swapChainResources[1]->Release();
@@ -1096,7 +1097,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, // データ転送設定
-		nullptr,
+		&depthClearValue,
 		IID_PPV_ARGS(&resource)
 	);
 	assert(SUCCEEDED(hr));
