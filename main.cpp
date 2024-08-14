@@ -476,40 +476,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
-#pragma region Resources Create
-	ID3D12Resource* vertexResource = CreataeBufferResource(device, sizeof(VertexData) * 6);
-	ID3D12Resource* wvpResource = CreataeBufferResource(device, sizeof(Matrix4x4));
-	ID3D12Resource* materialResource = CreataeBufferResource(device, sizeof(Vector4));
-#pragma endregion
-
-#pragma region Resources Writing
-	VertexData* vertexData = nullptr;
-	// 書き込み先アドレス取得
-	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
-	vertexData[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
-	vertexData[0].uv = { 0.0f, 1.0f };
-	vertexData[1].position = { 0.0f, 0.5, 0.0f, 1.0f };			// top
-	vertexData[1].uv = { 0.5f, 0.0f };
-	vertexData[2].position = { 0.5f, -0.5, 0.0f, 1.0f };		// right bottom
-	vertexData[2].uv = { 1.0f, 1.0f };
-
-	vertexData[3].position = { -0.5f, -0.5, 0.5f, 1.0f };		// left bottom 2
-	vertexData[3].uv = { 0.0f, 1.0f };
-	vertexData[4].position = { 0.0f, 0.0, 0.0f, 1.0f };			// top 2
-	vertexData[4].uv = { 0.5f, 0.0f };
-	vertexData[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
-	vertexData[5].uv = { 1.0f, 1.0f };
-
-	Matrix4x4* wvpData = nullptr;
-	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
-	*wvpData = MakeIdentityMatrix();
-
-	Vector4* materialData = nullptr;
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-	*materialData = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
-
-#pragma endregion
-
 #pragma region TextureResource Create
 	// Textureを読み込んで転送
 	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/uvChecker.png");
@@ -566,11 +532,83 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateShaderResourceView(textureResource, &srvDesc, texSrvHandleCPU);
 #pragma endregion
 
+#pragma region Resources Create
+	ID3D12Resource* vertexResourceTriangle = CreataeBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* wvpResourceTriangle = CreataeBufferResource(device, sizeof(Matrix4x4));
+	ID3D12Resource* materialResourceTriangle = CreataeBufferResource(device, sizeof(Vector4));
+
+	ID3D12Resource* vertexResourceSprite = CreataeBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* wvpResourceSprite = CreataeBufferResource(device, sizeof(Matrix4x4));
+	ID3D12Resource* materialResourceSprite = CreataeBufferResource(device, sizeof(Vector4));
+#pragma endregion
+
+#pragma region Resources Writing
+
+#pragma region Trinangle
+	VertexData* vertexDataTriangle = nullptr;
+	// 書き込み先アドレス取得
+	vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataTriangle));
+	vertexDataTriangle[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
+	vertexDataTriangle[0].uv = { 0.0f, 1.0f };
+	vertexDataTriangle[1].position = { 0.0f, 0.5, 0.0f, 1.0f };			// top
+	vertexDataTriangle[1].uv = { 0.5f, 0.0f };
+	vertexDataTriangle[2].position = { 0.5f, -0.5, 0.0f, 1.0f };		// right bottom
+	vertexDataTriangle[2].uv = { 1.0f, 1.0f };
+
+	vertexDataTriangle[3].position = { -0.5f, -0.5, 0.5f, 1.0f };		// left bottom 2
+	vertexDataTriangle[3].uv = { 0.0f, 1.0f };
+	vertexDataTriangle[4].position = { 0.0f, 0.0, 0.0f, 1.0f };			// top 2
+	vertexDataTriangle[4].uv = { 0.5f, 0.0f };
+	vertexDataTriangle[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
+	vertexDataTriangle[5].uv = { 1.0f, 1.0f };
+
+	Matrix4x4* wvpDataTriangle = nullptr;
+	wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataTriangle));
+	*wvpDataTriangle = MakeIdentityMatrix();
+
+	Vector4* materialDataTriangle = nullptr;
+	materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&materialDataTriangle));
+	*materialDataTriangle = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
+#pragma endregion
+
+#pragma region Sprite
+	VertexData* vertexDataSprite = nullptr;
+	// 書き込み先アドレス取得
+	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
+	vertexDataSprite[0].position = { 0.0f, static_cast<float>(metaData.height), 0.0f, 1.0f};								// left bottom
+	vertexDataSprite[0].uv = { 0.0f, 1.0f };																				
+	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	vertexDataSprite[1].uv = { 0.0f, 0.0f };
+	vertexDataSprite[2].position = { static_cast<float>(metaData.width), static_cast<float>(metaData.height), 0.0f, 1.0f };	// right bottom
+	vertexDataSprite[2].uv = { 1.0f, 1.0f };
+
+	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	vertexDataSprite[3].uv = { 0.0f, 0.0f };																				
+	vertexDataSprite[4].position = { static_cast<float>(metaData.width), 0.0f, 0.0f, 1.0f };								// right top
+	vertexDataSprite[4].uv = { 1.0f, 0.0f };
+	vertexDataSprite[5].position = { static_cast<float>(metaData.width), static_cast<float>(metaData.height), 0.0f, 1.0f };	// right bottom	2
+	vertexDataSprite[5].uv = { 1.0f, 1.0f };
+
+	Matrix4x4* wvpDataSprite = nullptr;
+	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
+	*wvpDataSprite = MakeIdentityMatrix();
+
+	Vector4* materialDataSprite = nullptr;
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+	*materialDataSprite = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+#pragma endregion
+#pragma endregion
+
 #pragma region VertexBufferView Create
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
-	vertexBufferView.StrideInBytes = sizeof(VertexData);
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewTriangle{};
+	vertexBufferViewTriangle.BufferLocation = vertexResourceTriangle->GetGPUVirtualAddress();
+	vertexBufferViewTriangle.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferViewTriangle.StrideInBytes = sizeof(VertexData);
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
+	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
+	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
 #pragma endregion
 
 #pragma region Viewport & Scissor
@@ -614,11 +652,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
 
+	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+
 	Transform triangleTransform = {};
 	triangleTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
 	Matrix4x4 triangleWorldMatrix = MakeIdentityMatrix();
 
-	Vector4 texColor = *materialData;
+	Transform spriteTransform = {};
+	spriteTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	Matrix4x4 spriteWorldMatrix = MakeIdentityMatrix();
+
+	Vector4 texColor = *materialDataTriangle;
 #pragma endregion
 
 	while (!winApp->PoccesMessage())
@@ -638,11 +683,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region GameUpdate
-		* materialData = texColor;
+		* materialDataTriangle = texColor;
 
 		triangleTransform.rotate.y += 0.01f;
 		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
-		*wvpData = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+		*wvpDataTriangle = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+
+		spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
+		*wvpDataSprite = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
 #pragma endregion
 
 #pragma region PreDraw
@@ -667,18 +715,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
 		commandList->SetDescriptorHeaps(1, descriptorHeaps);
-#pragma endregion
-
 
 		commandList->RSSetViewports(1, &viewport);
 		commandList->RSSetScissorRects(1, &scissorRect);
 		commandList->SetGraphicsRootSignature(rootSignature);
 		commandList->SetPipelineState(graphicsPipelineState);
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+#pragma endregion
+
+		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
 		// CBuffer Set
-		commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		// いざ描画
+		commandList->DrawInstanced(6, 1, 0, 0);
+
+		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+		// CBuffer Set
+		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
@@ -738,12 +794,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ImGui::DestroyContext();
 	depthStencilResource->Release();
 	textureResource->Release();
-	materialResource->Unmap(0, nullptr);
-	materialResource->Release();
-	wvpResource->Unmap(0, nullptr);
-	wvpResource->Release();
-	vertexResource->Unmap(0, nullptr);
-	vertexResource->Release();
+	materialResourceTriangle->Unmap(0, nullptr);
+	materialResourceTriangle->Release();
+	materialResourceSprite->Unmap(0, nullptr);
+	materialResourceSprite->Release();
+	wvpResourceTriangle->Unmap(0, nullptr);
+	wvpResourceTriangle->Release();
+	wvpResourceSprite->Unmap(0, nullptr);
+	wvpResourceSprite->Release();
+	vertexResourceTriangle->Unmap(0, nullptr);
+	vertexResourceSprite->Unmap(0, nullptr);
+	vertexResourceTriangle->Release();
+	vertexResourceSprite->Release();
 	graphicsPipelineState->Release();
 	vertexShaderBlob->Release();
 	pixelShaderBlob->Release();
@@ -879,7 +941,7 @@ ID3D12Resource* CreataeBufferResource(ID3D12Device* device, size_t sizeInBytes)
 	ID3D12Resource* resource = nullptr;
 	HRESULT hr = device->CreateCommittedResource(&uploadHeapPoperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
 	assert(SUCCEEDED(hr));
-	Log("CreateVertexResource\n");
+	Log("Created Resource\n");
 	return resource;
 }
 
