@@ -75,9 +75,9 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const Di
 ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
 #pragma endregion
 
+	D3DResourceLeakChecker leckChecker;
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-	D3DResourceLeakChecker leckChecker;
 	// Texture読み込みのためCOMを初期化
 	CoInitializeEx(0, COINIT_MULTITHREADED);
 	unique_ptr<WinApp> winApp = make_unique<WinApp>();
@@ -926,7 +926,7 @@ ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>& device,
 /// <returns></returns>
 ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>& device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
 {
-	ID3D12DescriptorHeap* descriptorHeap = nullptr;
+	ComPtr<ID3D12DescriptorHeap> descriptorHeap = nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
 	descriptorHeapDesc.Type = heapType;
 	descriptorHeapDesc.NumDescriptors = numDescriptors;
