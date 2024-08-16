@@ -3,6 +3,8 @@
 #include <format>
 #include <cassert>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 // DirectX12
 #include <d3d12.h>
@@ -45,6 +47,27 @@ struct VertexData
 {
 	Vector4 position{};
 	Vector2 uv{};
+	Vector3 normal{};
+};
+
+struct MaterialData
+{
+
+	Vector3 ambient{};
+	Vector3 diffuse{};
+	Vector3 speculer{};
+	std::string textureFilePath;
+};
+
+struct ObjectData
+{
+	std::vector<VertexData> verttices;
+	
+};
+
+struct ModelData
+{
+	std::vector<VertexData> vertices;
 };
 
 struct D3DResourceLeakChecker
@@ -64,18 +87,21 @@ struct D3DResourceLeakChecker
 
 #pragma region functoins
 ComPtr<IDxcBlob> CompileShader(const std::wstring&, const wchar_t*, const ComPtr<IDxcUtils>&, const ComPtr<IDxcCompiler3>&, const ComPtr<IDxcIncludeHandler>&);
+
 ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>&, size_t);
+
 ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>&, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
 
-// Texture用
 DirectX::ScratchImage LoadTexture(const std::string&);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>&, const DirectX::TexMetadata&);
 ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const DirectX::ScratchImage&, const ComPtr<ID3D12Device>&, const ComPtr<ID3D12GraphicsCommandList>&);
-// DepthStencil用
+
 ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
+
+ModelData LoadFromObjFile(const std::string& filePath);
 #pragma endregion
 
-	D3DResourceLeakChecker leckChecker;
+D3DResourceLeakChecker leckChecker;
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	// Texture読み込みのためCOMを初期化
@@ -544,6 +570,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
 #pragma endregion
 
+#pragma region Model Load
+	ModelData modelData = LoadFromObjFile("Resources/Models/Syunnya_Tamura/magmabow.obj");
+#pragma endregion
+
 #pragma region Resources Create
 	ComPtr<ID3D12Resource> vertexResourceTriangle = CreataeBufferResource(device, sizeof(VertexData) * 6);
 	ComPtr<ID3D12Resource> wvpResourceTriangle = CreataeBufferResource(device, sizeof(Matrix4x4));
@@ -552,6 +582,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ComPtr<ID3D12Resource> vertexResourceSprite = CreataeBufferResource(device, sizeof(VertexData) * 6);
 	ComPtr<ID3D12Resource> wvpResourceSprite = CreataeBufferResource(device, sizeof(Matrix4x4));
 	ComPtr<ID3D12Resource> materialResourceSprite = CreataeBufferResource(device, sizeof(Vector4));
+
+	ComPtr<ID3D12Resource> vertexResourceModel = CreataeBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
+	ComPtr<ID3D12Resource> wvpResourceModel = CreataeBufferResource(device, sizeof(Matrix4x4));
+	ComPtr<ID3D12Resource> materialResourceModel = CreataeBufferResource(device, sizeof(Vector4));
 #pragma endregion
 
 #pragma region Resources Writing
@@ -609,6 +643,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 	*materialDataSprite = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 #pragma endregion
+
+#pragma region Model
+	VertexData* vertexDataModel = nullptr;
+	vertexResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel));
+	// 頂点データコピー
+	if(vertexDataModel != nullptr)
+	{
+		std::memcpy(vertexDataModel, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
+	}
+
+	Matrix4x4* wvpDataModel = nullptr;
+	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataModel));
+	*wvpDataModel = MakeIdentityMatrix();
+
+	Vector4* materialDataModel = nullptr;
+	materialResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&materialDataModel));
+	*materialDataModel = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+#pragma endregion
+
 #pragma endregion
 
 #pragma region VertexBufferView Create
@@ -621,6 +674,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
 	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewModel{};
+	vertexBufferViewModel.BufferLocation = vertexResourceModel->GetGPUVirtualAddress();
+	vertexBufferViewModel.SizeInBytes = static_cast<UINT>(sizeof(VertexData) * modelData.vertices.size());
+	vertexBufferViewModel.StrideInBytes = sizeof(VertexData);
 #pragma endregion
 
 #pragma region Viewport & Scissor
@@ -669,11 +727,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	Transform triangleTransform = {};
 	triangleTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	//triangleTransform.translate.x = 100.0f;
 	Matrix4x4 triangleWorldMatrix = MakeIdentityMatrix();
 
 	Transform spriteTransform = {};
-	spriteTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	spriteTransform.scale = Vector3(0.5f, 0.5f, 0.5f);
 	Matrix4x4 spriteWorldMatrix = MakeIdentityMatrix();
+
+	Transform modelTransform = {};
+	modelTransform.scale = Vector3(0.01f, 0.01f, 0.01f);
+	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
 
 	Vector4 texColor = *materialDataTriangle;
 #pragma endregion
@@ -688,18 +751,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region Imgui Update
 		ImGui::Begin("Debug");
+		ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
+		ImGui::DragFloat3("Model Color", &modelTransform.rotate.x, 0.001f);
 		ImGui::End();
 
 		ImGui::Render();
 #pragma endregion
 
 #pragma region GameUpdate
+		mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
+		mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
+
 		*materialDataTriangle = texColor;
 
 		triangleTransform.rotate.y += 0.01f;
 		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
 		*wvpDataTriangle = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+
+		//modelTransform.rotate.y += 0.03f;
+		modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
+		*wvpDataModel = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 
 		spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
 		*wvpDataSprite = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
@@ -735,6 +807,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 #pragma endregion
 
+#pragma region 3D Draw
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
 		// CBuffer Set
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
@@ -743,6 +816,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
 
+		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewModel);
+		// CBuffer Set
+		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+
+		commandList->DrawInstanced(static_cast<UINT>(modelData.vertices.size()), 1, 0, 0);
+#pragma endregion
+
+#pragma region 2D Draw
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 		// CBuffer Set
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
@@ -750,6 +833,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
+#pragma endregion
 
 #pragma region PostDraw
 #pragma region ImGui Set
@@ -1073,4 +1157,78 @@ ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Devi
 	assert(SUCCEEDED(hr));
 	Log("TextureResource Created\n");
 	return resource;
+}
+
+ModelData LoadFromObjFile(const std::string& filePath)
+{
+	ModelData result;
+	std::vector<Vector4> positions;
+	std::vector<Vector3> normals;
+	std::vector<Vector2> uvs;
+
+	std::string line;
+	std::ifstream file(filePath);
+	assert(file.is_open());
+
+	while (std::getline(file, line))
+	{
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier; // 先頭識別子読み込み
+
+		// 頂点
+		if (identifier == "v")
+		{
+			Vector4 position;
+			s >> position.x >> position.y >> position.z;
+			position.w = 1.0f;
+			positions.push_back(position);
+		}
+		// uv
+		else if (identifier == "vt")
+		{
+			Vector2 uv;
+			s >> uv.x >> uv.y;
+			uv.y = 1.0f - uv.y;
+			uvs.push_back(uv);
+		}
+		// 法線
+		else if (identifier == "vn")
+		{
+			Vector3 normal;
+			s >> normal.x >> normal.y >> normal.z;
+			normals.push_back(normal);
+		}
+		// index
+		else if (identifier == "f")
+		{
+			// とりあえず今は三角のみ
+			const uint32_t triangleVertex = 3;
+			VertexData triangle[triangleVertex];
+			for (int32_t faceVertex = 0; faceVertex < triangleVertex; ++faceVertex)
+			{
+				std::string vertexDefinition;
+				s >> vertexDefinition;
+				// [頂点 / UV / 法線]で格納されているため分解してindexを取得
+				std::istringstream v(vertexDefinition);
+				uint32_t elementIndecies[3]{};
+				for (int32_t element = 0; element < 3; ++element)
+				{
+					std::string index;
+					std::getline(v, index, '/'); // スラッシュ区切りで読み込み
+					elementIndecies[element] = std::stoi(index);
+				}
+				Vector4 position = positions[elementIndecies[0] - 1];
+				Vector2 uv = uvs[elementIndecies[1] - 1];
+				Vector3 normal = normals[elementIndecies[2] - 1];
+				triangle[faceVertex] = {position, uv, normal};
+			}
+
+			for (int i = triangleVertex - 1; i >= 0; --i) {
+				result.vertices.push_back(triangle[i]);
+			}
+		}
+	}
+
+	return result;
 }
