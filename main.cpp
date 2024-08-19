@@ -571,7 +571,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadFromObjFile("Resources/Models/Syunnya_Tamura/magmabow.obj");
+	ModelData modelData = LoadFromObjFile("Resources/Models/axis.obj");
 #pragma endregion
 
 #pragma region Resources Create
@@ -735,7 +735,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Matrix4x4 spriteWorldMatrix = MakeIdentityMatrix();
 
 	Transform modelTransform = {};
-	modelTransform.scale = Vector3(0.01f, 0.01f, 0.01f);
+	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
 	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
 
 	Vector4 texColor = *materialDataTriangle;
@@ -753,7 +753,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		ImGui::Begin("Debug");
 		ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Model Color", &modelTransform.rotate.x, 0.001f);
+		ImGui::DragFloat3("Model rot", &modelTransform.rotate.x, 0.01f);
 		ImGui::End();
 
 		ImGui::Render();
@@ -1181,6 +1181,7 @@ ModelData LoadFromObjFile(const std::string& filePath)
 		{
 			Vector4 position;
 			s >> position.x >> position.y >> position.z;
+			position.x *= -1.0f;
 			position.w = 1.0f;
 			positions.push_back(position);
 		}
@@ -1197,6 +1198,7 @@ ModelData LoadFromObjFile(const std::string& filePath)
 		{
 			Vector3 normal;
 			s >> normal.x >> normal.y >> normal.z;
+			normal.x *= -1.0f;
 			normals.push_back(normal);
 		}
 		// index
@@ -1224,9 +1226,12 @@ ModelData LoadFromObjFile(const std::string& filePath)
 				triangle[faceVertex] = {position, uv, normal};
 			}
 
-			for (int i = triangleVertex - 1; i >= 0; --i) {
+				result.vertices.push_back(triangle[2]);
+				result.vertices.push_back(triangle[1]);
+				result.vertices.push_back(triangle[0]);
+			/*for (int i = triangleVertex - 1; i >= 0; --i) {
 				result.vertices.push_back(triangle[i]);
-			}
+			}*/
 		}
 	}
 
