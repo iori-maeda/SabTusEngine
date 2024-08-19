@@ -52,7 +52,6 @@ struct VertexData
 
 struct MaterialData
 {
-
 	Vector3 ambient{};
 	Vector3 diffuse{};
 	Vector3 speculer{};
@@ -61,13 +60,14 @@ struct MaterialData
 
 struct ObjectData
 {
-	std::vector<VertexData> verttices;
-	
+	std::string name;
+	std::vector<VertexData> vertices;
+	MaterialData material;
 };
 
 struct ModelData
 {
-	std::vector<VertexData> vertices;
+	std::vector<ObjectData> objects;
 };
 
 struct D3DResourceLeakChecker
@@ -571,7 +571,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadFromObjFile("Resources/Models/axis.obj");
+	ModelData modelData = LoadFromObjFile("Resources/Models/multiMesh.obj");
 #pragma endregion
 
 #pragma region Resources Create
@@ -583,7 +583,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ComPtr<ID3D12Resource> wvpResourceSprite = CreataeBufferResource(device, sizeof(Matrix4x4));
 	ComPtr<ID3D12Resource> materialResourceSprite = CreataeBufferResource(device, sizeof(Vector4));
 
-	ComPtr<ID3D12Resource> vertexResourceModel = CreataeBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
+	//ComPtr<ID3D12Resource> vertexResourceModel = CreataeBufferResource(device, sizeof(VertexData) * modelData.objects[1].vertices.size());
+	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
+	vertexResourceModel.reserve(modelData.objects.size());
+	for (ObjectData obj: modelData.objects)
+	{
+		vertexResourceModel.push_back(CreataeBufferResource(device, sizeof(VertexData) * obj.vertices.size()));
+	}
 	ComPtr<ID3D12Resource> wvpResourceModel = CreataeBufferResource(device, sizeof(Matrix4x4));
 	ComPtr<ID3D12Resource> materialResourceModel = CreataeBufferResource(device, sizeof(Vector4));
 #pragma endregion
@@ -645,12 +651,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region Model
-	VertexData* vertexDataModel = nullptr;
-	vertexResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel));
-	// 頂点データコピー
-	if(vertexDataModel != nullptr)
+	std::vector<VertexData*> vertexDataModel;
+	vertexDataModel.resize(modelData.objects.size());
+	for (size_t i = 0; i < modelData.objects.size(); ++i)
 	{
-		std::memcpy(vertexDataModel, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
+		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel[i]));
+		// 頂点データコピー
+		if (vertexDataModel[i] != nullptr)
+		{
+			std::memcpy(vertexDataModel[i], modelData.objects[i].vertices.data(), sizeof(VertexData) * modelData.objects[i].vertices.size());
+		}
 	}
 
 	Matrix4x4* wvpDataModel = nullptr;
@@ -675,10 +685,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
 
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewModel{};
-	vertexBufferViewModel.BufferLocation = vertexResourceModel->GetGPUVirtualAddress();
-	vertexBufferViewModel.SizeInBytes = static_cast<UINT>(sizeof(VertexData) * modelData.vertices.size());
-	vertexBufferViewModel.StrideInBytes = sizeof(VertexData);
+	std::vector<D3D12_VERTEX_BUFFER_VIEW>vertexBufferViewModel;
+	vertexBufferViewModel.reserve(modelData.objects.size());
+	for (size_t i = 0; i < modelData.objects.size(); ++i)
+	{
+		D3D12_VERTEX_BUFFER_VIEW bufferView{};
+		bufferView.BufferLocation = vertexResourceModel[i]->GetGPUVirtualAddress();
+		bufferView.SizeInBytes = static_cast<UINT>(sizeof(VertexData) * modelData.objects[i].vertices.size());
+		bufferView.StrideInBytes = sizeof(VertexData);
+		vertexBufferViewModel.push_back(bufferView);
+	}
 #pragma endregion
 
 #pragma region Viewport & Scissor
@@ -816,13 +832,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
 
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewModel);
-		// CBuffer Set
-		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		for (size_t i = 0; i < modelData.objects.size(); ++i)
+		{
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
 
-		commandList->DrawInstanced(static_cast<UINT>(modelData.vertices.size()), 1, 0, 0);
+			// CBuffer Set
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+			// いざ描画
+			commandList->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
+		}
 #pragma endregion
 
 #pragma region 2D Draw
@@ -888,6 +908,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
+	materialResourceModel->Unmap(0, nullptr);
+	wvpResourceModel->Unmap(0, nullptr);
+	for (ComPtr<ID3D12Resource> resource : vertexResourceModel)
+	{
+		resource->Unmap(0, nullptr);
+	}
 
 	materialResourceSprite->Unmap(0, nullptr);
 	wvpResourceSprite->Unmap(0, nullptr);
@@ -1162,6 +1189,7 @@ ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Devi
 ModelData LoadFromObjFile(const std::string& filePath)
 {
 	ModelData result;
+	std::unique_ptr<ObjectData> obj = std::make_unique<ObjectData>();
 	std::vector<Vector4> positions;
 	std::vector<Vector3> normals;
 	std::vector<Vector2> uvs;
@@ -1175,9 +1203,19 @@ ModelData LoadFromObjFile(const std::string& filePath)
 		std::string identifier;
 		std::istringstream s(line);
 		s >> identifier; // 先頭識別子読み込み
-
+		// オブジェクト名
+		if (identifier == "o") {
+			// 名前が空じゃない = 内容がある
+			// 返却用構造体にpuahして内容破棄
+			if (!obj->name.empty()) {
+				result.objects.push_back(*obj);
+				obj.release();
+				obj = std::make_unique<ObjectData>();
+			}
+			s >> obj->name;
+		}
 		// 頂点
-		if (identifier == "v")
+		else if (identifier == "v")
 		{
 			Vector4 position;
 			s >> position.x >> position.y >> position.z;
@@ -1223,17 +1261,16 @@ ModelData LoadFromObjFile(const std::string& filePath)
 				Vector4 position = positions[elementIndecies[0] - 1];
 				Vector2 uv = uvs[elementIndecies[1] - 1];
 				Vector3 normal = normals[elementIndecies[2] - 1];
-				triangle[faceVertex] = {position, uv, normal};
+				triangle[faceVertex] = { position, uv, normal };
 			}
 
-				result.vertices.push_back(triangle[2]);
-				result.vertices.push_back(triangle[1]);
-				result.vertices.push_back(triangle[0]);
-			/*for (int i = triangleVertex - 1; i >= 0; --i) {
-				result.vertices.push_back(triangle[i]);
-			}*/
+			for (int i = triangleVertex - 1; i >= 0; --i) {
+				obj->vertices.push_back(triangle[i]);
+			}
 		}
 	}
 
+	
+	result.objects.push_back(*obj);
 	return result;
 }
