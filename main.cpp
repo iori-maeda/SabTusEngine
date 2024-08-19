@@ -99,6 +99,7 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const Di
 ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
 
 ModelData LoadFromObjFile(const std::string& filePath);
+MaterialData LoadMtlFile(const std::string&, const std::string&);
 #pragma endregion
 
 D3DResourceLeakChecker leckChecker;
@@ -1264,7 +1265,8 @@ ModelData LoadFromObjFile(const std::string& filePath)
 				triangle[faceVertex] = { position, uv, normal };
 			}
 
-			for (int i = triangleVertex - 1; i >= 0; --i) {
+			for (int i = triangleVertex - 1; i >= 0; --i)
+			{
 				obj->vertices.push_back(triangle[i]);
 			}
 		}
@@ -1273,4 +1275,29 @@ ModelData LoadFromObjFile(const std::string& filePath)
 	
 	result.objects.push_back(*obj);
 	return result;
+}
+
+MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName)
+{
+	MaterialData result{};
+
+	std::string line;
+	std::ifstream file(fileName);
+	while (std::getline(file, line))
+	{
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier;
+		if (identifier == "newmtl")
+		{
+			std::string materialName;
+			s >> materialName;
+			if (useMaterialName == materialName)
+			{
+
+			}
+		}
+	}
+	assert(file.is_open());
+	return MaterialData();
 }
