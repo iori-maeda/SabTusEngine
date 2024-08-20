@@ -26,7 +26,7 @@
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
 
-#include "Engine/WIndow/WinApp.h"
+#include "Engine/Window/WinApp.h"
 // Math
 #include "Engine/Math/Vector2.h"
 #include "Engine/Math/Vector4.h"
@@ -62,7 +62,7 @@ struct ObjectData
 {
 	std::string name;
 	std::vector<VertexData> vertices;
-	MaterialData material;
+	MaterialData material{};
 };
 
 struct ModelData
@@ -96,17 +96,20 @@ DirectX::ScratchImage LoadTexture(const std::string&);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>&, const DirectX::TexMetadata&);
 ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const DirectX::ScratchImage&, const ComPtr<ID3D12Device>&, const ComPtr<ID3D12GraphicsCommandList>&);
 
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
+
 ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
 
-ModelData LoadFromObjFile(const std::string& filePath);
+ModelData LoadObjFile(const std::string&, const std::string&);
 MaterialData LoadMtlFile(const std::string&, const std::string&);
 #pragma endregion
 
 D3DResourceLeakChecker leckChecker;
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
 	// Texture読み込みのためCOMを初期化
-	CoInitializeEx(0, COINIT_MULTITHREADED);
+	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	unique_ptr<WinApp> winApp = make_unique<WinApp>();
 	winApp->Initialize();
 
@@ -123,7 +126,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// ファクトリ生成
 	ComPtr<IDXGIFactory7> dxgiFactory = nullptr;
 	// エラーコードの取得
-	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
 	// SUCCEEDEDマクロで判定
 	assert(SUCCEEDED(hr));
 
@@ -267,7 +270,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// 2Dテクスチャとして書き込み
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	// RTVを2つ作成するためディスクリプタも2つ用意
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2]{};
 	// ディスクリプタの先頭に1つ目を作成
 	rtvHandles[0] = rtvStartHandle;
 	device->CreateRenderTargetView(swapChainResources[0].Get(), &rtvDesc, rtvHandles[0]);
@@ -572,7 +575,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadFromObjFile("Resources/Models/multiMesh.obj");
+	ModelData modelData = LoadObjFile("Resources/Models","multiMaterial.obj");
 #pragma endregion
 
 #pragma region Resources Create
@@ -953,7 +956,7 @@ ComPtr<IDxcBlob> CompileShader(const std::wstring& filePath, const wchar_t* prof
 	Log("Shader Load Complete");
 
 	// 内容設定
-	DxcBuffer shaderSourceBuffer;
+	DxcBuffer shaderSourceBuffer{};
 	shaderSourceBuffer.Ptr = shaderSource->GetBufferPointer();
 	shaderSourceBuffer.Size = shaderSource->GetBufferSize();
 	shaderSourceBuffer.Encoding = DXC_CP_UTF8;	// UTF-8のコードであることを通知
@@ -1187,16 +1190,36 @@ ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Devi
 	return resource;
 }
 
-ModelData LoadFromObjFile(const std::string& filePath)
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
+	result.ptr +=  static_cast<SIZE_T>(descriptorSize * index);
+	return result;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
+	result.ptr += static_cast<UINT64>(descriptorSize * index);
+	return result;
+}
+
+/// <summary>
+/// objファイルの読み込み
+/// </summary>
+/// <param name="filePath">.objファイルのパス</param>
+/// <returns>モデルの頂点情報</returns>
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath)
 {
 	ModelData result;
 	std::unique_ptr<ObjectData> obj = std::make_unique<ObjectData>();
 	std::vector<Vector4> positions;
 	std::vector<Vector3> normals;
 	std::vector<Vector2> uvs;
+	std::string useMtlFileName;
 
 	std::string line;
-	std::ifstream file(filePath);
+	std::ifstream file(directoryPath + '/' + filePath);
 	assert(file.is_open());
 
 	while (std::getline(file, line))
@@ -1204,8 +1227,13 @@ ModelData LoadFromObjFile(const std::string& filePath)
 		std::string identifier;
 		std::istringstream s(line);
 		s >> identifier; // 先頭識別子読み込み
+		
+		if (identifier == "mtllib")
+		{
+			s >> useMtlFileName;
+		}
 		// オブジェクト名
-		if (identifier == "o") {
+		else if (identifier == "o") {
 			// 名前が空じゃない = 内容がある
 			// 返却用構造体にpuahして内容破棄
 			if (!obj->name.empty()) {
@@ -1240,6 +1268,12 @@ ModelData LoadFromObjFile(const std::string& filePath)
 			normal.x *= -1.0f;
 			normals.push_back(normal);
 		}
+		// 使用マテリアル名
+		else if (identifier == "usemtl") {
+			std::string useMatreialName;
+			s >> useMatreialName;
+			obj->material = LoadMtlFile(directoryPath + '/' + useMtlFileName, useMatreialName);
+		}
 		// index
 		else if (identifier == "f")
 		{
@@ -1259,9 +1293,12 @@ ModelData LoadFromObjFile(const std::string& filePath)
 					std::getline(v, index, '/'); // スラッシュ区切りで読み込み
 					elementIndecies[element] = std::stoi(index);
 				}
-				Vector4 position = positions[elementIndecies[0] - 1];
-				Vector2 uv = uvs[elementIndecies[1] - 1];
-				Vector3 normal = normals[elementIndecies[2] - 1];
+				uint32_t positionIndex = elementIndecies[0] - 1;
+				uint32_t uvIndex = elementIndecies[1] - 1;
+				uint32_t normalIndex = elementIndecies[2] - 1;
+				Vector4 position = positions[positionIndex];
+				Vector2 uv = uvs[uvIndex];
+				Vector3 normal = normals[normalIndex];
 				triangle[faceVertex] = { position, uv, normal };
 			}
 
@@ -1283,6 +1320,9 @@ MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMate
 
 	std::string line;
 	std::ifstream file(fileName);
+
+	std::unique_ptr<std::string> materialName = std::make_unique<std::string>();
+
 	while (std::getline(file, line))
 	{
 		std::string identifier;
@@ -1290,14 +1330,48 @@ MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMate
 		s >> identifier;
 		if (identifier == "newmtl")
 		{
-			std::string materialName;
-			s >> materialName;
-			if (useMaterialName == materialName)
+			s >> *materialName;
+		}
+		if (useMaterialName == *materialName)
+		{
+			if (identifier == "Ns")
 			{
 
 			}
+			else if (identifier == "Ns")
+			{
+
+			}
+			else if (identifier == "Ka")
+			{
+				s >> result.ambient.x >> result.ambient.y >> result.ambient.z;
+			}
+			else if (identifier == "Kd")
+			{
+				s >> result.diffuse.x >> result.diffuse.y >> result.diffuse.z;
+			}
+			else if (identifier == "Ks")
+			{
+				s >> result.speculer.x >> result.speculer.y >> result.speculer.z;
+			}
+			else if (identifier == "Ke")
+			{
+
+			}
+			else if (identifier == "Ni")
+			{
+
+			}
+			else if (identifier == "ilumi")
+			{
+
+			}
+			else if (identifier == "map_Kd")
+			{
+				s >> result.textureFilePath;
+			}
 		}
 	}
-	assert(file.is_open());
-	return MaterialData();
+
+	return result;
 }
