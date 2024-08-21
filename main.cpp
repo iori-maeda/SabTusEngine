@@ -43,6 +43,19 @@ struct  Transform
 	Vector3 translate{};
 };
 
+struct TransformationMatrix
+{
+	Matrix4x4 wvp{};
+	Matrix4x4 world{};
+};
+
+struct DirectionalLight
+{
+	Vector4 color{};
+	Vector3 direction{};
+	float intensity = 0.0f;
+};
+
 struct VertexData
 {
 	Vector4 position{};
@@ -52,9 +65,10 @@ struct VertexData
 
 struct MaterialData
 {
-	Vector3 ambient{};
-	Vector3 diffuse{};
-	Vector3 speculer{};
+	Vector4 Ka{};
+	Vector4 Kd{};
+	Vector4 Ks{};
+	int32_t enableLighting = true;
 	std::string textureFilePath;
 };
 
@@ -399,7 +413,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region PipeLine Settings
 
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -419,6 +433,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].Descriptor.ShaderRegister = 1;
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
@@ -454,7 +472,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	Log("Created RootSignature\n");
 #pragma endregion
 #pragma region InputLayout Settings
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
 	inputElementDescs[0].SemanticIndex = 0;
 	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -463,6 +481,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	inputElementDescs[1].SemanticIndex = 0;
 	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDescs[2].SemanticName = "NORMAL";
+	inputElementDescs[2].SemanticIndex = 0;
+	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -520,13 +542,32 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma endregion
 
+#pragma region Model Load
+	ModelData modelData = LoadObjFile("Resources/Models/Syunnya_Tamura/Shield", "shield.obj");
+	//ModelData modelData = LoadObjFile("Resources/Models", "blenderMonkey.obj");
+	for (ObjectData& obj : modelData.objects)
+	{
+		if (obj.material.textureFilePath.empty())
+		{
+			obj.material.textureFilePath = "uvChecker.png";
+		}
+	}
+#pragma endregion
+
 #pragma region TextureResource Create
+
 	// Textureを読み込んで転送
-	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/uvChecker.png");
+	DirectX::ScratchImage mipImages = LoadTexture("Resources/Models/Syunnya_Tamura/shield/shield_Allin_BaseColor.png");
+	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFilePath);
 	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
 	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(device, metaData);
 	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
-#pragma endregion
+
+	// Textureを読み込んで転送
+	DirectX::ScratchImage mipImages2 = LoadTexture("Resources/Textures/uvChecker.png");
+	const DirectX::TexMetadata& metaData2 = mipImages2.GetMetadata();
+	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(device, metaData2);
+	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device, commandList);
 #pragma region テクスチャ転送待ち CommandList Close & Kick & Reset
 	// コマンドリスト積込み終了
 	hr = commandList->Close();
@@ -558,6 +599,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	hr = commandList->Reset(commandAllocator.Get(), nullptr);
 #pragma endregion
 
+#pragma endregion
+
 #pragma region textureSRV Create
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = metaData.format;
@@ -565,27 +608,31 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = static_cast<UINT>(metaData.mipLevels);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-
-	texSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	texSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
+	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
 
 	device->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
-#pragma endregion
 
-#pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models","multiMaterial.obj");
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
+	srvDesc2.Format = metaData2.format;
+	srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc2.Texture2D.MipLevels = static_cast<UINT>(metaData2.mipLevels);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
+	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
+
+	device->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, texSrvHandleCPU2);
 #pragma endregion
 
 #pragma region Resources Create
 	ComPtr<ID3D12Resource> vertexResourceTriangle = CreataeBufferResource(device, sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceTriangle = CreataeBufferResource(device, sizeof(Matrix4x4));
-	ComPtr<ID3D12Resource> materialResourceTriangle = CreataeBufferResource(device, sizeof(Vector4));
+	ComPtr<ID3D12Resource> wvpResourceTriangle = CreataeBufferResource(device, sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceTriangle = CreataeBufferResource(device, sizeof(MaterialData));
 
 	ComPtr<ID3D12Resource> vertexResourceSprite = CreataeBufferResource(device, sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceSprite = CreataeBufferResource(device, sizeof(Matrix4x4));
-	ComPtr<ID3D12Resource> materialResourceSprite = CreataeBufferResource(device, sizeof(Vector4));
+	ComPtr<ID3D12Resource> wvpResourceSprite = CreataeBufferResource(device, sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceSprite = CreataeBufferResource(device, sizeof(MaterialData));
 
 	//ComPtr<ID3D12Resource> vertexResourceModel = CreataeBufferResource(device, sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
@@ -594,8 +641,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	{
 		vertexResourceModel.push_back(CreataeBufferResource(device, sizeof(VertexData) * obj.vertices.size()));
 	}
-	ComPtr<ID3D12Resource> wvpResourceModel = CreataeBufferResource(device, sizeof(Matrix4x4));
-	ComPtr<ID3D12Resource> materialResourceModel = CreataeBufferResource(device, sizeof(Vector4));
+	ComPtr<ID3D12Resource> wvpResourceModel = CreataeBufferResource(device, sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceModel = CreataeBufferResource(device, sizeof(MaterialData));
+
+	ComPtr<ID3D12Resource> directionalLightResource = CreataeBufferResource(device, sizeof(DirectionalLight));
 #pragma endregion
 
 #pragma region Resources Writing
@@ -618,40 +667,41 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexDataTriangle[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
 	vertexDataTriangle[5].uv = { 1.0f, 1.0f };
 
-	Matrix4x4* wvpDataTriangle = nullptr;
+	TransformationMatrix* wvpDataTriangle = nullptr;
 	wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataTriangle));
-	*wvpDataTriangle = MakeIdentityMatrix();
+	wvpDataTriangle->wvp = MakeIdentityMatrix();
 
-	Vector4* materialDataTriangle = nullptr;
+	MaterialData* materialDataTriangle = nullptr;
 	materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&materialDataTriangle));
-	*materialDataTriangle = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
+	materialDataTriangle->Kd = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
 #pragma endregion
 
 #pragma region Sprite
 	VertexData* vertexDataSprite = nullptr;
 	// 書き込み先アドレス取得
 	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
-	vertexDataSprite[0].position = { 0.0f, static_cast<float>(metaData.height), 0.0f, 1.0f };								// left bottom
+	vertexDataSprite[0].position = { 0.0f, static_cast<float>(metaData2.height), 0.0f, 1.0f };								// left bottom
 	vertexDataSprite[0].uv = { 0.0f, 1.0f };
 	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[1].uv = { 0.0f, 0.0f };
-	vertexDataSprite[2].position = { static_cast<float>(metaData.width), static_cast<float>(metaData.height), 0.0f, 1.0f };	// right bottom
+	vertexDataSprite[2].position = { static_cast<float>(metaData2.width), static_cast<float>(metaData2.height), 0.0f, 1.0f };	// right bottom
 	vertexDataSprite[2].uv = { 1.0f, 1.0f };
 
 	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[3].uv = { 0.0f, 0.0f };
-	vertexDataSprite[4].position = { static_cast<float>(metaData.width), 0.0f, 0.0f, 1.0f };								// right top
+	vertexDataSprite[4].position = { static_cast<float>(metaData2.width), 0.0f, 0.0f, 1.0f };								// right top
 	vertexDataSprite[4].uv = { 1.0f, 0.0f };
-	vertexDataSprite[5].position = { static_cast<float>(metaData.width), static_cast<float>(metaData.height), 0.0f, 1.0f };	// right bottom	2
+	vertexDataSprite[5].position = { static_cast<float>(metaData2.width), static_cast<float>(metaData2.height), 0.0f, 1.0f };	// right bottom	2
 	vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
-	Matrix4x4* wvpDataSprite = nullptr;
+	TransformationMatrix* wvpDataSprite = nullptr;
 	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
-	*wvpDataSprite = MakeIdentityMatrix();
+	wvpDataSprite->wvp = MakeIdentityMatrix();
 
-	Vector4* materialDataSprite = nullptr;
+	MaterialData* materialDataSprite = nullptr;
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
-	*materialDataSprite = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialDataSprite->enableLighting = false;
 #pragma endregion
 
 #pragma region Model
@@ -667,14 +717,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		}
 	}
 
-	Matrix4x4* wvpDataModel = nullptr;
+	TransformationMatrix* wvpDataModel = nullptr;
 	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataModel));
-	*wvpDataModel = MakeIdentityMatrix();
+	wvpDataModel->wvp = MakeIdentityMatrix();
 
-	Vector4* materialDataModel = nullptr;
+	MaterialData* materialDataModel = nullptr;
 	materialResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&materialDataModel));
-	*materialDataModel = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	*materialDataModel = modelData.objects[0].material;
+	materialDataModel->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	//materialDataModel->enableLighting = false;
 #pragma endregion
+
+	DirectionalLight* directionalLightData = nullptr;
+	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
+	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
+	directionalLightData->intensity = 1.0f;
 
 #pragma endregion
 
@@ -737,7 +795,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region 変数宣言
 	Transform mainCameraTransform = {};
 	mainCameraTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	mainCameraTransform.translate.z = -10.0f;
+	mainCameraTransform.translate.z = -20.0f;
 	Matrix4x4 mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
 	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
@@ -758,7 +816,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
 	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
 
-	Vector4 texColor = *materialDataTriangle;
+	Vector4 texColor = materialDataTriangle->Kd;
 #pragma endregion
 
 	while (!winApp->PoccesMessage())
@@ -773,7 +831,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		ImGui::Begin("Debug");
 		ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Model rot", &modelTransform.rotate.x, 0.01f);
+		ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
+		ImGui::DragFloat3("Light Dir", &directionalLightData->direction.x, 0.01f);
 		ImGui::End();
 
 		ImGui::Render();
@@ -783,18 +842,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
 		mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 
-		*materialDataTriangle = texColor;
+		materialDataTriangle->Kd = texColor;
 
 		triangleTransform.rotate.y += 0.01f;
 		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
-		*wvpDataTriangle = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+		wvpDataTriangle->wvp = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+		wvpDataTriangle->world = triangleWorldMatrix;
 
 		//modelTransform.rotate.y += 0.03f;
 		modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
-		*wvpDataModel = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+		wvpDataModel->wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
+		wvpDataModel->world = modelWorldMatrix;
 
 		spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
-		*wvpDataSprite = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
+		wvpDataSprite->wvp = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
+		wvpDataSprite->world = MakeIdentityMatrix();
 #pragma endregion
 
 #pragma region PreDraw
@@ -833,6 +895,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -844,6 +907,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 			// いざ描画
 			commandList->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
 		}
@@ -854,7 +918,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// CBuffer Set
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU2);
+		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
 		commandList->DrawInstanced(6, 1, 0, 0);
 #pragma endregion
@@ -1344,15 +1409,18 @@ MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMate
 			}
 			else if (identifier == "Ka")
 			{
-				s >> result.ambient.x >> result.ambient.y >> result.ambient.z;
+				s >> result.Ka.x >> result.Ka.y >> result.Ka.z;
+				result.Ka.w = 1.0f;
 			}
 			else if (identifier == "Kd")
 			{
-				s >> result.diffuse.x >> result.diffuse.y >> result.diffuse.z;
+				s >> result.Kd.x >> result.Kd.y >> result.Kd.z;
+				result.Kd.w = 1.0f;
 			}
 			else if (identifier == "Ks")
 			{
-				s >> result.speculer.x >> result.speculer.y >> result.speculer.z;
+				s >> result.Ks.x >> result.Ks.y >> result.Ks.z;
+				result.Ks.w = 1.0f;
 			}
 			else if (identifier == "Ke")
 			{
@@ -1372,6 +1440,5 @@ MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMate
 			}
 		}
 	}
-
 	return result;
 }
