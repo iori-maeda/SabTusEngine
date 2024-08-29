@@ -26,6 +26,7 @@
 #include "Engine/ComPtr.h"
 #include "Engine/Window/WinApp.h"
 #include "Engine/DirectX12Objects/DxDevice.h"
+#include "Engine/DirectX12Objects/DxCommand.h"
 // Math
 #include "Engine/Math/Vector2.h"
 #include "Engine/Math/Vector4.h"
@@ -114,27 +115,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxDevice> device = make_unique<DxDevice>();
 	device->Initialize();
-#pragma region Command Initialize
-	// コマンドキュー生成
-	ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
-	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
-	hr = device->GetDevice()->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue));
-	// コマンドキュー生成確認
-	assert(SUCCEEDED(hr));
-	Logger::Log("CreateCommandQueue\n");
-	// コマンドアロケータ生成
-	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-	hr = device->GetDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
-	// コマンドアロケータ生成確認
-	assert(SUCCEEDED(hr));
-	Logger::Log("CreateCommandAllocator\n");
-	// コマンドリスト生成
-	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
-	hr = device->GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
-	// コマンドリスト生成確認
-	assert(SUCCEEDED(hr));
-	Logger::Log("CreateCommandList\n");
-#pragma endregion
+
+	unique_ptr<DxCommand> command = make_unique<DxCommand>();
+	command->Initialize(device.get());
 
 #pragma region SwapChain Create
 	// スワップチェーン生成
@@ -148,7 +131,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	swapChainDesc.BufferCount = 2;									// ダブルバッファ
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// 画面に移したら内容破棄
 	// コマンドキュー、オウィンドウハンドル、設定渡して生成
-	hr = device->GetFactory()->CreateSwapChainForHwnd(commandQueue.Get(), winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
+	hr = device->GetFactory()->CreateSwapChainForHwnd(command->GetCommandQueue(), winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
 	// スワップチェイン生成確認
 	assert(SUCCEEDED(hr));
 	Logger::Log("CreateSwapChain\n");
@@ -215,14 +198,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// After Resource State
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	// Transition Barrier Set
-	commandList->ResourceBarrier(1, &barrier);
+	command->GetCommandList()->ResourceBarrier(1, &barrier);
 #pragma endregion
 
 	// 描画先のRTｖをバックバッファのインデックスをもとに設定
-	commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
+	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 	// 画面全体をクリア
 	float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
-	commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+	command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 #pragma endregion
 
 #pragma region DepthStencilHandle Create
@@ -235,18 +218,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	// Transition Barrier Set
-	commandList->ResourceBarrier(1, &barrier);
+	command->GetCommandList()->ResourceBarrier(1, &barrier);
 #pragma endregion 
 
 #pragma region CommandList Close & Kick
-	// コマンドリスト積込み終了
-	hr = commandList->Close();
-	assert(SUCCEEDED(hr));
-	Logger::Log("CloseCommandList\n");
-
-	// GPUにコマンドリストの実行依頼
-	ID3D12CommandList* commandLists[] = { commandList.Get() };
-	commandQueue->ExecuteCommandLists(1, commandLists);
+	command->Close();
 	// GPUとOSに画面の交換を依頼を通知
 	swapChain->Present(1, 0);
 #pragma endregion
@@ -267,7 +243,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// Fence Value Update
 	fenceValue++;
 	// GPUが実行完了したら指定した値の書き込みをするよう依頼するSignalの送信
-	commandQueue->Signal(fence.Get(), fenceValue);
+	command->GetCommandQueue()->Signal(fence.Get(), fenceValue);
 
 	// Fence Value Check
 	if (fence->GetCompletedValue() < fenceValue)
@@ -280,11 +256,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Next Flame SetUp
-	// 次の準備
-	hr = commandAllocator->Reset();
-	assert(SUCCEEDED(hr));
-	hr = commandList->Reset(commandAllocator.Get(), nullptr);
-	Logger::Log("CommandReset\n");
+	//// 次の準備
+	//hr = commandAllocator->Reset();
+	//assert(SUCCEEDED(hr));
+	//hr = commandList->Reset(commandAllocator.Get(), nullptr);
+	//Logger::Log("CommandReset\n");
+	command->Reset();
 #pragma endregion
 
 #pragma region dxcCOmplier Initialize
@@ -453,28 +430,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFilePath);
 	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
 	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(device->GetDevice(), metaData);
-	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device->GetDevice(), commandList);
+	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device->GetDevice(), command->GetCommandList());
 
 	// Textureを読み込んで転送
 	DirectX::ScratchImage mipImages2 = LoadTexture("Resources/Textures/uvChecker.png");
 	const DirectX::TexMetadata& metaData2 = mipImages2.GetMetadata();
 	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(device->GetDevice(), metaData2);
-	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device->GetDevice(), commandList);
+	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device->GetDevice(), command->GetCommandList());
 #pragma region テクスチャ転送待ち CommandList Close & Kick & Reset
-	// コマンドリスト積込み終了
-	hr = commandList->Close();
-	assert(SUCCEEDED(hr));
-
-	// GPUにコマンドリストの実行依頼
-	commandLists[0] = commandList.Get();
-	commandQueue->ExecuteCommandLists(1, commandLists);
+	command->Close();
 	// GPUとOSに画面の交換を依頼を通知
 	swapChain->Present(1, 0);
 
 	// Fence Value Update
 	fenceValue++;
 	// GPUが実行完了したら指定した値の書き込みをするよう依頼するSignalの送信
-	commandQueue->Signal(fence.Get(), fenceValue);
+	command->GetCommandQueue()->Signal(fence.Get(), fenceValue);
 
 	// Fence Value Check
 	if (fence->GetCompletedValue() < fenceValue)
@@ -485,10 +456,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		WaitForSingleObject(fenceEvent, INFINITE);
 	}
 
-	// 次の準備
-	hr = commandAllocator->Reset();
-	assert(SUCCEEDED(hr));
-	hr = commandList->Reset(commandAllocator.Get(), nullptr);
+	command->Reset();
 #pragma endregion
 
 #pragma endregion
@@ -761,64 +729,64 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// After Resource State
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		// Transition Barrier Set
-		commandList->ResourceBarrier(1, &barrier);
+		command->GetCommandList()->ResourceBarrier(1, &barrier);
 
 		// 描画先のRTｖをバックバッファのインデックスをもとに設定
-		commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
+		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 		// 画面全体をクリア
-		commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+		command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 
-		commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
-		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
+		command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap.Get() };
-		commandList->SetDescriptorHeaps(1, descriptorHeaps);
+		command->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
 
-		commandList->RSSetViewports(1, &viewport);
-		commandList->RSSetScissorRects(1, &scissorRect);
-		commandList->SetGraphicsRootSignature(rootSignature.Get());
-		commandList->SetPipelineState(graphicsPipelineState.Get());
-		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		command->GetCommandList()->RSSetViewports(1, &viewport);
+		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
+		command->GetCommandList()->SetGraphicsRootSignature(rootSignature.Get());
+		command->GetCommandList()->SetPipelineState(graphicsPipelineState.Get());
+		command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 #pragma endregion
 
 #pragma region 3D Draw
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
+		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
 		// CBuffer Set
-		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
-		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
-		commandList->DrawInstanced(6, 1, 0, 0);
+		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 
 		for (size_t i = 0; i < modelData.objects.size(); ++i)
 		{
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
+			command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
 
 			// CBuffer Set
-			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
+			command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
+			command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+			command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 			// いざ描画
-			commandList->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
+			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
 		}
 #pragma endregion
 
 #pragma region 2D Draw
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 		// CBuffer Set
-		commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU2);
-		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU2);
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
-		commandList->DrawInstanced(6, 1, 0, 0);
+		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 #pragma endregion
 
 #pragma region PostDraw
 #pragma region ImGui Set
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command->GetCommandList());
 #pragma endregion
 
 #pragma region TransitionBarrier Change To State
@@ -827,16 +795,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		// Transition Barrier Set
-		commandList->ResourceBarrier(1, &barrier);
+		command->GetCommandList()->ResourceBarrier(1, &barrier);
 #pragma endregion
 #pragma region CommandList Close & Kick
-		// コマンドリスト積込み終了
-		hr = commandList->Close();
-		assert(SUCCEEDED(hr));
-
-		// GPUにコマンドリストの実行依頼
-		commandLists[0] = commandList.Get();
-		commandQueue->ExecuteCommandLists(1, commandLists);
+		command->Close();
 		// GPUとOSに画面の交換を依頼を通知
 		swapChain->Present(1, 0);
 #pragma endregion
@@ -844,7 +806,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// Fence Value Update
 		fenceValue++;
 		// GPUが実行完了したら指定した値の書き込みをするよう依頼するSignalの送信
-		commandQueue->Signal(fence.Get(), fenceValue);
+		command->GetCommandQueue()->Signal(fence.Get(), fenceValue);
 
 		// Fence Value Check
 		if (fence->GetCompletedValue() < fenceValue)
@@ -855,12 +817,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			WaitForSingleObject(fenceEvent, INFINITE);
 		}
 #pragma endregion
-#pragma region Next Flame SetUp
-		// 次の準備
-		hr = commandAllocator->Reset();
-		assert(SUCCEEDED(hr));
-		hr = commandList->Reset(commandAllocator.Get(), nullptr);
-#pragma endregion
+		command->Reset();
 
 #pragma endregion
 	}

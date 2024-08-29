@@ -6,6 +6,11 @@
 #include "../Logger.h"
 #include "../StringUtility.h"
 
+// DirectX12
+#pragma comment(lib, "dxgi.lib")
+// Debug
+#pragma comment(lib, "dxguid.lib")
+
 void DxDevice::Initialize()
 {
 #ifdef _DEBUG

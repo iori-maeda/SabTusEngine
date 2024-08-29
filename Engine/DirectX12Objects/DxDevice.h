@@ -3,12 +3,10 @@
 #include "../ComPtr.h"
 
 #include <d3d12.h>
-
 #include <dxgi1_6.h>
-#pragma comment(lib, "dxgi.lib")
+
 // Debug
 #include <dxgidebug.h>
-#pragma comment(lib, "dxguid.lib")
 
 class DxDevice
 {
