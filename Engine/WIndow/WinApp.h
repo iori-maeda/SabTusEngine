@@ -5,11 +5,6 @@
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
-void Log(const std::string &message);
-
-std::wstring ConvertToWString(const std::string &);
-std::string ConvertToString(const std::wstring &);
-
 class WinApp
 {
 public:

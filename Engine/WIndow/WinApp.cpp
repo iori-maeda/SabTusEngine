@@ -2,6 +2,9 @@
 #include <format>
 
 #include "../../externals/imgui/imgui.h"
+#include "../Logger.h"
+#include "../StringUtility.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -19,51 +22,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 	}
 	return DefWindowProc(hwnd, message, wparam, lparam);
-}
-
-void Log(const std::string &message)
-{
-	OutputDebugStringA(message.c_str());
-}
-
-std::wstring ConvertToWString(const std::string &str)
-{
-	if (str.empty())
-	{
-		return std::wstring();
-	}
-
-	auto sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char *>(&str[0]), static_cast<int>(str.size()), NULL, 0);
-	if (sizeNeeded == 0)
-	{
-		return std::wstring();
-	}
-
-	std::wstring result(sizeNeeded, 0);
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char *>(&str[0]), static_cast<int>(str.size()), &result[0], sizeNeeded);
-
-	return result;
-
-}
-
-std::string ConvertToString(const std::wstring &str)
-{
-	if (str.empty())
-	{
-		return std::string();
-	}
-
-	auto sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), NULL, 0, NULL, NULL);
-	if (sizeNeeded == 0)
-	{
-		return std::string();
-	}
-
-	std::string result(sizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), result.data(), sizeNeeded, NULL, NULL);
-
-	return result;
-
 }
 
 void WinApp::Initialize()
@@ -92,7 +50,7 @@ void WinApp::Initialize()
 		nullptr
 	);
 	ShowWindow(hwnd_, SW_SHOW);
-	Log(std::format("WindowOpened\n"));
+	Logger::Log(std::format("WindowOpened\n"));
 }
 
 bool WinApp::PoccesMessage()
@@ -106,7 +64,7 @@ bool WinApp::PoccesMessage()
 	}
 
 	if (msg.message == WM_QUIT) {
-		Log(std::format("WindowClosed\n"));
+		Logger::Log(std::format("WindowClosed\n"));
 		return true;
 	}
 	return false;
