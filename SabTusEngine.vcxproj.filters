@@ -28,6 +28,12 @@
     <Filter Include="ヘッダー ファイル\Engine">
       <UniqueIdentifier>{dba4135a-18d1-49ed-b006-3cd5df8b7038}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Engine\DxObjects">
+      <UniqueIdentifier>{5b150e0e-5bc9-4d74-97eb-1d96e29dc526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\DxObjects">
+      <UniqueIdentifier>{a21fdb1e-3c00-4b24-a575-219d29148210}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -69,9 +75,6 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Logger.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
@@ -81,8 +84,14 @@
     <ClCompile Include="Engine\StringUtility.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp">
+      <Filter>ソース ファイル\Engine\DxObjects</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\DirectX12Objects\DxCommand.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Engine\DxObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\DirectX12Objects\DxSwapChain.cpp">
+      <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,9 +137,6 @@
     <ClInclude Include="Engine\ComPtr.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DirectX12Objects\DxDevice.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Logger.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
@@ -141,7 +147,13 @@
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DirectX12Objects\DxCommand.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DirectX12Objects\DxDevice.h">
+      <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DirectX12Objects\DxSwapChain.h">
+      <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

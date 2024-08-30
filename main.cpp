@@ -27,6 +27,8 @@
 #include "Engine/Window/WinApp.h"
 #include "Engine/DirectX12Objects/DxDevice.h"
 #include "Engine/DirectX12Objects/DxCommand.h"
+#include "Engine/DirectX12Objects/DxSwapChain.h"
+
 // Math
 #include "Engine/Math/Vector2.h"
 #include "Engine/Math/Vector4.h"
@@ -120,36 +122,24 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	command->Initialize(device.get());
 
 #pragma region SwapChain Create
-	// スワップチェーン生成
-	ComPtr<IDXGISwapChain4> swapChain = nullptr;
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	swapChainDesc.Width = WinApp::kWindoWidth;
-	swapChainDesc.Height = WinApp::kWindoHeight;
-	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.SampleDesc.Count = 1;								//マルチサンプルしない
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	// 描画ターゲットとして利用する
-	swapChainDesc.BufferCount = 2;									// ダブルバッファ
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// 画面に移したら内容破棄
-	// コマンドキュー、オウィンドウハンドル、設定渡して生成
-	hr = device->GetFactory()->CreateSwapChainForHwnd(command->GetCommandQueue(), winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
-	// スワップチェイン生成確認
-	assert(SUCCEEDED(hr));
-	Logger::Log("CreateSwapChain\n");
+	unique_ptr<DxSwapChain> swapChain = make_unique<DxSwapChain>();
+	swapChain->Initialize(winApp.get(), device.get(), command.get());
+	UINT backBufferIndex = swapChain->GetBackBufferIndex();
+
+//#pragma region Get Resources From SwapChain
+//	ComPtr<ID3D12Resource> swapChainResources[2] = { nullptr };
+//	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&swapChainResources[0]));
+//	assert(SUCCEEDED(hr));
+//	hr = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResources[1]));
+//	assert(SUCCEEDED(hr));
+//	Logger::Log("GetResourcesFromSwapChain\n");
+//#pragma endregion
 #pragma endregion
 
 #pragma region DescriptorHeap Initialize
 	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
 	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
-#pragma endregion
-
-#pragma region Get Resources From SwapChain
-	ComPtr<ID3D12Resource> swapChainResources[2] = { nullptr };
-	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&swapChainResources[0]));
-	assert(SUCCEEDED(hr));
-	hr = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResources[1]));
-	assert(SUCCEEDED(hr));
-	Logger::Log("GetResourcesFromSwapChain\n");
 #pragma endregion
 
 #pragma region RenderTargetView Create
@@ -162,11 +152,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2]{};
 	// ディスクリプタの先頭に1つ目を作成
 	rtvHandles[0] = rtvStartHandle;
-	device->GetDevice()->CreateRenderTargetView(swapChainResources[0].Get(), &rtvDesc, rtvHandles[0]);
+	device->GetDevice()->CreateRenderTargetView(swapChain->GetSwapChainResourceByIndex(0), &rtvDesc, rtvHandles[0]);
 	// 先頭からディスクリプタのサイズ分移動した場所のハンドルを取得
 	rtvHandles[1].ptr = rtvHandles[0].ptr + device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	// 2つ目を作成
-	device->GetDevice()->CreateRenderTargetView(swapChainResources[1].Get(), &rtvDesc, rtvHandles[1]);
+	device->GetDevice()->CreateRenderTargetView(swapChain->GetSwapChainResourceByIndex(1), &rtvDesc, rtvHandles[1]);
 
 #pragma endregion
 
@@ -179,27 +169,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// DSVHeapの先頭に作成
 	device->GetDevice()->CreateDepthStencilView(depthStencilResource.Get(), &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 #pragma endregion
+	command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-#pragma region Get & Writing To BackBuffer
-	// バックバッファのインデックス取得
-	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
-
-#pragma region TransitionBarrier Create
-	// TransitionBarrier Settings
-	D3D12_RESOURCE_BARRIER barrier{};
-	// Type Trainsition
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	// Flag NONE
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	// Barrier To Target
-	barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
-	// Before Resource State
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	// After Resource State
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	// Transition Barrier Set
-	command->GetCommandList()->ResourceBarrier(1, &barrier);
-#pragma endregion
+	backBufferIndex = swapChain->GetBackBufferIndex();
 
 	// 描画先のRTｖをバックバッファのインデックスをもとに設定
 	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
@@ -215,10 +187,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region TransitionBarrier Change To State
 	// Windor Drawing Step
 	// State Render -> Present
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	// Transition Barrier Set
-	command->GetCommandList()->ResourceBarrier(1, &barrier);
+	command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 #pragma endregion 
 
 #pragma region CommandList Close & Kick
@@ -646,7 +616,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ImGui_ImplWin32_Init(winApp->GetHWND());
 	ImGui_ImplDX12_Init(
 		device->GetDevice(),
-		swapChainDesc.BufferCount,
+		swapChain->kBufferCount,
 		rtvDesc.Format, srvDescriptorHeap.Get(),
 		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -720,16 +690,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region PreDraw
-		// バックバッファのインデックス取得
-		backBufferIndex = swapChain->GetCurrentBackBufferIndex();
-		// Barrier To Target
-		barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
-		// Before Resource State
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		// After Resource State
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		// Transition Barrier Set
-		command->GetCommandList()->ResourceBarrier(1, &barrier);
+		command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+		backBufferIndex = swapChain->GetBackBufferIndex();
 
 		// 描画先のRTｖをバックバッファのインデックスをもとに設定
 		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
@@ -792,10 +755,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region TransitionBarrier Change To State
 		// Windor Drawing Step
 		// State Render -> Present
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		// Transition Barrier Set
-		command->GetCommandList()->ResourceBarrier(1, &barrier);
+		command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 #pragma endregion
 #pragma region CommandList Close & Kick
 		command->Close();
