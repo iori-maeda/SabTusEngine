@@ -121,20 +121,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	unique_ptr<DxCommand> command = make_unique<DxCommand>();
 	command->Initialize(device.get());
 
-#pragma region SwapChain Create
 	unique_ptr<DxSwapChain> swapChain = make_unique<DxSwapChain>();
 	swapChain->Initialize(winApp.get(), device.get(), command.get());
 	UINT backBufferIndex = swapChain->GetBackBufferIndex();
 
-//#pragma region Get Resources From SwapChain
-//	ComPtr<ID3D12Resource> swapChainResources[2] = { nullptr };
-//	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&swapChainResources[0]));
-//	assert(SUCCEEDED(hr));
-//	hr = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResources[1]));
-//	assert(SUCCEEDED(hr));
-//	Logger::Log("GetResourcesFromSwapChain\n");
-//#pragma endregion
-#pragma endregion
 
 #pragma region DescriptorHeap Initialize
 	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
