@@ -29,6 +29,8 @@
 #include "Engine/DirectX12Objects/DxCommand.h"
 #include "Engine/DirectX12Objects/DxSwapChain.h"
 
+#include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
+
 // Math
 #include "Engine/Math/Vector2.h"
 #include "Engine/Math/Vector4.h"
@@ -91,10 +93,6 @@ struct ModelData
 #pragma region functoins
 ComPtr<IDxcBlob> CompileShader(const std::wstring&, const wchar_t*, const ComPtr<IDxcUtils>&, const ComPtr<IDxcCompiler3>&, const ComPtr<IDxcIncludeHandler>&);
 
-ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>&, size_t);
-
-ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>&, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
-
 DirectX::ScratchImage LoadTexture(const std::string&);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>&, const DirectX::TexMetadata&);
 ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const DirectX::ScratchImage&, const ComPtr<ID3D12Device>&, const ComPtr<ID3D12GraphicsCommandList>&);
@@ -127,9 +125,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 
 #pragma region DescriptorHeap Initialize
-	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
-	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
+	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 #pragma endregion
 
 #pragma region RenderTargetView Create
@@ -446,25 +444,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Resources Create
-	ComPtr<ID3D12Resource> vertexResourceTriangle = CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceTriangle = CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceTriangle = CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> vertexResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
+	ComPtr<ID3D12Resource> wvpResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> vertexResourceSprite = CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceSprite = CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceSprite = CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> vertexResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
+	ComPtr<ID3D12Resource> wvpResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	//ComPtr<ID3D12Resource> vertexResourceModel = CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
+	//ComPtr<ID3D12Resource> vertexResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
 	vertexResourceModel.reserve(modelData.objects.size());
 	for (ObjectData obj: modelData.objects)
 	{
-		vertexResourceModel.push_back(CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
+		vertexResourceModel.push_back(DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
 	}
-	ComPtr<ID3D12Resource> wvpResourceModel = CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceModel = CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> wvpResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> directionalLightResource = CreataeBufferResource(device->GetDevice(), sizeof(DirectionalLight));
+	ComPtr<ID3D12Resource> directionalLightResource = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(DirectionalLight));
 #pragma endregion
 
 #pragma region Resources Writing
@@ -870,55 +868,6 @@ ComPtr<IDxcBlob> CompileShader(const std::wstring& filePath, const wchar_t* prof
 }
 
 /// <summary>
-/// リソース作成関数
-/// </summary>
-/// <param name="device->GetDevice()">作成してくれるデバイス</param>
-/// <param name="sizeInBytes">使用サイズ</param>
-/// <returns></returns>
-ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>& device, size_t sizeInBytes)
-{
-	D3D12_HEAP_PROPERTIES uploadHeapPoperties{};
-	uploadHeapPoperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-	D3D12_RESOURCE_DESC resourceDesc{};
-	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resourceDesc.Width = sizeInBytes;
-	/// バッファのここはテンプレ
-	resourceDesc.Height = 1;
-	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.MipLevels = 1;
-	resourceDesc.SampleDesc.Count = 1;
-	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	/// ここまでテンプレ
-	ComPtr<ID3D12Resource> resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(&uploadHeapPoperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
-	assert(SUCCEEDED(hr));
-	Logger::Log("Created Resource\n");
-	return resource;
-}
-
-/// <summary>
-/// デスクリプタヒープ作成関数
-/// </summary>
-/// <param name="device">作成してくれるデバイス</param>
-/// <param name="heapType">作成するタイプ</param>
-/// <param name="numDescriptors">デスクリプタ個数</param>
-/// <param name="shaderVisible"></param>
-/// <returns></returns>
-ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>& device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
-{
-	ComPtr<ID3D12DescriptorHeap> descriptorHeap = nullptr;
-	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
-	descriptorHeapDesc.Type = heapType;
-	descriptorHeapDesc.NumDescriptors = numDescriptors;
-	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
-	// ディスクリプタヒープ生成確認
-	assert(SUCCEEDED(hr));
-	Logger::Log("CreateDecritorHeap\n");
-	return descriptorHeap;
-}
-
-/// <summary>
 /// ミップマップ付きデータの取得
 /// </summary>
 /// <param name="filePath"></param>
@@ -992,7 +941,7 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device.Get(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
-	ComPtr<ID3D12Resource> intermediateResource = CreataeBufferResource(device, intermediateSize);
+	ComPtr<ID3D12Resource> intermediateResource = DirectX12ObjectsFunction::CreataeBufferResource(device, intermediateSize);
 
 	// どうやったらこの関数の使用をやめれる？
 	UpdateSubresources(commandList.Get(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
