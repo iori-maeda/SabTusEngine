@@ -41,6 +41,6 @@ Output main(VertexOutput input)
 
 	output.color = ambient;
 	output.color += gMaterial.enableLighting ? diffuse * lightColor : diffuse;
-
+	
 	return output;
 }

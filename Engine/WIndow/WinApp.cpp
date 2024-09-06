@@ -7,8 +7,13 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
+int32_t WinApp::kWindoWidth = 1280;
+int32_t WinApp::kWindoHeight = 720;
+
 LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	if (hwnd == NULL) { return NULL; }
+	RECT rect{};
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wparam, lparam))
 	{
 		return true;
@@ -18,6 +23,15 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+
+	case WM_SIZE:
+		if (hwnd)
+		{
+			GetClientRect(hwnd, &rect);
+			Logger::Log(std::format("WindowSize(width:{}, height:{})\n", rect.right, rect.bottom));
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -34,7 +48,7 @@ void WinApp::Initialize()
 
 	RegisterClass(&windClass_);
 
-	windRect_ = { 0,0,kWindoWidth,kWindoWidth };
+	windRect_ = { 0, 0, kWindoWidth, kWindoHeight };
 
 	hwnd_ = CreateWindow(
 		windClass_.lpszClassName,
@@ -68,6 +82,11 @@ bool WinApp::PoccesMessage()
 		return true;
 	}
 	return false;
+}
+
+void WinApp::Update()
+{
+	UpdateWindow(hwnd_);
 }
 
 void WinApp::Finalize()

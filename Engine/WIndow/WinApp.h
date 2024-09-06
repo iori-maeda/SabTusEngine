@@ -9,11 +9,12 @@ class WinApp
 {
 public:
 
-	static const int32_t kWindoWidth = 1280;
-	static const int32_t kWindoHeight = 720;
+	static int32_t kWindoWidth;
+	static int32_t kWindoHeight;
 
 	void Initialize();
 	bool PoccesMessage();
+	void Update();
 	void Finalize();
 
 	// getter
