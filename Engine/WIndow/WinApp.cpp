@@ -48,7 +48,11 @@ void WinApp::Initialize()
 
 	RegisterClass(&windClass_);
 
+
 	windRect_ = { 0, 0, kWindoWidth, kWindoHeight };
+
+	// クライアント領域として調整
+	AdjustWindowRect(&windRect_, WS_OVERLAPPEDWINDOW, false);
 
 	hwnd_ = CreateWindow(
 		windClass_.lpszClassName,

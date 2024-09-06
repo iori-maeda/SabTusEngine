@@ -182,6 +182,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// Transition Barrier Set
 	command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
+#pragma region GPU Work Transfer & Wait
 	// CommandList Close & Kick
 	command->Close();
 	// GPUとOSに画面の交換を依頼を通知
@@ -192,6 +193,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	fence->WaitSignalToGPU();
 	// commandList Reset
 	command->Reset();
+#pragma endregion
 
 #pragma region dxcCOmplier Initialize
 	ComPtr<IDxcUtils> dxcUtils = nullptr;
@@ -720,18 +722,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// Transition Barrier Set
 		command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 #pragma endregion
-#pragma region CommandList Close & Kick
+#pragma region GPU Work Transfer & Wait
+		// CommandList Close & Kick
 		command->Close();
 		// GPUとOSに画面の交換を依頼を通知
 		swapChain->Present(1, 0);
-#pragma endregion
 		// Fence Wait
 		fence->IncrementFenceValue();
 		command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
 		fence->WaitSignalToGPU();
 		// commandList Reset
 		command->Reset();
-
 #pragma endregion
 	}
 #pragma region Finalize
