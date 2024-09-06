@@ -23,15 +23,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
-
-	case WM_SIZE:
-		if (hwnd)
-		{
-			GetClientRect(hwnd, &rect);
-			Logger::Log(std::format("WindowSize(width:{}, height:{})\n", rect.right, rect.bottom));
-		}
-		break;
-
 	default:
 		break;
 	}
@@ -95,10 +86,27 @@ void WinApp::Update()
 
 void WinApp::Finalize()
 {
+	RECT checkClientSize{};
+	GetClientRect(hwnd_, &checkClientSize);
+	if(checkClientSize.right != windRect_.right)
+	{
+		windRect_.right = checkClientSize.right;
+		kWindoWidth = checkClientSize.right -checkClientSize.left;
+	}
+	if(checkClientSize.bottom != windRect_.bottom)
+	{
+		windRect_.bottom = checkClientSize.bottom;
+		kWindoHeight = checkClientSize.bottom -checkClientSize.top;
+	}
 	CloseWindow(hwnd_);
 }
 
 HWND WinApp::GetHWND()
 {
 	return hwnd_;
+}
+
+RECT WinApp::GetWindowRect()
+{
+	return windRect_;
 }

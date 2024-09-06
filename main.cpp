@@ -164,6 +164,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 #pragma endregion
+
 	// Windor Drawing Step
 	// State Present -> Render
 	// Transition Barrier Set
@@ -175,7 +176,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// 画面全体をクリア
 	float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
 	command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
-#pragma endregion
 
 	// Windor Drawing Step
 	// State Render -> Present
@@ -603,12 +603,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	while (!winApp->PoccesMessage())
 	{
-		winApp->Update();
 
 #pragma region Begin Frame
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+
 #pragma endregion
 
 #pragma region Imgui Update
@@ -621,6 +621,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 		ImGui::Render();
 #pragma endregion
+
+		winApp->Update();
 
 #pragma region GameUpdate
 		projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);

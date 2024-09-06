@@ -19,6 +19,7 @@ public:
 
 	// getter
 	HWND GetHWND();
+	RECT GetWindowRect();
 
 private:
 
