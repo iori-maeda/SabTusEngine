@@ -29,6 +29,7 @@
 #include "Engine/DirectX12Objects/DxCommand.h"
 #include "Engine/DirectX12Objects/DxSwapChain.h"
 #include "Engine//DirectX12Objects/DxFence.h"
+#include "Engine/DirectX12Objects/DxShader.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -92,7 +93,7 @@ struct ModelData
 };
 
 #pragma region functoins
-ComPtr<IDxcBlob> CompileShader(const std::wstring &, const wchar_t *, const ComPtr<IDxcUtils> &, const ComPtr<IDxcCompiler3> &, const ComPtr<IDxcIncludeHandler> &);
+//ComPtr<IDxcBlob> CompileShader(const std::wstring &, const wchar_t *, const ComPtr<IDxcUtils> &, const ComPtr<IDxcCompiler3> &, const ComPtr<IDxcIncludeHandler> &);
 
 DirectX::ScratchImage LoadTexture(const std::string &);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
@@ -127,6 +128,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxFence> fence = make_unique<DxFence>();
 	fence->Initialize(device.get());
+
+	unique_ptr<DxShader> shaderManager = make_unique<DxShader>();
+	shaderManager->Initialize();
+
+#pragma region Shader Compile
+	const std::string shaderDirectoryPath = "Resources/Shaders/";
+	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
+	assert(vertexShaderBlob != nullptr);
+	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
+	assert(pixelShaderBlob != nullptr);
+#pragma endregion
+	
 
 
 #pragma region DescriptorHeap Create
@@ -193,21 +206,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	fence->WaitSignalToGPU();
 	// commandList Reset
 	command->Reset();
-#pragma endregion
-
-#pragma region dxcCOmplier Initialize
-	ComPtr<IDxcUtils> dxcUtils = nullptr;
-	ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
-	hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
-	assert(SUCCEEDED(hr));
-	hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
-	assert(SUCCEEDED(hr));
-	Logger::Log("dxcCompiler Initialized\n");
-
-	// includeに対応するための設定
-	ComPtr<IDxcIncludeHandler> includeHandler = nullptr;
-	hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
-	assert(SUCCEEDED(hr));
 #pragma endregion
 
 #pragma region PipeLine Settings
@@ -300,13 +298,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	// 塗りつぶし
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-#pragma endregion
-#pragma region Shader Compile
-	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(StringUtility::ConvertToWString(shaderDirectoryPath + "Basic3DVS.hlsl"), L"vs_6_0", dxcUtils, dxcCompiler, includeHandler);
-	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = CompileShader(StringUtility::ConvertToWString(shaderDirectoryPath + "Basic3DPS.hlsl"), L"ps_6_0", dxcUtils, dxcCompiler, includeHandler);
-	assert(pixelShaderBlob != nullptr);
 #pragma endregion
 #pragma region DepthStencilState Settings
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
@@ -763,74 +754,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 	return 0;
-}
-
-/// <summary>
-/// シェーダコンパイル
-/// </summary>
-/// <param name="filePath">CompilerするShaderファイルへのパス</param>
-/// <param name="peofile">Complerに使用するProfile</param>
-/// <param name="dxcUtils"></param>
-/// <param name="dxcCompiler"></param>
-/// <param name="includeHandler"></param>
-/// <returns></returns>
-ComPtr<IDxcBlob> CompileShader(const std::wstring &filePath, const wchar_t *profile, const ComPtr<IDxcUtils> &dxcUtils, const ComPtr<IDxcCompiler3> &dxcCompiler, const ComPtr<IDxcIncludeHandler> &includeHandler)
-{
-#pragma region HLSL Loading
-	Logger::Log(StringUtility::ConvertToString(std::format(L"Begin CompileShader, path:{}, profile:{}\n", filePath, profile)));
-	// hlsl Load
-	ComPtr<IDxcBlobEncoding> shaderSource = nullptr;
-	HRESULT hr = dxcUtils->LoadFile(filePath.c_str(), nullptr, &shaderSource);
-	assert(SUCCEEDED(hr));
-	Logger::Log("Shader Load Complete");
-
-	// 内容設定
-	DxcBuffer shaderSourceBuffer{};
-	shaderSourceBuffer.Ptr = shaderSource->GetBufferPointer();
-	shaderSourceBuffer.Size = shaderSource->GetBufferSize();
-	shaderSourceBuffer.Encoding = DXC_CP_UTF8;	// UTF-8のコードであることを通知
-#pragma endregion
-#pragma region Compiler
-	LPCWSTR arguments[] = {
-		filePath.c_str(),			// コンパイルするhlslファイル名
-		L"-E", L"main",				// エントリーポイント指定
-		L"-T", profile,				// ShaderProfile設定
-		L"-Zi", L"-Qembed_debug",	// デバッグ用の情報埋め込み
-		L"-Od",						// 最適化はしない
-		L"-Zpr",					// メモリレイアウトは行優先
-	};
-	// Shader Compile
-	ComPtr<IDxcResult> shaderResult = nullptr;
-	hr = dxcCompiler->Compile(
-		&shaderSourceBuffer,		// 読み込んだファイル
-		arguments,					// コンパイル時のオプション
-		_countof(arguments),		// ↑の数
-		includeHandler.Get(),		// Includeとか
-		IID_PPV_ARGS(&shaderResult)	// 結果
-	);
-	assert(SUCCEEDED(hr));
-
-	// 問題が発生したらログに出力
-	ComPtr<IDxcBlobUtf8> shaderError = nullptr;
-	shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
-	if (shaderError != nullptr && shaderError->GetStringLength() != 0)
-	{
-		// ログを出して停止
-		Logger::Log(shaderError->GetStringPointer());
-		shaderError->Release();
-		assert(false);
-	}
-#pragma endregion
-#pragma region Result
-	ComPtr<IDxcBlob> shaderBlob = nullptr;
-	hr = shaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
-	assert(SUCCEEDED(hr));
-	Logger::Log(StringUtility::ConvertToString(std::format(L"Complie Succeeded, path:{}, profile:{}\n", filePath, profile)));
-	// Release
-	shaderSource->Release();
-	shaderResult->Release();
-#pragma endregion
-	return shaderBlob;
 }
 
 /// <summary>

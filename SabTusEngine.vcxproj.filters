@@ -99,6 +99,9 @@
     <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -165,7 +168,10 @@
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DirectX12Objects\DxFence.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
+      <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DirectX12Objects\DxShader.h">
+      <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

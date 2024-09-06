@@ -1,0 +1,81 @@
+#include "DxShader.h"
+
+#include <cassert>
+#include <format>
+
+#include "../Logger.h"
+#include "../StringUtility.h"
+
+void DxShader::Initialize()
+{
+	HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils_));
+	assert(SUCCEEDED(hr));
+	hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler_));
+	assert(SUCCEEDED(hr));
+	Logger::Log("dxcCompiler Initialized\n");
+
+	// HLSL内でインクルードするときにこの設定がいる
+	hr = dxcUtils_->CreateDefaultIncludeHandler(&includeHandler_);
+	assert(SUCCEEDED(hr));
+}
+
+ComPtr<IDxcBlob> DxShader::CompileShader(const std::string& filePath, const wchar_t* profile)
+{
+	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
+
+#pragma region HLSL Loading
+	Logger::Log(StringUtility::ConvertToString(std::format(L"Begin CompileShader, path:{}, profile:{}\n", filePathW, profile)));
+	// hlsl Load
+	ComPtr<IDxcBlobEncoding> shaderSource = nullptr;
+	HRESULT hr = dxcUtils_->LoadFile(filePathW.c_str(), nullptr, &shaderSource);
+	assert(SUCCEEDED(hr));
+	Logger::Log("Shader Load Complete\n");
+
+	// 内容設定
+	DxcBuffer shaderSourceBuffer{};
+	shaderSourceBuffer.Ptr = shaderSource->GetBufferPointer();
+	shaderSourceBuffer.Size = shaderSource->GetBufferSize();
+	shaderSourceBuffer.Encoding = DXC_CP_UTF8;	// UTF-8のコードであることを通知
+#pragma endregion
+#pragma region Compiler
+	LPCWSTR arguments[] = {
+		filePathW.c_str(),			// コンパイルするhlslファイル名
+		L"-E", L"main",				// エントリーポイント指定
+		L"-T", profile,				// ShaderProfile設定
+		L"-Zi", L"-Qembed_debug",	// デバッグ用の情報埋め込み
+		L"-Od",						// 最適化はしない
+		L"-Zpr",					// メモリレイアウトは行優先
+	};
+	// Shader Compile
+	ComPtr<IDxcResult> shaderResult = nullptr;
+	hr = dxcCompiler_->Compile(
+		&shaderSourceBuffer,		// 読み込んだファイル
+		arguments,					// コンパイル時のオプション
+		_countof(arguments),		// ↑の数
+		includeHandler_.Get(),		// Includeとか
+		IID_PPV_ARGS(&shaderResult)	// 結果
+	);
+	assert(SUCCEEDED(hr));
+
+	// 問題が発生したらログに出力
+	ComPtr<IDxcBlobUtf8> shaderError = nullptr;
+	shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
+	if (shaderError != nullptr && shaderError->GetStringLength() != 0)
+	{
+		// ログを出して停止
+		Logger::Log(shaderError->GetStringPointer());
+		shaderError->Release();
+		assert(false);
+	}
+#pragma endregion
+#pragma region Result
+	ComPtr<IDxcBlob> shaderBlob = nullptr;
+	hr = shaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
+	assert(SUCCEEDED(hr));
+	Logger::Log(StringUtility::ConvertToString(std::format(L"Complie Succeeded, path:{}, profile:{}\n", filePathW, profile)));
+	// Release
+	shaderSource->Release();
+	shaderResult->Release();
+#pragma endregion
+	return shaderBlob;
+}
