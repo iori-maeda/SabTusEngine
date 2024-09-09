@@ -82,6 +82,16 @@ bool WinApp::PoccesMessage()
 void WinApp::Update()
 {
 	UpdateWindow(hwnd_);
+	RECT checkRect = {};
+	GetClientRect(hwnd_, &checkRect);
+	if(windRect_.right != checkRect.right)
+	{
+		kWindoWidth = checkRect.right - checkRect.left;
+	}
+	if(windRect_.bottom != checkRect.bottom)
+	{
+		kWindoWidth = checkRect.bottom - checkRect.top;
+	}
 }
 
 void WinApp::Finalize()

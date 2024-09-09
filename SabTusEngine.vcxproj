@@ -94,6 +94,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\DirectX12Objects\DxCommand.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp" />
+    <ClCompile Include="Engine\DirectX12Objects\DxPipelineStateObject.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxSwapChain.cpp" />
     <ClCompile Include="Engine\Logger.cpp" />
@@ -119,6 +120,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\DirectX12Objects\DxCommand.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxDevice.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxFence.h" />
+    <ClInclude Include="Engine\DirectX12Objects\DxPipelineStateObject.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxShader.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxSwapChain.h" />
     <ClInclude Include="Engine\Logger.h" />

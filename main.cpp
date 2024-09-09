@@ -594,12 +594,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	while (!winApp->PoccesMessage())
 	{
+		viewport.Width = static_cast<FLOAT>(WinApp::kWindoWidth);
+		viewport.Height = static_cast<FLOAT>(WinApp::kWindoHeight);
+
+		scissorRect.right = WinApp::kWindoWidth;
+		scissorRect.bottom = WinApp::kWindoHeight;
 
 #pragma region Begin Frame
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		auto& io = ImGui::GetIO();
+		io.DisplaySize  = ImVec2(static_cast<float>(WinApp::kWindoWidth),static_cast<float>(WinApp::kWindoHeight));
 #pragma endregion
 
 #pragma region Imgui Update
