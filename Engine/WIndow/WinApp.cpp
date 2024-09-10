@@ -82,7 +82,7 @@ bool WinApp::PoccesMessage()
 void WinApp::Update()
 {
 	UpdateWindow(hwnd_);
-	RECT checkRect = {};
+	/*RECT checkRect = {};
 	GetClientRect(hwnd_, &checkRect);
 	if(windRect_.right != checkRect.right)
 	{
@@ -91,23 +91,11 @@ void WinApp::Update()
 	if(windRect_.bottom != checkRect.bottom)
 	{
 		kWindoWidth = checkRect.bottom - checkRect.top;
-	}
+	}*/
 }
 
 void WinApp::Finalize()
 {
-	RECT checkClientSize{};
-	GetClientRect(hwnd_, &checkClientSize);
-	if(checkClientSize.right != windRect_.right)
-	{
-		windRect_.right = checkClientSize.right;
-		kWindoWidth = checkClientSize.right -checkClientSize.left;
-	}
-	if(checkClientSize.bottom != windRect_.bottom)
-	{
-		windRect_.bottom = checkClientSize.bottom;
-		kWindoHeight = checkClientSize.bottom -checkClientSize.top;
-	}
 	CloseWindow(hwnd_);
 }
 

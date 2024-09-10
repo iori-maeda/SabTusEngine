@@ -29,7 +29,7 @@
 #include "Engine/DirectX12Objects/DxCommand.h"
 #include "Engine/DirectX12Objects/DxSwapChain.h"
 #include "Engine//DirectX12Objects/DxFence.h"
-#include "Engine/DirectX12Objects/DxShader.h"
+#include "Engine/DirectX12Objects/DxShaderManager.h"
 #include "Engine/DirectX12Objects/DxPipelineStateObject.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
@@ -130,19 +130,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	unique_ptr<DxFence> fence = make_unique<DxFence>();
 	fence->Initialize(device.get());
 
-	unique_ptr<DxShader> shaderManager = make_unique<DxShader>();
+	unique_ptr<DxShaderManager> shaderManager = make_unique<DxShaderManager>();
 	shaderManager->Initialize();
 
 	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
 	pipelineState->DefaultInitialize(device.get());
 
-#pragma region Shader Compile
-	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
-	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
-	assert(pixelShaderBlob != nullptr);
-#pragma endregion
+	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("Basic3DVS.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
 	
 
 

@@ -5,19 +5,16 @@
 #include <dxcapi.h>
 
 #include "DxDevice.h"
-#include "DxShader.h"
+#include "DxShaderManager.h"
 #include "../Logger.h"
 
 void DxPipelineStateObject::DefaultInitialize(DxDevice *device)
 {
 
-	std::unique_ptr<DxShader> shaderManager = std::make_unique<DxShader>();
+	std::unique_ptr<DxShaderManager> shaderManager = std::make_unique<DxShaderManager>();
 	shaderManager->Initialize();
-	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
-	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
-	assert(pixelShaderBlob != nullptr);
+	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("Basic3DVS.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
 
 #pragma region RootParameter Create
 	D3D12_ROOT_PARAMETER rootParameters[4] = {};

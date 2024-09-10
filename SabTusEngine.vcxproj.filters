@@ -99,11 +99,11 @@
     <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp">
+    <ClCompile Include="Engine\DirectX12Objects\DxShaderManager.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
     <ClCompile Include="Engine\DirectX12Objects\DxPipelineStateObject.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -173,7 +173,7 @@
     <ClInclude Include="Engine\DirectX12Objects\DxFence.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DirectX12Objects\DxShader.h">
+    <ClInclude Include="Engine\DirectX12Objects\DxShaderManager.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DirectX12Objects\DxPipelineStateObject.h">

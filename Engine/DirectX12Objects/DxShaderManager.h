@@ -7,13 +7,14 @@
 
 #include "../ComPtr.h"
 
-class DxShader
+class DxShaderManager
 {
 public:
 	void Initialize();
 	ComPtr<IDxcBlob> CompileShader(const std::string&, const wchar_t*);
 
 private:
+	const std::string shaderDirectoryPath = "Resources/Shaders/";
 
 	ComPtr<IDxcUtils> dxcUtils_ = nullptr;
 	ComPtr<IDxcCompiler3> dxcCompiler_ = nullptr;

@@ -1,4 +1,4 @@
-#include "DxShader.h"
+#include "DxShaderManager.h"
 
 #include <cassert>
 #include <format>
@@ -6,7 +6,7 @@
 #include "../Logger.h"
 #include "../StringUtility.h"
 
-void DxShader::Initialize()
+void DxShaderManager::Initialize()
 {
 	HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils_));
 	assert(SUCCEEDED(hr));
@@ -19,9 +19,9 @@ void DxShader::Initialize()
 	assert(SUCCEEDED(hr));
 }
 
-ComPtr<IDxcBlob> DxShader::CompileShader(const std::string& filePath, const wchar_t* profile)
+ComPtr<IDxcBlob> DxShaderManager::CompileShader(const std::string& filePath, const wchar_t* profile)
 {
-	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
+	std::wstring filePathW = StringUtility::ConvertToWString(shaderDirectoryPath + filePath);
 
 #pragma region HLSL Loading
 	Logger::Log(StringUtility::ConvertToString(std::format(L"Begin CompileShader, path:{}, profile:{}\n", filePathW, profile)));
@@ -76,6 +76,8 @@ ComPtr<IDxcBlob> DxShader::CompileShader(const std::string& filePath, const wcha
 	// Release
 	shaderSource->Release();
 	shaderResult->Release();
+
+	assert(shaderBlob);
 #pragma endregion
 	return shaderBlob;
 }
