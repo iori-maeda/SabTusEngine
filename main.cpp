@@ -30,6 +30,7 @@
 #include "Engine/DirectX12Objects/DxSwapChain.h"
 #include "Engine//DirectX12Objects/DxFence.h"
 #include "Engine/DirectX12Objects/DxShader.h"
+#include "Engine/DirectX12Objects/DxPipelineStateObject.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -131,6 +132,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxShader> shaderManager = make_unique<DxShader>();
 	shaderManager->Initialize();
+
+	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
+	pipelineState->DefaultInitialize(device.get());
 
 #pragma region Shader Compile
 	const std::string shaderDirectoryPath = "Resources/Shaders/";
@@ -670,8 +674,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 		command->GetCommandList()->RSSetViewports(1, &viewport);
 		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
-		command->GetCommandList()->SetGraphicsRootSignature(rootSignature.Get());
-		command->GetCommandList()->SetPipelineState(graphicsPipelineState.Get());
+		command->GetCommandList()->SetGraphicsRootSignature(pipelineState->GetRootSignature());
+		command->GetCommandList()->SetPipelineState(pipelineState->GetPipelineState());
 		command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 #pragma endregion
 
