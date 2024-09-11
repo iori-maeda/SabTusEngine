@@ -105,6 +105,9 @@
     <ClCompile Include="Engine\DirectX12Objects\DxPipelineStateObject.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\DirectX12Objects\DxRootSignature.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -177,6 +180,9 @@
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DirectX12Objects\DxPipelineStateObject.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DirectX12Objects\DxRootSignature.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
