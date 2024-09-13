@@ -78,7 +78,7 @@ struct MaterialData
 	Vector4 Kd{};
 	Vector4 Ks{};
 	int32_t enableLighting = true;
-	std::string textureFilePath;
+	std::string textureFileName = "uvChecker.png";
 };
 
 struct ObjectData
@@ -94,8 +94,6 @@ struct ModelData
 };
 
 #pragma region functoins
-//ComPtr<IDxcBlob> CompileShader(const std::wstring &, const wchar_t *, const ComPtr<IDxcUtils> &, const ComPtr<IDxcCompiler3> &, const ComPtr<IDxcIncludeHandler> &);
-
 DirectX::ScratchImage LoadTexture(const std::string &);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
 ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &, const DirectX::ScratchImage &, const ComPtr<ID3D12Device> &, const ComPtr<ID3D12GraphicsCommandList> &);
@@ -211,20 +209,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region Model Load
 	//ModelData modelData = LoadObjFile("Resources/Models/Syunnya_Tamura/Shield", "cubes.obj");
 	ModelData modelData = LoadObjFile("Resources/Models", "multiMesh.obj");
-	for (ObjectData &obj : modelData.objects)
-	{
-		if (obj.material.textureFilePath.empty())
-		{
-			obj.material.textureFilePath = "uvChecker.png";
-		}
-	}
 #pragma endregion
 
 #pragma region TextureResource Create
 
 	// Textureを読み込んで転送
 	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Models/Syunnya_Tamura/shield/shield_Allin_BaseColor.png");
-	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFilePath);
+	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFileName);
 	const DirectX::TexMetadata &metaData = mipImages.GetMetadata();
 	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(device->GetDevice(), metaData);
 	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device->GetDevice(), command->GetCommandList());
@@ -946,7 +937,7 @@ MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMate
 
 			} else if (identifier == "map_Kd")
 			{
-				s >> result.textureFilePath;
+				s >> result.textureFileName;
 			}
 		}
 	}
