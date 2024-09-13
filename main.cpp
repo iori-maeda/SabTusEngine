@@ -31,6 +31,7 @@
 #include "Engine//DirectX12Objects/DxFence.h"
 #include "Engine/DirectX12Objects/DxShaderManager.h"
 #include "Engine/DirectX12Objects/DxPipelineStateObject.h"
+#include "Engine/TextureManager.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -139,12 +140,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
 
 
-
 #pragma region DescriptorHeap Create
 	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
 	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 #pragma endregion
+
+	unique_ptr<TextureManager> texManager = make_unique<TextureManager>();
+	texManager->Initialize(device.get(), command.get(), srvDescriptorHeap.Get());
 
 #pragma region RenderTargetView Create
 	// RTVSettings
@@ -207,60 +210,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	//ModelData modelData = LoadObjFile("Resources/Models/Syunnya_Tamura/Shield", "cubes.obj");
 	ModelData modelData = LoadObjFile("Resources/Models", "multiMesh.obj");
 #pragma endregion
 
-#pragma region TextureResource Create
+#pragma region Texture
+	TextureData uvCheckerTex = texManager->LoadTexrureData("uvChecker.png");
+	TextureData monsterBallTex = texManager->LoadTexrureData("monsterBall.png");
 
-	// Textureを読み込んで転送
-	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Models/Syunnya_Tamura/shield/shield_Allin_BaseColor.png");
-	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFileName);
-	const DirectX::TexMetadata &metaData = mipImages.GetMetadata();
-	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(device->GetDevice(), metaData);
-	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device->GetDevice(), command->GetCommandList());
+	texManager->WaitToUploadTextureDataForGPU(fence.get());
 
-	// Textureを読み込んで転送
-	DirectX::ScratchImage mipImages2 = LoadTexture("Resources/Textures/uvChecker.png");
-	const DirectX::TexMetadata &metaData2 = mipImages2.GetMetadata();
-	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(device->GetDevice(), metaData2);
-	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device->GetDevice(), command->GetCommandList());
-#pragma region テクスチャ転送待ち CommandList Close & Kick & Reset
-	command->Close();
-	// GPUとOSに画面の交換を依頼を通知
-	swapChain->Present(1, 0);
-	// Fence Wait
-	fence->IncrementFenceValue();
-	command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
-	fence->WaitSignalToGPU();
+	texManager->InitializeDescriptorHandles(uvCheckerTex.texSrvHandleCPU, uvCheckerTex.texSrvHandleGPU);
+	texManager->InitializeDescriptorHandles(monsterBallTex.texSrvHandleCPU, monsterBallTex.texSrvHandleGPU);
 
-	command->Reset();
-#pragma endregion
-
-#pragma endregion
-
-#pragma region textureSRV Create
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = metaData.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = static_cast<UINT>(metaData.mipLevels);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
-
-	device->GetDevice()->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
-	srvDesc2.Format = metaData2.format;
-	srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc2.Texture2D.MipLevels = static_cast<UINT>(metaData2.mipLevels);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
-
-	device->GetDevice()->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, texSrvHandleCPU2);
+	texManager->CreateSRVByTexuter(uvCheckerTex);
+	texManager->CreateSRVByTexuter(monsterBallTex);
 #pragma endregion
 
 #pragma region Resources Create
@@ -318,18 +281,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	VertexData *vertexDataSprite = nullptr;
 	// 書き込み先アドレス取得
 	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
-	vertexDataSprite[0].position = { 0.0f, static_cast<float>(metaData2.height), 0.0f, 1.0f };								// left bottom
+	vertexDataSprite[0].position = { 0.0f, static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };								// left bottom
 	vertexDataSprite[0].uv = { 0.0f, 1.0f };
 	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[1].uv = { 0.0f, 0.0f };
-	vertexDataSprite[2].position = { static_cast<float>(metaData2.width), static_cast<float>(metaData2.height), 0.0f, 1.0f };	// right bottom
+	vertexDataSprite[2].position = { static_cast<float>(uvCheckerTex.metaData.width), static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };	// right bottom
 	vertexDataSprite[2].uv = { 1.0f, 1.0f };
 
 	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[3].uv = { 0.0f, 0.0f };
-	vertexDataSprite[4].position = { static_cast<float>(metaData2.width), 0.0f, 0.0f, 1.0f };								// right top
+	vertexDataSprite[4].position = { static_cast<float>(uvCheckerTex.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
 	vertexDataSprite[4].uv = { 1.0f, 0.0f };
-	vertexDataSprite[5].position = { static_cast<float>(metaData2.width), static_cast<float>(metaData2.height), 0.0f, 1.0f };	// right bottom	2
+	vertexDataSprite[5].position = { static_cast<float>(uvCheckerTex.metaData.width), static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };	// right bottom	2
 	vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
 	TransformationMatrix *wvpDataSprite = nullptr;
@@ -532,7 +495,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap.Get() };
-		command->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
+		command->GetCommandList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 		command->GetCommandList()->RSSetViewports(1, &viewport);
 		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
@@ -546,7 +509,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// CBuffer Set
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceTriangle->GetGPUVirtualAddress());
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), texSrvHandleGPU);
+		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), uvCheckerTex.texSrvHandleGPU);
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
 		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
@@ -558,7 +521,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			// CBuffer Set
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceModel->GetGPUVirtualAddress());
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), texSrvHandleGPU);
+			command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), uvCheckerTex.texSrvHandleGPU);
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
 			// いざ描画
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
@@ -570,7 +533,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// CBuffer Set
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceSprite->GetGPUVirtualAddress());
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceSprite->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), texSrvHandleGPU);
+		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
 		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
