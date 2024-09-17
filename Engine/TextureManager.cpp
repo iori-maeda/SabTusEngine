@@ -11,45 +11,64 @@
 #include "DirectX12Objects/DxCommand.h"
 #include "DirectX12Objects/DxFence.h"
 
-void TextureManager::Initialize(DxDevice* device, DxCommand* command, ID3D12DescriptorHeap* heap)
+std::map<std::string, TextureData> TextureManager::texMap_;
+
+void TextureManager::Initialize(DxDevice *device, DxCommand *command, DxFence *fence, ID3D12DescriptorHeap *heap)
 {
 	device_ = device->GetDevice();
 	command_ = command;
+	fence_ = fence;
 	heap_ = heap;
 }
 
-TextureData TextureManager::LoadTexrureData(const std::string& fileName)
+TextureData TextureManager::LoadTexrureData(const std::string &fileName, const std::string& registrationKey)
 {
-	TextureData result{};
-	result.mipImages = LoadTexture(kDirectoryPath + fileName);
-	result.metaData = result.mipImages.GetMetadata();
-	result.resource = CreateTextureResource(device_, result.metaData);
-	result.intermediateResource = UploadTextureData(result.resource, result.mipImages, device_, command_->GetCommandList());
-	result.texSrvHandleCPU = GetCPUDescriptorHandle(device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), indexCount_);
-	result.texSrvHandleGPU = GetGPUDescriptorHandle(device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), indexCount_);
-	// インデックス番号加算
-	++indexCount_;
+	// KEYをファイル名から決定
+	std::string key = registrationKey == "" ? fileName.substr(0, fileName.find_last_of(".")) : registrationKey;
 
+	// 画像読込
+	DirectX::ScratchImage mipImages = LoadTexture(kDirectoryPath + fileName);
+
+	// 格納用データ
+	TextureData result{};
+	result.metaData = mipImages.GetMetadata();
+	result.resource = CreateTextureResource(device_, result.metaData);
+	result.intermediateResource = UploadTextureData(result.resource, mipImages, device_, command_->GetCommandList());
+
+	// 転送待ち
+	WaitToUploadTextureDataForGPU();
+	// ハンドル作成
+	InitializeDescriptorHandles(result.texSrvHandleCPU, result.texSrvHandleGPU);
+	// SRVに新しく領域を確保
+	CreateSRVByTexuter(result);
+
+	// マップへ挿入
+	//texMap_.emplace(key, result);
 	return result;
 }
 
-bool TextureManager::WaitToUploadTextureDataForGPU(DxFence* fence)
+TextureData& TextureManager::GetTextureData(const std::string& key)
+{
+	auto itr = texMap_.find(key) ;
+	assert(itr != texMap_.end());
+	return itr->second;
+}
+
+bool TextureManager::WaitToUploadTextureDataForGPU()
 {
 	// CommandList Close & Kick
 	command_->Close();
-	// GPUとOSに画面の交換を依頼を通知
-	//swapChain->Present(1, 0);
 	// Fence Wait
-	fence->IncrementFenceValue();
-	command_->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
-	fence->WaitSignalToGPU();
+	fence_->IncrementFenceValue();
+	command_->GetCommandQueue()->Signal(fence_->GetFence(), fence_->GetFenceValue());
+	fence_->WaitSignalToGPU();
 	// commandList Reset
 	command_->Reset();
 
 	return true;
 }
 
-void TextureManager::InitializeDescriptorHandles(D3D12_CPU_DESCRIPTOR_HANDLE& CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE& GPUHandle)
+void TextureManager::InitializeDescriptorHandles(D3D12_CPU_DESCRIPTOR_HANDLE &CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE &GPUHandle)
 {
 	CPUHandle = heap_->GetCPUDescriptorHandleForHeapStart();
 	CPUHandle.ptr += static_cast<SIZE_T>(device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * indexCount_);
@@ -60,7 +79,7 @@ void TextureManager::InitializeDescriptorHandles(D3D12_CPU_DESCRIPTOR_HANDLE& CP
 	++indexCount_;
 }
 
-void TextureManager::CreateSRVByTexuter(const TextureData& data)
+void TextureManager::CreateSRVByTexuter(const TextureData &data)
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = data.metaData.format;
@@ -90,9 +109,9 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetGPUDescriptorHandle(uint32_t disc
 /// </summary>
 /// <param name="filePath"></param>
 /// <returns></returns>
-DirectX::ScratchImage TextureManager::LoadTexture(const std::string& filePath)
+DirectX::ScratchImage TextureManager::LoadTexture(const std::string &filePath)
 {
-    // TextureFileえおプログラム用に読み込む
+	// TextureFileえおプログラム用に読み込む
 	DirectX::ScratchImage image{};
 	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
 	HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
@@ -111,7 +130,7 @@ DirectX::ScratchImage TextureManager::LoadTexture(const std::string& filePath)
 /// <param name="device">作成してくれるデバイス</param>
 /// <param name="metaData">作成元データ</param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> TextureManager::CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData)
+ComPtr<ID3D12Resource> TextureManager::CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -152,7 +171,7 @@ ComPtr<ID3D12Resource> TextureManager::CreateTextureResource(const ComPtr<ID3D12
 /// <param name="device">作成してくれるデバイス</param>
 /// <param name="commandList">アップロードコマンド積込みと実行用</param>
 /// <returns>中間リソース転送完了まで破棄しないこと</returns>
-ComPtr<ID3D12Resource> TextureManager::UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
+ComPtr<ID3D12Resource> TextureManager::UploadTextureData(const ComPtr<ID3D12Resource> &texture, const DirectX::ScratchImage &mipImage, const ComPtr<ID3D12Device> &device, const ComPtr<ID3D12GraphicsCommandList> &commandList)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;

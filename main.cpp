@@ -87,6 +87,7 @@ struct ObjectData
 	std::string name;
 	std::vector<VertexData> vertices;
 	MaterialData material{};
+	TextureData texData{};
 };
 
 struct ModelData
@@ -147,7 +148,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 	unique_ptr<TextureManager> texManager = make_unique<TextureManager>();
-	texManager->Initialize(device.get(), command.get(), srvDescriptorHeap.Get());
+	texManager->Initialize(device.get(), command.get(), fence.get(), srvDescriptorHeap.Get());
 
 #pragma region RenderTargetView Create
 	// RTVSettings
@@ -210,20 +211,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "multiMesh.obj");
+	ModelData modelData = LoadObjFile("Resources/Models", "Syunnya_Tamura/shield/sword.obj");
 #pragma endregion
 
 #pragma region Texture
-	TextureData uvCheckerTex = texManager->LoadTexrureData("uvChecker.png");
+	for (ObjectData &obj : modelData.objects) {
+		obj.texData = texManager->LoadTexrureData(obj.material.textureFileName, obj.name + "Tex");
+	}
 	TextureData monsterBallTex = texManager->LoadTexrureData("monsterBall.png");
-
-	texManager->WaitToUploadTextureDataForGPU(fence.get());
-
-	texManager->InitializeDescriptorHandles(uvCheckerTex.texSrvHandleCPU, uvCheckerTex.texSrvHandleGPU);
-	texManager->InitializeDescriptorHandles(monsterBallTex.texSrvHandleCPU, monsterBallTex.texSrvHandleGPU);
-
-	texManager->CreateSRVByTexuter(uvCheckerTex);
-	texManager->CreateSRVByTexuter(monsterBallTex);
 #pragma endregion
 
 #pragma region Resources Create
@@ -238,7 +233,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	//ComPtr<ID3D12Resource> vertexResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
 	vertexResourceModel.reserve(modelData.objects.size());
-	for (ObjectData obj : modelData.objects)
+
+	for (ObjectData &obj : modelData.objects)
 	{
 		vertexResourceModel.push_back(DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
 	}
@@ -281,18 +277,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	VertexData *vertexDataSprite = nullptr;
 	// 書き込み先アドレス取得
 	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
-	vertexDataSprite[0].position = { 0.0f, static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };								// left bottom
+	vertexDataSprite[0].position = { 0.0f, static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };								// left bottom
 	vertexDataSprite[0].uv = { 0.0f, 1.0f };
 	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[1].uv = { 0.0f, 0.0f };
-	vertexDataSprite[2].position = { static_cast<float>(uvCheckerTex.metaData.width), static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };	// right bottom
+	vertexDataSprite[2].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom
 	vertexDataSprite[2].uv = { 1.0f, 1.0f };
 
 	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
 	vertexDataSprite[3].uv = { 0.0f, 0.0f };
-	vertexDataSprite[4].position = { static_cast<float>(uvCheckerTex.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
+	vertexDataSprite[4].position = { static_cast<float>(monsterBallTex.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
 	vertexDataSprite[4].uv = { 1.0f, 0.0f };
-	vertexDataSprite[5].position = { static_cast<float>(uvCheckerTex.metaData.width), static_cast<float>(uvCheckerTex.metaData.height), 0.0f, 1.0f };	// right bottom	2
+	vertexDataSprite[5].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom	2
 	vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
 	TransformationMatrix *wvpDataSprite = nullptr;
@@ -509,7 +505,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		// CBuffer Set
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceTriangle->GetGPUVirtualAddress());
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), uvCheckerTex.texSrvHandleGPU);
+		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
 		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
@@ -521,7 +517,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			// CBuffer Set
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceModel->GetGPUVirtualAddress());
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), uvCheckerTex.texSrvHandleGPU);
+			command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), modelData.objects[i].texData.texSrvHandleGPU);
 			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
 			// いざ描画
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
@@ -771,7 +767,7 @@ ModelData LoadObjFile(const std::string &directoryPath, const std::string &fileP
 			s >> useMtlFileName;
 		}
 		// オブジェクト名
-		else if (identifier == "o") {
+		else if (identifier == "o" || identifier == "g") {
 			// 名前が空じゃない = 内容がある
 			// 返却用構造体にpuahして内容破棄
 			if (!obj->name.empty()) {
