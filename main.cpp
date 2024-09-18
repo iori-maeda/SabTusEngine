@@ -211,12 +211,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "Syunnya_Tamura/shield/sword.obj");
+	ModelData modelData = LoadObjFile("Resources/Models", "multiMaterial.obj");
 #pragma endregion
 
 #pragma region Texture
 	for (ObjectData &obj : modelData.objects) {
-		obj.texData = texManager->LoadTexrureData(obj.material.textureFileName, obj.name + "Tex");
+		obj.texData = texManager->LoadTexrureData(obj.material.textureFileName, obj.name);
 	}
 	TextureData monsterBallTex = texManager->LoadTexrureData("monsterBall.png");
 #pragma endregion
@@ -230,12 +230,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<ID3D12Resource> wvpResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
 	ComPtr<ID3D12Resource> materialResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	//ComPtr<ID3D12Resource> vertexResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
+	// オブジェクトの数分領域確保
 	vertexResourceModel.reserve(modelData.objects.size());
-
 	for (ObjectData &obj : modelData.objects)
 	{
+		// 実際に追加
 		vertexResourceModel.push_back(DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
 	}
 	ComPtr<ID3D12Resource> wvpResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));

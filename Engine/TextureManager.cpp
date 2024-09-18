@@ -13,6 +13,13 @@
 
 std::map<std::string, TextureData> TextureManager::texMap_;
 
+/// <summary>
+/// 借り物の借り受け
+/// </summary>
+/// <param name="device"></param>
+/// <param name="command"></param>
+/// <param name="fence"></param>
+/// <param name="heap"></param>
 void TextureManager::Initialize(DxDevice *device, DxCommand *command, DxFence *fence, ID3D12DescriptorHeap *heap)
 {
 	device_ = device->GetDevice();
@@ -21,6 +28,12 @@ void TextureManager::Initialize(DxDevice *device, DxCommand *command, DxFence *f
 	heap_ = heap;
 }
 
+/// <summary>
+/// 画像読込と登録
+/// </summary>
+/// <param name="fileName">画像名</param>
+/// <param name="registrationKey">登録するキー、省略する場合は画像名の拡張し無しで登録する</param>
+/// <returns></returns>
 TextureData TextureManager::LoadTexrureData(const std::string &fileName, const std::string& registrationKey)
 {
 	// KEYをファイル名から決定
@@ -43,10 +56,15 @@ TextureData TextureManager::LoadTexrureData(const std::string &fileName, const s
 	CreateSRVByTexuter(result);
 
 	// マップへ挿入
-	//texMap_.emplace(key, result);
+	texMap_.emplace(key, result);
 	return result;
 }
 
+/// <summary>
+/// 画像データの取得
+/// </summary>
+/// <param name="key">登録してあるキー</param>
+/// <returns></returns>
 TextureData& TextureManager::GetTextureData(const std::string& key)
 {
 	auto itr = texMap_.find(key) ;
