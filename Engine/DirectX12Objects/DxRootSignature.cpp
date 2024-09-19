@@ -38,11 +38,11 @@ void DxRootSignature::DefaultSettings()
 #pragma region Smapler Settings
 	staticSamplers_.resize(1);
 
-	staticSamplers_[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;			// バイナリフィルタ
+	staticSamplers_[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;		// バイナリフィルタ
 	staticSamplers_[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 0~1リピート
 	staticSamplers_[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
 	staticSamplers_[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
-	staticSamplers_[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;		// 比較しない
+	staticSamplers_[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;	// 比較しない
 	staticSamplers_[0].MaxLOD = D3D12_FLOAT32_MAX;						// 最大まで使用
 	staticSamplers_[0].ShaderRegister = 0;
 	staticSamplers_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -78,15 +78,17 @@ void DxRootSignature::Create(DxDevice *device)
 	Logger::Log("Created RootSignature\n");
 }
 
+void DxRootSignature::AddRootParameter(const std::string&, ParamType type, ShaderVisibility visibility, UINT useRegisterNum)
+{
+	D3D12_ROOT_PARAMETER addParam{};
+	addParam.ParameterType = static_cast<D3D12_ROOT_PARAMETER_TYPE>(type);
+	addParam.ShaderVisibility = static_cast<D3D12_SHADER_VISIBILITY>(visibility);
+	addParam.Descriptor.ShaderRegister = useRegisterNum;
+}
+
 ID3D12RootSignature *DxRootSignature::GetRootSignature()
 {
 	return rootSignature_.Get();
-}
-
-UINT DxRootSignature::GetParamIndex(const std::string& key)
-{
-	auto itr = paramsIndexMap_.find(key);
-	return itr->second;
 }
 
 std::vector<D3D12_ROOT_PARAMETER> DxRootSignature::GetRootParameters()

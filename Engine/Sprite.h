@@ -21,6 +21,7 @@ private:
 	ComPtr<ID3D12Resource> vertexResource_ = nullptr;
 	ComPtr<ID3D12Resource> indexResource_ = nullptr;
 	ComPtr<ID3D12Resource> colorResource_ = nullptr;
+	ComPtr<ID3D12Resource> transform2DResource_ = nullptr;
 
 	D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
 
@@ -30,7 +31,18 @@ private:
 		Vector2 uv{};
 	};
 
-	VertexData2D *vertexData_ = nullptr;
-	Vector4 *colorData_ = nullptr;
+	struct Transform2D
+	{
+		Vector2 position{};
+		Vector2 scale{};
+		float rotation = 0.0f;
+	};
+
+	VertexData2D *vertex_ = nullptr;
 	uint32_t *indexData_ = nullptr;
+
+public:
+
+	Vector4 *color_ = nullptr;
+	Transform2D *transform2D_ = nullptr;
 };
