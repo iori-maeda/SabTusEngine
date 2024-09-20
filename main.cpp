@@ -229,7 +229,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<ID3D12Resource> vertexResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
 	ComPtr<ID3D12Resource> wvpResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
 	ComPtr<ID3D12Resource> materialResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
-
+	
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
 	// オブジェクトの数分領域確保
 	vertexResourceModel.reserve(modelData.objects.size());

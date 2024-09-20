@@ -11,15 +11,10 @@ class DxDevice;
 
 enum class ParamType
 {
-	CBV = D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV,
-	SRV = D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV,
-	Table = D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-};
-
-enum class ShaderVisibility
-{
-	Vertex = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX,
-	Pixel = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL,
+	PixelCBuffer,
+	PixelTex,
+	VertexCbuffer,
+	VertexTex
 };
 
 class DxRootSignature
@@ -28,7 +23,7 @@ public:
 	void DefaultSettings();
 	void Create(DxDevice*);
 
-	void AddRootParameter(const std::string&,ParamType, ShaderVisibility, UINT);
+	void AddRootParameter(ParamType, ID3D12Resource*);
 
 	ID3D12RootSignature* GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
