@@ -72,15 +72,17 @@ void DxRootSignature::Create(DxDevice *device)
 	Logger::Log("Created RootSignature\n");
 }
 
-void DxRootSignature::AddRootParameter(ParamType type, ID3D12Resource *setResource)
+void DxRootSignature::AddRootParameter(ParamType type, UINT numDescriptors, UINT startReginsterIndex)
 {
 	D3D12_ROOT_PARAMETER addParam{};
+	D3D12_DESCRIPTOR_RANGE descriptorRange{};
+
 	switch (type)
 	{
 	case ParamType::PixelCBuffer:
-		rootParameters_[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameters_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		rootParameters_[0].Descriptor.ShaderRegister = 0;
+		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.Descriptor.ShaderRegister = 0;
 		break;
 	case ParamType::PixelTex:
 		descriptorRange_[0].BaseShaderRegister = 0;
@@ -88,20 +90,20 @@ void DxRootSignature::AddRootParameter(ParamType type, ID3D12Resource *setResour
 		descriptorRange_[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		descriptorRange_[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-		rootParameters_[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParameters_[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		rootParameters_[2].DescriptorTable.pDescriptorRanges = descriptorRange_.data();
-		rootParameters_[2].DescriptorTable.NumDescriptorRanges = static_cast<UINT>(descriptorRange_.size());
+		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.DescriptorTable.pDescriptorRanges = descriptorRange_.data();
+		addParam.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(descriptorRange_.size());
 		break;
 	case ParamType::VertexCbuffer:
-		rootParameters_[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameters_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		rootParameters_[0].Descriptor.ShaderRegister = 0;
+		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.Descriptor.ShaderRegister = 0;
 		break;
 	case ParamType::VertexTex:
-		rootParameters_[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameters_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		rootParameters_[0].Descriptor.ShaderRegister = 0;
+		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.Descriptor.ShaderRegister = 0;
 		break;
 	default:
 		break;

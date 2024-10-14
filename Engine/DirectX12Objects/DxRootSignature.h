@@ -23,7 +23,7 @@ public:
 	void DefaultSettings();
 	void Create(DxDevice*);
 
-	void AddRootParameter(ParamType, ID3D12Resource*);
+	void AddRootParameter(ParamType type, UINT numDescriptors, UINT startReginsterIndex);
 
 	ID3D12RootSignature* GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
