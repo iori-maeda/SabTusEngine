@@ -1,6 +1,7 @@
 #include "DxRootSignature.h"
 
 #include <cassert>
+#include <format>
 
 #include "DxDevice.h"
 #include "../Logger.h"
@@ -72,7 +73,7 @@ void DxRootSignature::Create(DxDevice *device)
 	Logger::Log("Created RootSignature\n");
 }
 
-void DxRootSignature::AddRootParameter(ParamType type, UINT numDescriptors, UINT startReginsterIndex)
+void DxRootSignature::AddRootParameter(ParamType type, UINT bindRegister)
 {
 	D3D12_ROOT_PARAMETER addParam{};
 	D3D12_DESCRIPTOR_RANGE descriptorRange{};
@@ -82,32 +83,73 @@ void DxRootSignature::AddRootParameter(ParamType type, UINT numDescriptors, UINT
 	case ParamType::PixelCBuffer:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		addParam.Descriptor.ShaderRegister = 0;
+		addParam.Descriptor.ShaderRegister = bindRegister;
 		break;
-	case ParamType::PixelTex:
-		descriptorRange_[0].BaseShaderRegister = 0;
-		descriptorRange_[0].NumDescriptors = 1;
-		descriptorRange_[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descriptorRange_[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	case ParamType::PixelTex:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		addParam.DescriptorTable.pDescriptorRanges = descriptorRange_.data();
 		addParam.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(descriptorRange_.size());
 		break;
+
 	case ParamType::VertexCbuffer:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		addParam.Descriptor.ShaderRegister = 0;
+		addParam.Descriptor.ShaderRegister = bindRegister;
 		break;
+
 	case ParamType::VertexTex:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		addParam.Descriptor.ShaderRegister = 0;
+		addParam.Descriptor.ShaderRegister = bindRegister;
 		break;
+
 	default:
+		Logger::Log(std::format("Not Found Type by {}", type));
 		break;
 	}
+}
+
+void DxRootSignature::CreateDescriptorRange()
+{
+	if (!descriptorRange_.empty())
+	{
+		return;
+	}
+	else
+	{
+		descriptorRange_.resize(1);
+		descriptorRange_[0].BaseShaderRegister = 0;
+		descriptorRange_[0].NumDescriptors = 1;
+
+		descriptorRange_[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange_[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
+}
+
+void DxRootSignature::CreateStaticSamplers()
+{
+	staticSamplers_.resize(1);
+
+	staticSamplers_[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;		// バイナリフィルタ
+	staticSamplers_[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 0~1リピート
+	staticSamplers_[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
+	staticSamplers_[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
+	staticSamplers_[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;	// 比較しない
+	staticSamplers_[0].MaxLOD = D3D12_FLOAT32_MAX;						// 最大まで使用
+	staticSamplers_[0].ShaderRegister = 0;
+	staticSamplers_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+}
+
+void DxRootSignature::SetDescriptorRange(UINT baseRegsterIndex = 0, UINT numIRegisters = 1)
+{
+	CreateDescriptorRange();
+	descriptorRange_[0].BaseShaderRegister = baseRegsterIndex;
+	descriptorRange_[0].NumDescriptors = numIRegisters;
+
+	descriptorRange_[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRange_[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
 ID3D12RootSignature *DxRootSignature::GetRootSignature()

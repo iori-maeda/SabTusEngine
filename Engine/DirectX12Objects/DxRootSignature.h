@@ -20,10 +20,41 @@ enum class ParamType
 class DxRootSignature
 {
 public:
+	/// <summary>
+	/// Basic3D用のデフォルト設定
+	/// </summary>
 	void DefaultSettings();
-	void Create(DxDevice*);
 
-	void AddRootParameter(ParamType type, UINT numDescriptors, UINT startReginsterIndex);
+	/// <summary>
+	/// ルートシグネチャ生成
+	/// これより前にDefaultSettingsか手動でパラメータを追加しておくこと
+	/// </summary>
+	/// <param name="device">デバイス</param>
+	void Create(DxDevice* device);
+
+	/// <summary>
+	/// ルートパラメータ追加
+	/// </summary>
+	/// <param name="type"></param>
+	/// <param name="registerIndex">バインドするレジスタ</param>
+	void AddRootParameter(ParamType type, UINT bindRegister);
+
+	/// <summary>
+	/// テンプレディスクリプタレンジ生成
+	/// </summary>
+	void CreateDescriptorRange();
+
+	/// <summary>
+	/// テンプレサンプラー生成
+	/// </summary>
+	void CreateStaticSamplers();
+
+	/// <summary>
+	/// 現状テクスチャ専用のディスクリプターレンジのセット
+	/// </summary>
+	/// <param name="baseRegsterIndex">レジスタ開始インデックス</param>
+	/// <param name="numIndexies">確保レジスタ数</param>
+	void SetDescriptorRange(UINT baseRegsterIndex, UINT numIndexies);
 
 	ID3D12RootSignature* GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
