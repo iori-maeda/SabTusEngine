@@ -8,6 +8,13 @@
 #include "./Math/Vector2.h"
 
 class DxDevice;
+struct TextureData;
+
+struct SpriteData
+{
+	Vector4 color{};
+
+};
 
 class Sprite
 {
@@ -15,6 +22,8 @@ public:
 
 	~Sprite();
 	void Initialize(DxDevice *);
+
+	void DrawSetup(const TextureData& texture);
 
 private:
 

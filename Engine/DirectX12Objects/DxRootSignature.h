@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 #include "../ComPtr.h"
@@ -30,7 +31,7 @@ public:
 	/// これより前にDefaultSettingsか手動でパラメータを追加しておくこと
 	/// </summary>
 	/// <param name="device">デバイス</param>
-	void Create(DxDevice* device);
+	void Create(DxDevice *device);
 
 	/// <summary>
 	/// ルートパラメータ追加
@@ -56,7 +57,7 @@ public:
 	/// <param name="numIndexies">確保レジスタ数</param>
 	void SetDescriptorRange(UINT baseRegsterIndex, UINT numIndexies);
 
-	ID3D12RootSignature* GetRootSignature();
+	ID3D12RootSignature *GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
 private:
 
@@ -66,7 +67,13 @@ private:
 	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRange_;
 	std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers_;
 
+	struct ResourceData
+	{
+		D3D12_ROOT_PARAMETER param;
+		ComPtr<ID3D12Resource> resource;
+	};
+
 	// パラメタコンテナ
-	std::vector<D3D12_ROOT_PARAMETER> rootParameters_;
+	std::unordered_map<std::string, ResourceData> rootParameters_;
 	UINT paramIndex_ = 0;
 };

@@ -523,7 +523,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
 		}
 #pragma endregion
-
+		
 #pragma region 2D Draw
 		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 		// CBuffer Set
