@@ -8,16 +8,12 @@
 
 void DxRootSignature::DefaultSettings()
 {
-	descriptorRange_.resize(1);
-
-	// Texture用
-	descriptorRange_[0].BaseShaderRegister = 0;
-	descriptorRange_[0].NumDescriptors = 1;
-	descriptorRange_[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange_[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	CreateDescriptorRange();
 
 #pragma region RootParameter Create
-	rootParameters_.resize(4);
+
+
+	rootParameters_.emplace
 
 	rootParameters_[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters_[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -52,9 +48,11 @@ void DxRootSignature::DefaultSettings()
 
 void DxRootSignature::Create(DxDevice *device)
 {
+	CreateStaticSamplers();
+
 	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
 	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	descriptorRootSignature.pParameters = rootParameters_.data();
+	descriptorRootSignature.pParameters = rootParameters_.;
 	descriptorRootSignature.NumParameters = static_cast<UINT>(rootParameters_.size());
 	descriptorRootSignature.pStaticSamplers = staticSamplers_.data();
 	descriptorRootSignature.NumStaticSamplers = static_cast<UINT>(staticSamplers_.size());
@@ -73,10 +71,10 @@ void DxRootSignature::Create(DxDevice *device)
 	Logger::Log("Created RootSignature\n");
 }
 
-void DxRootSignature::AddRootParameter(ParamType type, UINT bindRegister)
+void DxRootSignature::AddRootParameter(const std::string& key, ParamType type, UINT bindRegister)
 {
 	D3D12_ROOT_PARAMETER addParam{};
-	D3D12_DESCRIPTOR_RANGE descriptorRange{};
+	//D3D12_DESCRIPTOR_RANGE descriptorRange{};
 
 	switch (type)
 	{
@@ -87,6 +85,8 @@ void DxRootSignature::AddRootParameter(ParamType type, UINT bindRegister)
 		break;
 
 	case ParamType::PixelTex:
+		CreateDescriptorRange();
+
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		addParam.DescriptorTable.pDescriptorRanges = descriptorRange_.data();
@@ -107,8 +107,11 @@ void DxRootSignature::AddRootParameter(ParamType type, UINT bindRegister)
 
 	default:
 		Logger::Log(std::format("Not Found Type by {}", type));
-		break;
+		return;
+		//break;
 	}
+
+	rootParameters_.emplace(key , addParam);
 }
 
 void DxRootSignature::CreateDescriptorRange()

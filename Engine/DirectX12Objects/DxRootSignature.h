@@ -3,7 +3,6 @@
 #include <d3d12.h>
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 #include "../ComPtr.h"
@@ -36,9 +35,10 @@ public:
 	/// <summary>
 	/// ルートパラメータ追加
 	/// </summary>
-	/// <param name="type"></param>
-	/// <param name="registerIndex">バインドするレジスタ</param>
-	void AddRootParameter(ParamType type, UINT bindRegister);
+	/// <param name="key">登録名</param>
+	/// <param name="type">パラメータのタイプ</param>
+	/// <param name="bindRegister">バインドするレジスタ</param>
+	void AddRootParameter(const std::string& key,ParamType type, UINT bindRegister);
 
 	/// <summary>
 	/// テンプレディスクリプタレンジ生成
@@ -59,6 +59,7 @@ public:
 
 	ID3D12RootSignature *GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
+
 private:
 
 	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
@@ -71,9 +72,15 @@ private:
 	{
 		D3D12_ROOT_PARAMETER param;
 		ComPtr<ID3D12Resource> resource;
+		template<typename T> T GetVirtualPtr()
+		{
+			T ptr = nullptr;
+			resource->Map(0,, nullptr, reinterpret_cast<void **>(&ptr));
+			return ptr;
+		}
 	};
 
 	// パラメタコンテナ
-	std::unordered_map<std::string, ResourceData> rootParameters_;
+	std::map<std::string, ResourceData> rootParameters_;
 	UINT paramIndex_ = 0;
 };
