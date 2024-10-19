@@ -5,6 +5,7 @@
 
 #include "DxDevice.h"
 #include "../Logger.h"
+#include "DirectX12ObjectsFunction.h"
 
 void DxRootSignature::DefaultSettings()
 {

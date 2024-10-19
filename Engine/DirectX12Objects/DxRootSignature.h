@@ -30,7 +30,7 @@ public:
 	/// これより前にDefaultSettingsか手動でパラメータを追加しておくこと
 	/// </summary>
 	/// <param name="device">デバイス</param>
-	void Create(DxDevice *device);
+	void Create(DxDevice* device);
 
 	/// <summary>
 	/// ルートパラメータ追加
@@ -38,7 +38,7 @@ public:
 	/// <param name="key">登録名</param>
 	/// <param name="type">パラメータのタイプ</param>
 	/// <param name="bindRegister">バインドするレジスタ</param>
-	void AddRootParameter(const std::string& key,ParamType type, UINT bindRegister);
+	void AddRootParameter(const std::string& key, ParamType type, UINT bindRegister);
 
 	/// <summary>
 	/// テンプレディスクリプタレンジ生成
@@ -57,7 +57,7 @@ public:
 	/// <param name="numIndexies">確保レジスタ数</param>
 	void SetDescriptorRange(UINT baseRegsterIndex, UINT numIndexies);
 
-	ID3D12RootSignature *GetRootSignature();
+	ID3D12RootSignature* GetRootSignature();
 	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
 
 private:
@@ -70,14 +70,9 @@ private:
 
 	struct ResourceData
 	{
+		std::string key;
 		D3D12_ROOT_PARAMETER param;
-		ComPtr<ID3D12Resource> resource;
-		template<typename T> T GetVirtualPtr()
-		{
-			T ptr = nullptr;
-			resource->Map(0,, nullptr, reinterpret_cast<void **>(&ptr));
-			return ptr;
-		}
+		ID3D12Resource* resource;
 	};
 
 	// パラメタコンテナ
