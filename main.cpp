@@ -134,29 +134,29 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxRootSignature>rootSignature = make_unique<DxRootSignature>();
 #pragma region ルートパラメータ回り
-	unique_ptr<Dx12Structs::CBufferResourceMaterial<VertexData>> vertex = make_unique<Dx12Structs::CBufferResourceMaterial<VertexData>>();
-	vertex->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(VertexData) * 6), ParamType::VertexCbuffer, 0);
-	vertex->Map();
+	Dx12Structs::CBufferResourceMaterial<VertexData> vertex{};
+	vertex.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(VertexData) * 6), ParamType::VertexCbuffer, 0);
+	vertex.Map();
 	// ルートパラメータへ追加
-	rootSignature->AddRootParameter("vertexData", vertex->GetParamsMaterials());
+	//rootSignature->AddRootParameter("vertexData", vertex.GetParamsMaterials());
 
-	unique_ptr<Dx12Structs::CBufferResourceMaterial<TransformationMatrix>> transformationMatrix = make_unique<Dx12Structs::CBufferResourceMaterial<TransformationMatrix>>();
-	transformationMatrix->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::VertexCbuffer, 0);
-	transformationMatrix->Map();
+	Dx12Structs::CBufferResourceMaterial<TransformationMatrix> transformationMatrix{};
+	transformationMatrix.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::VertexCbuffer, 0);
+	transformationMatrix.Map();
 	// ルートパラメータへ追加
-	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix->GetParamsMaterials());
+	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix.GetParamsMaterials());
 
-	unique_ptr<Dx12Structs::CBufferResourceMaterial<MaterialData>> material = make_unique<Dx12Structs::CBufferResourceMaterial<MaterialData>>();
-	material->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::VertexCbuffer, 0);
-	material->Map();
+	Dx12Structs::CBufferResourceMaterial<MaterialData> material{};
+	material.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::PixelCBuffer, 0);
+	material.Map();
 	// ルートパラメータへ追加
-	rootSignature->AddRootParameter("materialData", material->GetParamsMaterials());
+	rootSignature->AddRootParameter("materialData", material.GetParamsMaterials());
 	
-	unique_ptr<Dx12Structs::CBufferResourceMaterial<DirectionalLight>> directionalLight = make_unique<Dx12Structs::CBufferResourceMaterial<DirectionalLight>>();
-	directionalLight->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(DirectionalLight)), ParamType::VertexCbuffer, 0);
-	directionalLight->Map();
+	Dx12Structs::CBufferResourceMaterial<DirectionalLight> directionalLight{};
+	directionalLight.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(DirectionalLight)), ParamType::PixelCBuffer, 1);
+	directionalLight.Map();
 	// ルートパラメータへ追加
-	rootSignature->AddRootParameter("directionalLight", directionalLight->GetParamsMaterials());
+	rootSignature->AddRootParameter("directionalLight", directionalLight.GetParamsMaterials());
 
 	Dx12Structs::CBufferResourceMaterial<char> texParam;
 	texParam.Initialize(nullptr, 0, ParamType::PixelTex, 0);
@@ -280,7 +280,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region Resources Writing
 
 #pragma region Trinangle
-	VertexData* vertexDataTriangle = vertex->ptr;
+	VertexData* vertexDataTriangle = vertex.ptr;
 	// 書き込み先アドレス取得
 	//vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataTriangle));
 	vertexDataTriangle[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
@@ -297,11 +297,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexDataTriangle[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
 	vertexDataTriangle[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix* wvpDataTriangle = transformationMatrix->ptr;
+	TransformationMatrix* wvpDataTriangle = transformationMatrix.ptr;
 	//wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataTriangle));
 	wvpDataTriangle->wvp = MakeIdentityMatrix();
 
-	MaterialData* materialDataTriangle = material->ptr;
+	MaterialData* materialDataTriangle = material.ptr;
 	//materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&materialDataTriangle));
 	materialDataTriangle->Kd = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
 #pragma endregion
@@ -358,7 +358,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 //	//materialDataModel->enableLighting = false;
 //#pragma endregion
 //
-	DirectionalLight* directionalLightData = directionalLight->ptr;
+	DirectionalLight* directionalLightData = directionalLight.ptr;
 	//directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
@@ -368,7 +368,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region VertexBufferView Create
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewTriangle{};
-	vertexBufferViewTriangle.BufferLocation = vertex->resource->GetGPUVirtualAddress();
+	vertexBufferViewTriangle.BufferLocation = vertex.resource->GetGPUVirtualAddress();
 	vertexBufferViewTriangle.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewTriangle.StrideInBytes = sizeof(VertexData);
 
@@ -610,9 +610,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	wvpResourceSprite->Unmap(0, nullptr);
 	vertexResourceSprite->Unmap(0, nullptr);*/
 
-	material->Unmap();
-	transformationMatrix->Unmap();
-	vertex->Unmap();
+	material.Unmap();
+	transformationMatrix.Unmap();
+	vertex.Unmap();
+	directionalLight.Unmap();
 
 	winApp->Finalize();
 	// COM終了

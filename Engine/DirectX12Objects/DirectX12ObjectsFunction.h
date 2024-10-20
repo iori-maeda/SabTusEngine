@@ -3,6 +3,8 @@
 #include <d3d12.h>
 
 #include "../ComPtr.h"
+#include "../Logger.h"
+#include <cassert>
 
 namespace Dx12ObjFuncs
 {
@@ -40,10 +42,46 @@ namespace Dx12Structs
 		int useRegister = -1;
 
 		CBufferResourceMaterial() {};
-		void Initialize(ID3D12Device* device, size_t sizeInBytes, ParamType type = ParamType::SelectTypeNone, int useRegister = -1);
-		~CBufferResourceMaterial();
-		void Map();
-		void Unmap();
-		RootParamMaterials GetParamsMaterials();
+		void Initialize(ID3D12Device* device, size_t sizeInBytes, ParamType paramType = ParamType::SelectTypeNone, int useRegisterIndex = -1)
+		{
+			this->type = paramType;
+			this->useRegister = useRegisterIndex;
+			if (device == nullptr)
+			{
+				Logger::Log("resource not Created. device is null\n");
+				return;
+			}
+			resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
+		}
+		~CBufferResourceMaterial()
+		{
+			Unmap();
+			resource.Reset();
+			resource = nullptr;
+		}
+		void Map()
+		{
+			assert(resource != nullptr);
+			if (ptr != nullptr) { return; }
+			resource->Map(0, nullptr, reinterpret_cast<void**> (&ptr));
+		}
+		void Unmap()
+		{
+			if (ptr == nullptr) { return; }
+			resource->Unmap(0, nullptr);
+			ptr = nullptr;
+		}
+		RootParamMaterials GetParamsMaterials()
+		{
+			//assert(resource != nullptr);
+			assert(type != ParamType::SelectTypeNone);
+			assert(useRegister != -1);
+
+			RootParamMaterials result{};
+			result.resource = resource == nullptr ? nullptr : resource.Get();
+			result.type = type;
+			result.useRegister = useRegister;
+			return result;
+		}
 	};
 }

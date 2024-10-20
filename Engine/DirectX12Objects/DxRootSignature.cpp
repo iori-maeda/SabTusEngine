@@ -51,7 +51,7 @@ void DxRootSignature::Create(DxDevice* device)
 	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
 	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	descriptorRootSignature.pParameters = params_.data();
-	descriptorRootSignature.NumParameters = static_cast<UINT>(rootParameters_.size());
+	descriptorRootSignature.NumParameters = static_cast<UINT>(params_.size());
 	descriptorRootSignature.pStaticSamplers = staticSamplers_.data();
 	descriptorRootSignature.NumStaticSamplers = static_cast<UINT>(staticSamplers_.size());
 	// シリアライズしてバイナリ化
@@ -74,6 +74,10 @@ void DxRootSignature::AddRootParameter(const std::string& key, const Dx12Structs
 	ParamData addParam{};
 	//D3D12_DESCRIPTOR_RANGE descriptorRange{};
 	addParam.key = key;
+	if (addParamMaterials.resource != nullptr)
+	{
+		addParam.resource = addParamMaterials.resource;
+	}
 	switch (addParamMaterials.type)
 	{
 	case ParamType::PixelCBuffer:
@@ -93,13 +97,13 @@ void DxRootSignature::AddRootParameter(const std::string& key, const Dx12Structs
 
 	case ParamType::VertexCbuffer:
 		addParam.param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		addParam.param.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.param.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 		addParam.param.Descriptor.ShaderRegister = static_cast<UINT>(addParamMaterials.useRegister);
 		break;
 
 	case ParamType::VertexTex:
 		addParam.param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		addParam.param.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		addParam.param.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 		addParam.param.Descriptor.ShaderRegister = static_cast<UINT>(addParamMaterials.useRegister);
 		break;
 

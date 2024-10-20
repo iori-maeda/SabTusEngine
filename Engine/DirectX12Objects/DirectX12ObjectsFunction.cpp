@@ -1,8 +1,5 @@
 #include "DirectX12ObjectsFunction.h"
 
-#include <cassert>
-
-#include "../Logger.h"
 
 namespace Dx12ObjFuncs
 {
@@ -56,50 +53,50 @@ namespace Dx12ObjFuncs
 	}
 }
 
-namespace Dx12Structs
-{
-	template<typename T>
-	void CBufferResourceMaterial<T>::Initialize(ID3D12Device* device, size_t sizeInBytes, ParamType type, int useRegister)
-	{
-		this->type = type;
-		this->useRegister = useRegister;
-		if (device == nullptr)
-		{
-			Logger::Log("resource not Created. device is null\n");
-			return;
-		}
-		resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
-	}
-	template<typename T>
-	CBufferResourceMaterial<T>::~CBufferResourceMaterial()
-	{
-		Unmap();
-	}
-	template<typename T>
-	void CBufferResourceMaterial<T>::Map()
-	{
-		assert(resource != nullptr);
-		if (ptr != nullptr) { return; }
-		resource->Map(0, nullptr, reinterpret_cast<void**> (&ptr));
-	}
-	template<typename T>
-	void CBufferResourceMaterial<T>::Unmap()
-	{
-		assert(resource != nullptr);
-		if (ptr == nullptr) { return; }
-		resource->Unmap(0, nullptr);
-	}
-	template<typename T>
-	RootParamMaterials CBufferResourceMaterial<T>::GetParamsMaterials()
-	{
-		assert(resource != nullptr);
-		assert(type != ParamType::SelectTypeNone);
-		assert(useRegister != -1);
-
-		RootParamMaterials result{};
-		result.resource = resource.Get();
-		result.type = type;
-		result.useRegister = useRegister;
-		return result;
-	}
-}
+//namespace Dx12Structs
+//{
+//	template<typename T>
+//	void CBufferResourceMaterial<T>::Initialize(ID3D12Device* device, size_t sizeInBytes, ParamType type, int useRegister)
+//	{
+//		this->type = type;
+//		this->useRegister = useRegister;
+//		if (device == nullptr)
+//		{
+//			Logger::Log("resource not Created. device is null\n");
+//			return;
+//		}
+//		resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
+//	}
+//	template<typename T>
+//	CBufferResourceMaterial<T>::~CBufferResourceMaterial()
+//	{
+//		Unmap();
+//	}
+//	template<typename T>
+//	void CBufferResourceMaterial<T>::Map()
+//	{
+//		assert(resource != nullptr);
+//		if (ptr != nullptr) { return; }
+//		resource->Map(0, nullptr, reinterpret_cast<void**> (&ptr));
+//	}
+//	template<typename T>
+//	void CBufferResourceMaterial<T>::Unmap()
+//	{
+//		assert(resource != nullptr);
+//		if (ptr == nullptr) { return; }
+//		resource->Unmap(0, nullptr);
+//	}
+//	template<typename T>
+//	RootParamMaterials CBufferResourceMaterial<T>::GetParamsMaterials()
+//	{
+//		assert(resource != nullptr);
+//		assert(type != ParamType::SelectTypeNone);
+//		assert(useRegister != -1);
+//
+//		RootParamMaterials result{};
+//		result.resource = resource.Get();
+//		result.type = type;
+//		result.useRegister = useRegister;
+//		return result;
+//	}
+//}
