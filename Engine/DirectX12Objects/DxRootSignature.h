@@ -6,16 +6,10 @@
 #include <string>
 
 #include "../ComPtr.h"
+#include "DirectX12ObjectsFunction.h"
 
 class DxDevice;
-
-enum class ParamType
-{
-	PixelCBuffer,
-	PixelTex,
-	VertexCbuffer,
-	VertexTex
-};
+class DxCommand;
 
 class DxRootSignature
 {
@@ -23,7 +17,7 @@ public:
 	/// <summary>
 	/// Basic3D用のデフォルト設定
 	/// </summary>
-	void DefaultSettings();
+	//void DefaultSettings();
 
 	/// <summary>
 	/// ルートシグネチャ生成
@@ -38,7 +32,7 @@ public:
 	/// <param name="key">登録名</param>
 	/// <param name="type">パラメータのタイプ</param>
 	/// <param name="bindRegister">バインドするレジスタ</param>
-	void AddRootParameter(const std::string& key, ParamType type, UINT bindRegister);
+	void AddRootParameter(const std::string& key, const Dx12Structs::RootParamMaterials& addParamMaterials);
 
 	/// <summary>
 	/// テンプレディスクリプタレンジ生成
@@ -57,8 +51,21 @@ public:
 	/// <param name="numIndexies">確保レジスタ数</param>
 	void SetDescriptorRange(UINT baseRegsterIndex, UINT numIndexies);
 
+	//ID3D12RootSignature* GetRootSignature();
+	//std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
+
+	/// <summary>
+	/// テクスチャ以外のコマンドセット
+	/// </summary>
+	/// <param name="command">積込み先コマンド</param>
+	/// <param name="handle">テクスチャハンドル</param>
+	void SetCommands(DxCommand* command, D3D12_GPU_DESCRIPTOR_HANDLE handle = {});
+
+	/// <summary>
+	/// ルートシグネチャのアドレス
+	/// </summary>
+	/// <returns>読み取り専用アドレス</returns>
 	ID3D12RootSignature* GetRootSignature();
-	std::vector<D3D12_ROOT_PARAMETER> GetRootParameters();
 
 private:
 
@@ -68,7 +75,7 @@ private:
 	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRange_;
 	std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers_;
 
-	struct ResourceData
+	struct ParamData
 	{
 		std::string key;
 		D3D12_ROOT_PARAMETER param;
@@ -76,6 +83,7 @@ private:
 	};
 
 	// パラメタコンテナ
-	std::map<std::string, ResourceData> rootParameters_;
-	UINT paramIndex_ = 0;
+	std::vector<ParamData> rootParameters_;
+	std::vector<D3D12_ROOT_PARAMETER> params_;
+	int texIndex = -1;
 };

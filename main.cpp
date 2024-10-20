@@ -28,7 +28,8 @@
 #include "Engine/DirectX12Objects/DxDevice.h"
 #include "Engine/DirectX12Objects/DxCommand.h"
 #include "Engine/DirectX12Objects/DxSwapChain.h"
-#include "Engine//DirectX12Objects/DxFence.h"
+#include "Engine/DirectX12Objects/DxFence.h"
+#include "Engine/DirectX12Objects/DxRootSignature.h"
 #include "Engine/DirectX12Objects/DxShaderManager.h"
 #include "Engine/DirectX12Objects/DxPipelineStateObject.h"
 #include "Engine/TextureManager.h"
@@ -96,17 +97,17 @@ struct ModelData
 };
 
 #pragma region functoins
-DirectX::ScratchImage LoadTexture(const std::string &);
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &, const DirectX::ScratchImage &, const ComPtr<ID3D12Device> &, const ComPtr<ID3D12GraphicsCommandList> &);
+DirectX::ScratchImage LoadTexture(const std::string&);
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>&, const DirectX::TexMetadata&);
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const DirectX::ScratchImage&, const ComPtr<ID3D12Device>&, const ComPtr<ID3D12GraphicsCommandList>&);
 
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
 
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &, int32_t, int32_t);
+ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
 
-ModelData LoadObjFile(const std::string &, const std::string &);
-MaterialData LoadMtlFile(const std::string &, const std::string &);
+ModelData LoadObjFile(const std::string&, const std::string&);
+MaterialData LoadMtlFile(const std::string&, const std::string&);
 #pragma endregion
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
@@ -131,20 +132,52 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	unique_ptr<DxFence> fence = make_unique<DxFence>();
 	fence->Initialize(device.get());
 
+	unique_ptr<DxRootSignature>rootSignature = make_unique<DxRootSignature>();
+#pragma region ルートパラメータ回り
+	unique_ptr<Dx12Structs::CBufferResourceMaterial<VertexData>> vertex = make_unique<Dx12Structs::CBufferResourceMaterial<VertexData>>();
+	vertex->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(VertexData) * 6), ParamType::VertexCbuffer, 0);
+	vertex->Map();
+	// ルートパラメータへ追加
+	rootSignature->AddRootParameter("vertexData", vertex->GetParamsMaterials());
+
+	unique_ptr<Dx12Structs::CBufferResourceMaterial<TransformationMatrix>> transformationMatrix = make_unique<Dx12Structs::CBufferResourceMaterial<TransformationMatrix>>();
+	transformationMatrix->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::VertexCbuffer, 0);
+	transformationMatrix->Map();
+	// ルートパラメータへ追加
+	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix->GetParamsMaterials());
+
+	unique_ptr<Dx12Structs::CBufferResourceMaterial<MaterialData>> material = make_unique<Dx12Structs::CBufferResourceMaterial<MaterialData>>();
+	material->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::VertexCbuffer, 0);
+	material->Map();
+	// ルートパラメータへ追加
+	rootSignature->AddRootParameter("materialData", material->GetParamsMaterials());
+	
+	unique_ptr<Dx12Structs::CBufferResourceMaterial<DirectionalLight>> directionalLight = make_unique<Dx12Structs::CBufferResourceMaterial<DirectionalLight>>();
+	directionalLight->Initialize(device->GetDevice(), static_cast<size_t>(sizeof(DirectionalLight)), ParamType::VertexCbuffer, 0);
+	directionalLight->Map();
+	// ルートパラメータへ追加
+	rootSignature->AddRootParameter("directionalLight", directionalLight->GetParamsMaterials());
+
+	Dx12Structs::CBufferResourceMaterial<char> texParam;
+	texParam.Initialize(nullptr, 0, ParamType::PixelTex, 0);
+	rootSignature->AddRootParameter("texture", texParam.GetParamsMaterials());
+#pragma endregion
+	rootSignature->Create(device.get());
+
 	unique_ptr<DxShaderManager> shaderManager = make_unique<DxShaderManager>();
 	shaderManager->Initialize();
-
-	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
-	pipelineState->DefaultInitialize(device.get());
-
 	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("Basic3DVS.hlsl", L"vs_6_0");
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
 
+	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
+	pipelineState->InitializeAndCreate(device.get(), rootSignature.get(), pixelShaderBlob.Get(), vertexShaderBlob.Get());
+
+
 
 #pragma region DescriptorHeap Create
-	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
-	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = Dx12ObjFuncs::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
+	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = Dx12ObjFuncs::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = Dx12ObjFuncs::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 #pragma endregion
 
 	unique_ptr<TextureManager> texManager = make_unique<TextureManager>();
@@ -211,45 +244,45 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "multiMaterial.obj");
+	//ModelData modelData = LoadObjFile("Resources/Models", "multiMaterial.obj");
 #pragma endregion
 
 #pragma region Texture
-	for (ObjectData &obj : modelData.objects) {
+	/*for (ObjectData& obj : modelData.objects) {
 		obj.texData = texManager->LoadTexrureData(obj.material.textureFileName, obj.name);
-	}
+	}*/
 	TextureData monsterBallTex = texManager->LoadTexrureData("monsterBall.png");
 #pragma endregion
 
 #pragma region Resources Create
-	ComPtr<ID3D12Resource> vertexResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	//ComPtr<ID3D12Resource> vertexResourceTriangle = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
+	//ComPtr<ID3D12Resource> wvpResourceTriangle = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	//ComPtr<ID3D12Resource> materialResourceTriangle = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> vertexResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
-	
-	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
-	// オブジェクトの数分領域確保
-	vertexResourceModel.reserve(modelData.objects.size());
-	for (ObjectData &obj : modelData.objects)
-	{
-		// 実際に追加
-		vertexResourceModel.push_back(DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
-	}
-	ComPtr<ID3D12Resource> wvpResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	//ComPtr<ID3D12Resource> vertexResourceSprite = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
+	//ComPtr<ID3D12Resource> wvpResourceSprite = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	//ComPtr<ID3D12Resource> materialResourceSprite = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> directionalLightResource = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(DirectionalLight));
+	//std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
+	//// オブジェクトの数分領域確保
+	//vertexResourceModel.reserve(modelData.objects.size());
+	//for (ObjectData& obj : modelData.objects)
+	//{
+	//	// 実際に追加
+	//	vertexResourceModel.push_back(Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
+	//}
+	//ComPtr<ID3D12Resource> wvpResourceModel = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
+	//ComPtr<ID3D12Resource> materialResourceModel = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+
+	//ComPtr<ID3D12Resource> directionalLightResource = Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(DirectionalLight));
 #pragma endregion
 
 #pragma region Resources Writing
 
 #pragma region Trinangle
-	VertexData *vertexDataTriangle = nullptr;
+	VertexData* vertexDataTriangle = vertex->ptr;
 	// 書き込み先アドレス取得
-	vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataTriangle));
+	//vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataTriangle));
 	vertexDataTriangle[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
 	vertexDataTriangle[0].uv = { 0.0f, 1.0f };
 	vertexDataTriangle[1].position = { 0.0f, 0.5, 0.0f, 1.0f };			// top
@@ -264,69 +297,69 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexDataTriangle[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
 	vertexDataTriangle[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix *wvpDataTriangle = nullptr;
-	wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataTriangle));
+	TransformationMatrix* wvpDataTriangle = transformationMatrix->ptr;
+	//wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataTriangle));
 	wvpDataTriangle->wvp = MakeIdentityMatrix();
 
-	MaterialData *materialDataTriangle = nullptr;
-	materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&materialDataTriangle));
+	MaterialData* materialDataTriangle = material->ptr;
+	//materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&materialDataTriangle));
 	materialDataTriangle->Kd = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
 #pragma endregion
 
 #pragma region Sprite
-	VertexData *vertexDataSprite = nullptr;
-	// 書き込み先アドレス取得
-	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
-	vertexDataSprite[0].position = { 0.0f, static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };								// left bottom
-	vertexDataSprite[0].uv = { 0.0f, 1.0f };
-	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
-	vertexDataSprite[1].uv = { 0.0f, 0.0f };
-	vertexDataSprite[2].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom
-	vertexDataSprite[2].uv = { 1.0f, 1.0f };
+	//VertexData* vertexDataSprite = nullptr;
+	//// 書き込み先アドレス取得
+	//vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
+	//vertexDataSprite[0].position = { 0.0f, static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };								// left bottom
+	//vertexDataSprite[0].uv = { 0.0f, 1.0f };
+	//vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	//vertexDataSprite[1].uv = { 0.0f, 0.0f };
+	//vertexDataSprite[2].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom
+	//vertexDataSprite[2].uv = { 1.0f, 1.0f };
 
-	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
-	vertexDataSprite[3].uv = { 0.0f, 0.0f };
-	vertexDataSprite[4].position = { static_cast<float>(monsterBallTex.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
-	vertexDataSprite[4].uv = { 1.0f, 0.0f };
-	vertexDataSprite[5].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom	2
-	vertexDataSprite[5].uv = { 1.0f, 1.0f };
+	//vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	//vertexDataSprite[3].uv = { 0.0f, 0.0f };
+	//vertexDataSprite[4].position = { static_cast<float>(monsterBallTex.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
+	//vertexDataSprite[4].uv = { 1.0f, 0.0f };
+	//vertexDataSprite[5].position = { static_cast<float>(monsterBallTex.metaData.width), static_cast<float>(monsterBallTex.metaData.height), 0.0f, 1.0f };	// right bottom	2
+	//vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix *wvpDataSprite = nullptr;
-	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataSprite));
-	wvpDataSprite->wvp = MakeIdentityMatrix();
+	//TransformationMatrix* wvpDataSprite = nullptr;
+	//wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
+	//wvpDataSprite->wvp = MakeIdentityMatrix();
 
-	MaterialData *materialDataSprite = nullptr;
-	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&materialDataSprite));
-	materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSprite->enableLighting = false;
+	//MaterialData* materialDataSprite = nullptr;
+	//materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+	//materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	//materialDataSprite->enableLighting = false;
 #pragma endregion
 
 #pragma region Model
-	std::vector<VertexData *> vertexDataModel;
-	vertexDataModel.resize(modelData.objects.size());
-	for (size_t i = 0; i < modelData.objects.size(); ++i)
-	{
-		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataModel[i]));
-		// 頂点データコピー
-		if (vertexDataModel[i] != nullptr)
-		{
-			std::memcpy(vertexDataModel[i], modelData.objects[i].vertices.data(), sizeof(VertexData) * modelData.objects[i].vertices.size());
-		}
-	}
-
-	TransformationMatrix *wvpDataModel = nullptr;
-	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataModel));
-	wvpDataModel->wvp = MakeIdentityMatrix();
-
-	MaterialData *materialDataModel = nullptr;
-	materialResourceModel->Map(0, nullptr, reinterpret_cast<void **>(&materialDataModel));
-	*materialDataModel = modelData.objects[0].material;
-	materialDataModel->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	//materialDataModel->enableLighting = false;
-#pragma endregion
-
-	DirectionalLight *directionalLightData = nullptr;
-	directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData));
+//	std::vector<VertexData*> vertexDataModel;
+//	vertexDataModel.resize(modelData.objects.size());
+//	for (size_t i = 0; i < modelData.objects.size(); ++i)
+//	{
+//		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel[i]));
+//		// 頂点データコピー
+//		if (vertexDataModel[i] != nullptr)
+//		{
+//			std::memcpy(vertexDataModel[i], modelData.objects[i].vertices.data(), sizeof(VertexData) * modelData.objects[i].vertices.size());
+//		}
+//	}
+//
+//	TransformationMatrix* wvpDataModel = nullptr;
+//	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataModel));
+//	wvpDataModel->wvp = MakeIdentityMatrix();
+//
+//	MaterialData* materialDataModel = nullptr;
+//	materialResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&materialDataModel));
+//	*materialDataModel = modelData.objects[0].material;
+//	materialDataModel->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+//	//materialDataModel->enableLighting = false;
+//#pragma endregion
+//
+	DirectionalLight* directionalLightData = directionalLight->ptr;
+	//directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
 	directionalLightData->intensity = 1.0f;
@@ -335,11 +368,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region VertexBufferView Create
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewTriangle{};
-	vertexBufferViewTriangle.BufferLocation = vertexResourceTriangle->GetGPUVirtualAddress();
+	vertexBufferViewTriangle.BufferLocation = vertex->resource->GetGPUVirtualAddress();
 	vertexBufferViewTriangle.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewTriangle.StrideInBytes = sizeof(VertexData);
 
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
+	/*D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
 	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
 	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
@@ -353,7 +386,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		bufferView.SizeInBytes = static_cast<UINT>(sizeof(VertexData) * modelData.objects[i].vertices.size());
 		bufferView.StrideInBytes = sizeof(VertexData);
 		vertexBufferViewModel.push_back(bufferView);
-	}
+	}*/
 #pragma endregion
 
 #pragma region Viewport & Scissor
@@ -429,7 +462,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		auto &io = ImGui::GetIO();
+		auto& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight));
 #pragma endregion
 
@@ -461,13 +494,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		wvpDataTriangle->world = triangleWorldMatrix;
 
 		//modelTransform.rotate.y += 0.03f;
-		modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
+		/*modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
 		wvpDataModel->wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 		wvpDataModel->world = modelWorldMatrix;
 
 		spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
 		wvpDataSprite->wvp = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
-		wvpDataSprite->world = MakeIdentityMatrix();
+		wvpDataSprite->world = MakeIdentityMatrix();*/
 #pragma endregion
 
 #pragma region PreDraw
@@ -490,49 +523,51 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
 		command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap.Get() };
+		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap.Get() };
 		command->GetCommandList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 		command->GetCommandList()->RSSetViewports(1, &viewport);
 		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
-		command->GetCommandList()->SetGraphicsRootSignature(pipelineState->GetRootSignature());
+		command->GetCommandList()->SetGraphicsRootSignature(rootSignature->GetRootSignature());
 		command->GetCommandList()->SetPipelineState(pipelineState->GetPipelineState());
 		command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 #pragma endregion
 
 #pragma region 3D Draw
 		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
+
+		rootSignature->SetCommands(command.get(), monsterBallTex.texSrvHandleGPU);
 		// CBuffer Set
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceTriangle->GetGPUVirtualAddress());
+		/*command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceTriangle->GetGPUVirtualAddress());
 		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceTriangle->GetGPUVirtualAddress());
 		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
+		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());*/
 		// いざ描画
 		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 
-		for (size_t i = 0; i < modelData.objects.size(); ++i)
-		{
-			command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
+		//for (size_t i = 0; i < modelData.objects.size(); ++i)
+		//{
+		//	command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
 
-			// CBuffer Set
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), modelData.objects[i].texData.texSrvHandleGPU);
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
-			// いざ描画
-			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
-		}
+		//	// CBuffer Set
+		//	command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceModel->GetGPUVirtualAddress());
+		//	command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceModel->GetGPUVirtualAddress());
+		//	command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), modelData.objects[i].texData.texSrvHandleGPU);
+		//	command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
+		//	// いざ描画
+		//	command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
+		//}
 #pragma endregion
-		
+
 #pragma region 2D Draw
-		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-		// CBuffer Set
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceSprite->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceSprite->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
-		// いざ描画
-		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+		//command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+		//// CBuffer Set
+		//command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceSprite->GetGPUVirtualAddress());
+		//command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceSprite->GetGPUVirtualAddress());
+		//command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
+		//command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());
+		//// いざ描画
+		//command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 #pragma endregion
 
 #pragma region PostDraw
@@ -564,20 +599,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	materialResourceModel->Unmap(0, nullptr);
+	/*materialResourceModel->Unmap(0, nullptr);
 	wvpResourceModel->Unmap(0, nullptr);
 	for (ComPtr<ID3D12Resource> resource : vertexResourceModel)
 	{
 		resource->Unmap(0, nullptr);
-	}
+	}*/
 
-	materialResourceSprite->Unmap(0, nullptr);
+	/*materialResourceSprite->Unmap(0, nullptr);
 	wvpResourceSprite->Unmap(0, nullptr);
-	vertexResourceSprite->Unmap(0, nullptr);
+	vertexResourceSprite->Unmap(0, nullptr);*/
 
-	materialResourceTriangle->Unmap(0, nullptr);
-	wvpResourceTriangle->Unmap(0, nullptr);
-	vertexResourceTriangle->Unmap(0, nullptr);
+	material->Unmap();
+	transformationMatrix->Unmap();
+	vertex->Unmap();
 
 	winApp->Finalize();
 	// COM終了
@@ -592,7 +627,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 /// </summary>
 /// <param name="filePath"></param>
 /// <returns></returns>
-DirectX::ScratchImage LoadTexture(const std::string &filePath)
+DirectX::ScratchImage LoadTexture(const std::string& filePath)
 {
 	// TextureFileえおプログラム用に読み込む
 	DirectX::ScratchImage image{};
@@ -613,7 +648,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath)
 /// <param name="device">作成してくれるデバイス</param>
 /// <param name="metaData">作成元データ</param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData)
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -655,13 +690,13 @@ ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device,
 /// <param name="commandList">アップロードコマンド積込みと実行用</param>
 /// <returns>中間リソース転送完了まで破棄しないこと</returns>
 [[nodiscard]]
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, const DirectX::ScratchImage &mipImage, const ComPtr<ID3D12Device> &device, const ComPtr<ID3D12GraphicsCommandList> &commandList)
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device.Get(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
-	ComPtr<ID3D12Resource> intermediateResource = DirectX12ObjectsFunction::CreataeBufferResource(device, intermediateSize);
+	ComPtr<ID3D12Resource> intermediateResource = Dx12ObjFuncs::CreataeBufferResource(device, intermediateSize);
 
 	// どうやったらこの関数の使用をやめれる？
 	UpdateSubresources(commandList.Get(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
@@ -687,7 +722,7 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, 
 /// <param name="width"></param>
 /// <param name="height"></param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &device, int32_t width, int32_t height)
+ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>& device, int32_t width, int32_t height)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -724,14 +759,14 @@ ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Devi
 	return resource;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<SIZE_T>(descriptorSize * index);
 	return result;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<UINT64>(descriptorSize * index);
@@ -743,7 +778,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12Descriptor
 /// </summary>
 /// <param name="filePath">.objファイルのパス</param>
 /// <returns>モデルの頂点情報</returns>
-ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath)
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath)
 {
 	ModelData result;
 	std::unique_ptr<ObjectData> obj = std::make_unique<ObjectData>();
@@ -847,7 +882,7 @@ ModelData LoadObjFile(const std::string &directoryPath, const std::string &fileP
 	return result;
 }
 
-MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)
+MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName)
 {
 	MaterialData result{};
 
@@ -870,31 +905,39 @@ MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMate
 			if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ns")
+			}
+			else if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ka")
+			}
+			else if (identifier == "Ka")
 			{
 				s >> result.Ka.x >> result.Ka.y >> result.Ka.z;
 				result.Ka.w = 1.0f;
-			} else if (identifier == "Kd")
+			}
+			else if (identifier == "Kd")
 			{
 				s >> result.Kd.x >> result.Kd.y >> result.Kd.z;
 				result.Kd.w = 1.0f;
-			} else if (identifier == "Ks")
+			}
+			else if (identifier == "Ks")
 			{
 				s >> result.Ks.x >> result.Ks.y >> result.Ks.z;
 				result.Ks.w = 1.0f;
-			} else if (identifier == "Ke")
+			}
+			else if (identifier == "Ke")
 			{
 
-			} else if (identifier == "Ni")
+			}
+			else if (identifier == "Ni")
 			{
 
-			} else if (identifier == "ilumi")
+			}
+			else if (identifier == "ilumi")
 			{
 
-			} else if (identifier == "map_Kd")
+			}
+			else if (identifier == "map_Kd")
 			{
 				s >> result.textureFileName;
 			}

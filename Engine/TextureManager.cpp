@@ -195,7 +195,7 @@ ComPtr<ID3D12Resource> TextureManager::UploadTextureData(const ComPtr<ID3D12Reso
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device.Get(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
-	ComPtr<ID3D12Resource> intermediateResource = DirectX12ObjectsFunction::CreataeBufferResource(device, intermediateSize);
+	ComPtr<ID3D12Resource> intermediateResource = Dx12ObjFuncs::CreataeBufferResource(device, intermediateSize);
 
 	// どうやったらこの関数の使用をやめれる？
 	UpdateSubresources(commandList.Get(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());

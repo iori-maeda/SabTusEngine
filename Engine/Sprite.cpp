@@ -12,16 +12,16 @@ Sprite::~Sprite()
 
 void Sprite::Initialize(DxDevice *device)
 {
-	vertexResource_ = DirectX12ObjectsFunction::CreataeBufferResource(device, sizeof(VertexData2D) * 6);
-	colorResource_ = DirectX12ObjectsFunction::CreataeBufferResource(device, sizeof(Vector4) * 6);
-	transform2DResource_ = DirectX12ObjectsFunction::CreataeBufferResource(device, sizeof(Transform2D));
+	vertexResource_ = Dx12ObjFuncs::CreataeBufferResource(device, sizeof(VertexData2D) * 6);
+	colorResource_ = Dx12ObjFuncs::CreataeBufferResource(device, sizeof(Vector4) * 6);
+	transform2DResource_ = Dx12ObjFuncs::CreataeBufferResource(device, sizeof(Transform2D));
 	vertexResource_->Map(0, nullptr, reinterpret_cast<void **>(&vertex_));
 	colorResource_->Map(0, nullptr, reinterpret_cast<void **>(&color_));
 	transform2DResource_->Map(0, nullptr, reinterpret_cast<void **>(&transform2D_));
 
 
 	// 頂点インデックス設定
-	indexResource_ = DirectX12ObjectsFunction::CreataeBufferResource(device, sizeof(uint32_t) * 6);
+	indexResource_ = Dx12ObjFuncs::CreataeBufferResource(device, sizeof(uint32_t) * 6);
 	indexBufferView_.BufferLocation = indexResource_->GetGPUVirtualAddress();
 	indexBufferView_.SizeInBytes = sizeof(uint32_t) * 6;
 	indexBufferView_.Format = DXGI_FORMAT_R32_UINT;
