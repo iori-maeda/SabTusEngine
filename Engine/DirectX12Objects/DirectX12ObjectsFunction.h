@@ -8,9 +8,9 @@
 
 namespace Dx12ObjFuncs
 {
-	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>&, size_t);
+	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device> &, size_t);
 
-	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>&, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
+	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device> &, D3D12_DESCRIPTOR_HEAP_TYPE, UINT, bool);
 };
 
 enum class ParamType
@@ -27,7 +27,7 @@ namespace Dx12Structs
 {
 	struct RootParamMaterials
 	{
-		ID3D12Resource* resource = nullptr;
+		ID3D12Resource *resource = nullptr;
 		ParamType type = ParamType::SelectTypeNone;
 		int useRegister = -1;
 	};
@@ -37,12 +37,12 @@ namespace Dx12Structs
 	struct CBufferResourceMaterial
 	{
 		ComPtr<ID3D12Resource> resource = nullptr;
-		T* ptr = nullptr;
+		T *ptr = nullptr;
 		ParamType type = ParamType::SelectTypeNone;
 		int useRegister = -1;
 
 		CBufferResourceMaterial() {};
-		void Initialize(ID3D12Device* device, size_t sizeInBytes, ParamType paramType = ParamType::SelectTypeNone, int useRegisterIndex = -1)
+		void Initialize(ID3D12Device *device, size_t sizeInBytes, ParamType paramType = ParamType::SelectTypeNone, int useRegisterIndex = -1)
 		{
 			this->type = paramType;
 			this->useRegister = useRegisterIndex;
@@ -51,6 +51,7 @@ namespace Dx12Structs
 				Logger::Log("resource not Created. device is null\n");
 				return;
 			}
+			sizeInBytes;
 			resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
 		}
 		~CBufferResourceMaterial()
@@ -62,8 +63,9 @@ namespace Dx12Structs
 		void Map()
 		{
 			assert(resource != nullptr);
+			if (resource == nullptr) { return; }
 			if (ptr != nullptr) { return; }
-			resource->Map(0, nullptr, reinterpret_cast<void**> (&ptr));
+			resource->Map(0, nullptr, reinterpret_cast<void **> (&ptr));
 		}
 		void Unmap()
 		{
