@@ -607,6 +607,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	wvpResourceSprite->Unmap(0, nullptr);
 	vertexResourceSprite->Unmap(0, nullptr);*/
 
+	texManager->Finalize();
+
 	material.Unmap();
 	transformationMatrix.Unmap();
 	vertex.Unmap();
@@ -616,7 +618,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// COM終了
 	CoUninitialize();
 #pragma endregion
-
 	return 0;
 }
 

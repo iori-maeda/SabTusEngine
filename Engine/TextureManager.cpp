@@ -1,6 +1,7 @@
 #include "TextureManager.h"
 
 #include <cassert>
+#include <format>
 
 #include "../externals/DirectXTex/d3dx12.h"
 
@@ -22,7 +23,7 @@ std::map<std::string, TextureData> TextureManager::texMap_;
 /// <param name="heap"></param>
 void TextureManager::Initialize(DxDevice *device, DxCommand *command, DxFence *fence, ID3D12DescriptorHeap *heap)
 {
-	device_ = device->GetDevice();
+	device_ = device;
 	command_ = command;
 	fence_ = fence;
 	heap_ = heap;
@@ -45,8 +46,8 @@ TextureData TextureManager::LoadTexrureData(const std::string &fileName, const s
 	// 格納用データ
 	TextureData result{};
 	result.metaData = mipImages.GetMetadata();
-	result.resource = CreateTextureResource(device_, result.metaData);
-	result.intermediateResource = UploadTextureData(result.resource, mipImages, device_, command_->GetCommandList());
+	result.resource = CreateTextureResource(device_->GetDevice(), result.metaData);
+	result.intermediateResource = UploadTextureData(result.resource, mipImages, device_->GetDevice(), command_->GetCommandList());
 
 	// 転送待ち
 	if(WaitToUploadTextureDataForGPU())
@@ -76,6 +77,11 @@ TextureData& TextureManager::GetTextureData(const std::string& key)
 	return itr->second;
 }
 
+void TextureManager::Finalize()
+{
+	texMap_.clear();
+}
+
 bool TextureManager::WaitToUploadTextureDataForGPU()
 {
 	// CommandList Close & Kick
@@ -93,10 +99,10 @@ bool TextureManager::WaitToUploadTextureDataForGPU()
 void TextureManager::InitializeDescriptorHandles(D3D12_CPU_DESCRIPTOR_HANDLE &CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE &GPUHandle)
 {
 	CPUHandle = heap_->GetCPUDescriptorHandleForHeapStart();
-	CPUHandle.ptr += static_cast<SIZE_T>(device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * indexCount_);
+	CPUHandle.ptr += static_cast<SIZE_T>(device_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * indexCount_);
 
 	GPUHandle = heap_->GetGPUDescriptorHandleForHeapStart();
-	GPUHandle.ptr += static_cast<SIZE_T>(device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * indexCount_);
+	GPUHandle.ptr += static_cast<SIZE_T>(device_->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * indexCount_);
 
 	++indexCount_;
 }
@@ -109,7 +115,7 @@ void TextureManager::CreateSRVByTexuter(const TextureData &data)
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = static_cast<UINT>(data.metaData.mipLevels);
 
-	device_->CreateShaderResourceView(data.resource.Get(), &srvDesc, data.texSrvHandleCPU);
+	device_->GetDevice()->CreateShaderResourceView(data.resource.Get(), &srvDesc, data.texSrvHandleCPU);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE TextureManager::GetCPUDescriptorHandle(uint32_t discriptorSize, uint32_t index)

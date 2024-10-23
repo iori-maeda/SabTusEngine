@@ -32,6 +32,7 @@ public:
 	void Initialize(DxDevice*, DxCommand*, DxFence*, ID3D12DescriptorHeap*);
 	TextureData LoadTexrureData(const std::string&, const std::string& = "");
 	TextureData& GetTextureData(const std::string&);
+	void Finalize();
 
 	// ゲッターより
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(uint32_t, uint32_t);
@@ -54,7 +55,7 @@ private:
 
 	static std::map<std::string, TextureData> texMap_;
 
-	ID3D12Device4* device_ = nullptr;
+	DxDevice* device_ = nullptr;
 	DxCommand* command_ = nullptr;
 	DxFence* fence_ = nullptr;
 	ID3D12DescriptorHeap* heap_ = nullptr;
