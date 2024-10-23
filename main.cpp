@@ -425,7 +425,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region 変数宣言
 	Transform mainCameraTransform = {};
 	mainCameraTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	mainCameraTransform.translate.z = -200.0f;
+	mainCameraTransform.translate.z = -10.0f;
 	Matrix4x4 mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
 	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
@@ -536,12 +536,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region 3D Draw
 		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
 
-		rootSignature->SetCommands(command.get(), monsterBallTex.texSrvHandleGPU);
 		// CBuffer Set
-		/*command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defVertex"), wvpResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defMtl"), materialResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(pipelineState->GetRootParamIndex("defTex"), monsterBallTex.texSrvHandleGPU);
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(pipelineState->GetRootParamIndex("defLight"), directionalLightResource->GetGPUVirtualAddress());*/
+		rootSignature->SetCommands(command.get(), monsterBallTex.texSrvHandleGPU);
+		
 		// いざ描画
 		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 

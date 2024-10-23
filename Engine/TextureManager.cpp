@@ -36,7 +36,7 @@ void TextureManager::Initialize(DxDevice *device, DxCommand *command, DxFence *f
 /// <returns></returns>
 TextureData TextureManager::LoadTexrureData(const std::string &fileName, const std::string& registrationKey)
 {
-	// KEYをファイル名から決定
+	// 第二引数に入力がなければKEYをファイル名から決定
 	std::string key = registrationKey == "" ? fileName.substr(0, fileName.find_last_of(".")) : registrationKey;
 
 	// 画像読込
@@ -49,7 +49,11 @@ TextureData TextureManager::LoadTexrureData(const std::string &fileName, const s
 	result.intermediateResource = UploadTextureData(result.resource, mipImages, device_, command_->GetCommandList());
 
 	// 転送待ち
-	WaitToUploadTextureDataForGPU();
+	if(WaitToUploadTextureDataForGPU())
+	{
+		result.intermediateResource.Reset();
+		result.intermediateResource = nullptr;
+	}
 	// ハンドル作成
 	InitializeDescriptorHandles(result.texSrvHandleCPU, result.texSrvHandleGPU);
 	// SRVに新しく領域を確保

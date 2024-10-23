@@ -18,6 +18,11 @@ struct TextureData
 	ComPtr<ID3D12Resource> intermediateResource = nullptr;
 	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU;
+	~TextureData()
+	{
+		resource.Reset();
+		resource = nullptr;
+	}
 };
 
 class TextureManager

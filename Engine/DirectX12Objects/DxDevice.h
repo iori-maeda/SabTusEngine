@@ -31,7 +31,7 @@ private:
 			}
 		};
 	};
-	static DxResourceLeakChecker leakCheck_;
+	DxResourceLeakChecker leakCheck_;
 
 	ComPtr<ID3D12Debug1> debugController_ = nullptr;
 	ComPtr<IDXGIFactory7> dxgiFactory_ = nullptr;
