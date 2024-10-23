@@ -171,7 +171,7 @@ ID3D12RootSignature* DxRootSignature::GetRootSignature()
 	return rootSignature_.Get();
 }
 
-void DxRootSignature::SetCommands(DxCommand* command, D3D12_GPU_DESCRIPTOR_HANDLE handle)
+void DxRootSignature::SetGraphicsCommands(DxCommand* command, D3D12_GPU_DESCRIPTOR_HANDLE handle)
 {
 	assert(command != nullptr);
 	if (command == nullptr) { return; }

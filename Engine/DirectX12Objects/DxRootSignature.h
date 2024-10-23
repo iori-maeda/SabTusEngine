@@ -59,13 +59,15 @@ public:
 	/// </summary>
 	/// <param name="command">積込み先コマンド</param>
 	/// <param name="handle">テクスチャハンドル</param>
-	void SetCommands(DxCommand* command, D3D12_GPU_DESCRIPTOR_HANDLE handle = {});
+	void SetGraphicsCommands(DxCommand* command, D3D12_GPU_DESCRIPTOR_HANDLE handle = {});
 
 	/// <summary>
 	/// ルートシグネチャのアドレス
 	/// </summary>
 	/// <returns>読み取り専用アドレス</returns>
 	ID3D12RootSignature* GetRootSignature();
+
+
 
 private:
 
