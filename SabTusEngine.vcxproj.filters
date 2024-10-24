@@ -193,8 +193,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl" />
-    <FxCompile Include="Resources\Shaders\Basic3DPS.hlsl" />
+    <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\Basic3DPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

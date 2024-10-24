@@ -42,6 +42,20 @@ namespace Dx12Structs
 		int useRegister = -1;
 
 		CBufferResourceMaterial() {};
+		~CBufferResourceMaterial()
+		{
+			Unmap();
+			resource.Reset();
+			resource = nullptr;
+		}
+
+		/// <summary>
+		/// 初期化
+		/// </summary>
+		/// <param name="device">作成してもらうデバイス</param>
+		/// <param name="sizeInBytes">メモリ領域</param>
+		/// <param name="paramType">ルートパラメータへの登録に必要</param>
+		/// <param name="useRegisterIndex">ルートパラメータへの登録に必要</param>
 		void Initialize(ID3D12Device *device, size_t sizeInBytes, ParamType paramType = ParamType::SelectTypeNone, int useRegisterIndex = -1)
 		{
 			this->type = paramType;
@@ -54,12 +68,17 @@ namespace Dx12Structs
 			sizeInBytes;
 			resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
 		}
-		~CBufferResourceMaterial()
+
+		void SetData(T *data)
 		{
-			Unmap();
-			resource.Reset();
-			resource = nullptr;
+			assert(data);
+			if (data == nullptr) { return; }
+			ptr = data;
 		}
+
+		/// <summary>
+		/// CPU用ポインタ取得
+		/// </summary>
 		void Map()
 		{
 			assert(resource != nullptr);
@@ -67,12 +86,21 @@ namespace Dx12Structs
 			if (ptr != nullptr) { return; }
 			resource->Map(0, nullptr, reinterpret_cast<void **> (&ptr));
 		}
+
+		/// <summary>
+		/// CPU用ポインタ解除
+		/// </summary>
 		void Unmap()
 		{
 			if (ptr == nullptr) { return; }
 			resource->Unmap(0, nullptr);
 			ptr = nullptr;
 		}
+
+		/// <summary>
+		/// ルートパラメータへの引数用関数
+		/// </summary>
+		/// <returns></returns>
 		RootParamMaterials GetParamsMaterials()
 		{
 			//assert(resource != nullptr);
