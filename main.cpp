@@ -82,7 +82,7 @@ struct MaterialData
 	int32_t enableLighting = true;
 	std::string textureFileName = "uvChecker.png";
 
-	void operator=(const MaterialData& m)
+	void operator=(const MaterialData &m)
 	{
 		Ka = m.Ka;
 		Kd = m.Kd;
@@ -251,7 +251,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "multiMaterial.obj");
+	ModelData modelData = LoadObjFile("Resources/Models", "blenderMonkey.obj");
 #pragma endregion
 
 #pragma region Texture
@@ -354,7 +354,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	DirectionalLight directionalLightData{};
 	directionalLightData.color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData.direction = Vector3(0.0f, -1.0f, 0.0f);
-	directionalLightData.intensity = 1.0f;
+	directionalLightData.intensity = 10.0f;
 
 #pragma endregion
 
@@ -464,6 +464,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
 		ImGui::DragFloat3("Light Dir", &directionalLightData.direction.x, 0.01f);
+		ImGui::DragFloat("Light Intencity", &directionalLightData.intensity, 0.01f,0.0f, 100.0f);
 		ImGui::End();
 
 		ImGui::Render();
@@ -489,6 +490,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
 		wvpDataModel.wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 		wvpDataModel.world = modelWorldMatrix;
+
+		*directionalLight.ptr = directionalLightData;
 
 		/*spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
 		wvpDataSprite->wvp = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
@@ -535,7 +538,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		//transformationMatrix.SetData(&wvpDataTriangle);
 		rootSignature->SetGraphicsCommands(command.get(), monsterBallTex.texSrvHandleGPU);
 		// いざ描画
-		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+		//command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 
 		for (size_t i = 0; i < modelData.objects.size(); ++i)
 		{
@@ -591,7 +594,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	texManager->Finalize();
+	//texManager->Finalize();
 
 	winApp->Finalize();
 	// COM終了
