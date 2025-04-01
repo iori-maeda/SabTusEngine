@@ -440,6 +440,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
 
 	Vector4 texColor = materialDataTriangle.Kd;
+
+	Matrix4x4 proj = MakePerspectiveFovMatrix(0.63f, 1.33f, 0.1f, 1000.0f);
+	proj;
 #pragma endregion
 
 	while (!winApp->PoccesMessage())
@@ -511,7 +514,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		backBufferIndex = swapChain->GetBackBufferIndex();
 
 		// 描画先のRTｖをバックバッファのインデックスをもとに設定
-		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
+		//command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 		// 画面全体をクリア
 		command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 

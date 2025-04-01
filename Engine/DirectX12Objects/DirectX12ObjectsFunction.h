@@ -65,7 +65,6 @@ namespace Dx12Structs
 				Logger::Log("resource not Created. device is null\n");
 				return;
 			}
-			sizeInBytes;
 			resource = Dx12ObjFuncs::CreataeBufferResource(device, sizeInBytes);
 		}
 
