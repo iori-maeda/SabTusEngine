@@ -105,6 +105,13 @@ struct ModelData
 	std::vector<ObjectData> objects;
 };
 
+struct WaveBuffer
+{
+	float time = 0.0f;
+	float frequency = 0.0f;
+	float amplitude = 0.0f;
+};
+
 #pragma region functoins
 DirectX::ScratchImage LoadTexture(const std::string &);
 ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
@@ -153,6 +160,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// ルートパラメータへ追加
 	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix.GetParamsMaterials());
 
+	Dx12Structs::CBufferResourceMaterial<WaveBuffer> waveBuffer{};
+	waveBuffer.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(WaveBuffer)), ParamType::VertexCbuffer, 1);
+	waveBuffer.Map();
+	rootSignature->AddRootParameter("waveBuffer", waveBuffer.GetParamsMaterials());
+
 	Dx12Structs::CBufferResourceMaterial<MaterialData> material{};
 	material.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::PixelCBuffer, 0);
 	material.Map();
@@ -173,7 +185,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxShaderManager> shaderManager = make_unique<DxShaderManager>();
 	shaderManager->Initialize();
-	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("Basic3DVS.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("WavePolygonVS.hlsl", L"vs_6_0");
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
 
 	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
@@ -251,7 +263,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "blenderMonkey.obj");
+	ModelData modelData = LoadObjFile("Resources/Models", "Sphere.obj");
 #pragma endregion
 
 #pragma region Texture
@@ -356,6 +368,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	directionalLightData.direction = Vector3(0.0f, -1.0f, 0.0f);
 	directionalLightData.intensity = 10.0f;
 
+	WaveBuffer waveBufferData{};
+	waveBufferData.frequency = 4.0f;
+	waveBufferData.amplitude = 0.2f;
+
 #pragma endregion
 
 #pragma region VertexBufferView Create
@@ -443,6 +459,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	Matrix4x4 proj = MakePerspectiveFovMatrix(0.63f, 1.33f, 0.1f, 1000.0f);
 	proj;
+
+	bool isWaving = true;
 #pragma endregion
 
 	while (!winApp->PoccesMessage())
@@ -467,7 +485,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
 		ImGui::DragFloat3("Light Dir", &directionalLightData.direction.x, 0.01f);
-		ImGui::DragFloat("Light Intencity", &directionalLightData.intensity, 0.01f,0.0f, 100.0f);
+		ImGui::DragFloat("Light Intencity", &directionalLightData.intensity, 0.01f, 0.0f, 100.0f);
+		ImGui::End();
+
+		ImGui::Begin("wave test");
+		ImGui::Checkbox("waving", &isWaving);
+		ImGui::DragFloat("time", &waveBufferData.time, 0.01f, 0.0f, 100.0f);
+		ImGui::DragFloat("frequensy", &waveBufferData.frequency, 0.01f, 0.0f, 100.0f);
+		ImGui::DragFloat("amplitude", &waveBufferData.amplitude, 0.01f, 0.0f, 100.0f);
 		ImGui::End();
 
 		ImGui::Render();
@@ -489,12 +514,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		wvpDataTriangle.wvp = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 		wvpDataTriangle.world = triangleWorldMatrix;
 
-		modelTransform.rotate.y += 0.03f;
+		//modelTransform.rotate.y += 0.03f;
 		modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
 		wvpDataModel.wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 		wvpDataModel.world = modelWorldMatrix;
 
 		*directionalLight.ptr = directionalLightData;
+
+		if (isWaving) { waveBufferData.time += 0.01f; }
 
 		/*spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
 		wvpDataSprite->wvp = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
@@ -550,6 +577,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			// CBuffer Set
 			*transformationMatrix.ptr = wvpDataModel;
 			*material.ptr = materialDataModel;
+			*waveBuffer.ptr = waveBufferData;
 			rootSignature->SetGraphicsCommands(command.get(), modelData.objects[i].texData.texSrvHandleGPU);
 			// いざ描画
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
@@ -892,31 +920,39 @@ MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMate
 			if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ns")
+			}
+			else if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ka")
+			}
+			else if (identifier == "Ka")
 			{
 				s >> result.Ka.x >> result.Ka.y >> result.Ka.z;
 				result.Ka.w = 1.0f;
-			} else if (identifier == "Kd")
+			}
+			else if (identifier == "Kd")
 			{
 				s >> result.Kd.x >> result.Kd.y >> result.Kd.z;
 				result.Kd.w = 1.0f;
-			} else if (identifier == "Ks")
+			}
+			else if (identifier == "Ks")
 			{
 				s >> result.Ks.x >> result.Ks.y >> result.Ks.z;
 				result.Ks.w = 1.0f;
-			} else if (identifier == "Ke")
+			}
+			else if (identifier == "Ke")
 			{
 
-			} else if (identifier == "Ni")
+			}
+			else if (identifier == "Ni")
 			{
 
-			} else if (identifier == "ilumi")
+			}
+			else if (identifier == "ilumi")
 			{
 
-			} else if (identifier == "map_Kd")
+			}
+			else if (identifier == "map_Kd")
 			{
 				s >> result.textureFileName;
 			}
