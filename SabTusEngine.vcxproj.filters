@@ -205,6 +205,15 @@
     <FxCompile Include="Resources\Shaders\WavePolygonVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="Resources\Shaders\HullShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\DomainShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\VertexShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -213,6 +222,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Basic3D.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Resources\Shaders\Header.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

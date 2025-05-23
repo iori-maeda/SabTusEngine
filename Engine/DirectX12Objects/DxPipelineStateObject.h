@@ -15,9 +15,9 @@ class DxPipelineStateObject
 public:
 
 	//void DefaultInitialize(DxDevice*);
-	void InitializeAndCreate(DxDevice* device, DxRootSignature* rootSignature, IDxcBlob* ps, IDxcBlob* vs);
+	void InitializeAndCreate(DxDevice *device, DxRootSignature *rootSignature, IDxcBlob *ps, IDxcBlob *vs, IDxcBlob *hs = nullptr, IDxcBlob *ds = nullptr);
 	//ID3D12RootSignature* GetRootSignature();
-	ID3D12PipelineState* GetPipelineState();
+	ID3D12PipelineState *GetPipelineState();
 	//UINT GetRootParamIndex(const std::string&);
 
 private:

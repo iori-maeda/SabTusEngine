@@ -187,9 +187,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	shaderManager->Initialize();
 	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("WavePolygonVS.hlsl", L"vs_6_0");
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
+	ComPtr<IDxcBlob> hullShaderBlob = shaderManager->CompileShader("HullShader.hlsl", L"hs_6_0");
+	ComPtr<IDxcBlob> domainShaderBlob = shaderManager->CompileShader("DomainShader.hlsl", L"ds_6_0");
 
 	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
-	pipelineState->InitializeAndCreate(device.get(), rootSignature.get(), pixelShaderBlob.Get(), vertexShaderBlob.Get());
+	pipelineState->InitializeAndCreate(device.get(), rootSignature.get(), pixelShaderBlob.Get(), vertexShaderBlob.Get(), hullShaderBlob.Get(), domainShaderBlob.Get());
 
 
 
@@ -555,7 +557,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
 		command->GetCommandList()->SetGraphicsRootSignature(rootSignature->GetRootSignature());
 		command->GetCommandList()->SetPipelineState(pipelineState->GetPipelineState());
-		command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		command->GetCommandList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST);
 #pragma endregion
 
 #pragma region 3D Draw
