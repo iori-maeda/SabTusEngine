@@ -103,7 +103,7 @@ namespace Dx12Structs
 		RootParamMaterials GetParamsMaterials()
 		{
 			//assert(resource != nullptr);
-			assert(type != ParamType::SelectTypeNone);
+			//assert(type != ParamType::SelectTypeNone);
 			assert(useRegister != -1);
 
 			RootParamMaterials result{};

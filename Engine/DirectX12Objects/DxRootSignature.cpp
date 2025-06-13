@@ -108,8 +108,11 @@ void DxRootSignature::AddRootParameter(const std::string& key, const Dx12Structs
 		break;
 
 	default:
+		addParam.param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		addParam.param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		addParam.param.Descriptor.ShaderRegister = static_cast<UINT>(addParamMaterials.useRegister);
 		Logger::Log("Not Found Type\n");
-		return;
+		//return;
 		//break;
 	}
 

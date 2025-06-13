@@ -23,9 +23,11 @@ HS_CONTROL_POINT_OUTPUT main(
 	InputPatch<VertexOutput, NUM_CONTROL_POINTS> ip,
 	uint i : SV_OutputControlPointID)
 {
-    HS_CONTROL_POINT_OUTPUT Output;
+    HS_CONTROL_POINT_OUTPUT output;
 
-    Output.vPosition = ip[i].worldPos;
+    output.vPosition = ip[i].worldPos;
+    output.normal = ip[i].normal;
+    output.uv = ip[i].uv;
 
-    return Output;
+    return output;
 }

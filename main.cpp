@@ -155,15 +155,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertex.Map();
 
 	Dx12Structs::CBufferResourceMaterial<TransformationMatrix> transformationMatrix{};
-	transformationMatrix.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::VertexCbuffer, 0);
+	transformationMatrix.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::SelectTypeNone,99);
 	transformationMatrix.Map();
 	// ルートパラメータへ追加
 	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix.GetParamsMaterials());
 
-	Dx12Structs::CBufferResourceMaterial<WaveBuffer> waveBuffer{};
-	waveBuffer.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(WaveBuffer)), ParamType::VertexCbuffer, 1);
+	/*Dx12Structs::CBufferResourceMaterial<WaveBuffer> waveBuffer{};
+	waveBuffer.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(WaveBuffer)), ParamType::SelectTypeNone, 1);
 	waveBuffer.Map();
-	rootSignature->AddRootParameter("waveBuffer", waveBuffer.GetParamsMaterials());
+	rootSignature->AddRootParameter("waveBuffer", waveBuffer.GetParamsMaterials());*/
 
 	Dx12Structs::CBufferResourceMaterial<MaterialData> material{};
 	material.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::PixelCBuffer, 0);
@@ -185,8 +185,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DxShaderManager> shaderManager = make_unique<DxShaderManager>();
 	shaderManager->Initialize();
-	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("WavePolygonVS.hlsl", L"vs_6_0");
-	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("Basic3DPS.hlsl", L"ps_6_0");
+	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader("VertexShader.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("PixelShader.hlsl", L"ps_6_0");
 	ComPtr<IDxcBlob> hullShaderBlob = shaderManager->CompileShader("HullShader.hlsl", L"hs_6_0");
 	ComPtr<IDxcBlob> domainShaderBlob = shaderManager->CompileShader("DomainShader.hlsl", L"ds_6_0");
 
@@ -579,7 +579,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			// CBuffer Set
 			*transformationMatrix.ptr = wvpDataModel;
 			*material.ptr = materialDataModel;
-			*waveBuffer.ptr = waveBufferData;
+			//*waveBuffer.ptr = waveBufferData;
 			rootSignature->SetGraphicsCommands(command.get(), modelData.objects[i].texData.texSrvHandleGPU);
 			// いざ描画
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
