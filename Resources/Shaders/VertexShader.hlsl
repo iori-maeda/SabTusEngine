@@ -14,7 +14,7 @@ VertexOutput main(Input input)
     output.position = mul(input.position, gTransformationMatrix.wvp);
     output.uv = input.uv;
     output.normal = normalize(mul(input.normal, (float3x3) gTransformationMatrix.world));
-    output.worldPos = mul(input.position, gTransformationMatrix.world).xyz;
+    output.worldPos = input.position.xyz; //mul(input.position, gTransformationMatrix.world).xyz;
    
     return output;
 }

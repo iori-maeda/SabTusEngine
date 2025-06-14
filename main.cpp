@@ -82,7 +82,7 @@ struct MaterialData
 	int32_t enableLighting = true;
 	std::string textureFileName = "uvChecker.png";
 
-	void operator=(const MaterialData &m)
+	void operator=(const MaterialData& m)
 	{
 		Ka = m.Ka;
 		Kd = m.Kd;
@@ -113,17 +113,17 @@ struct WaveBuffer
 };
 
 #pragma region functoins
-DirectX::ScratchImage LoadTexture(const std::string &);
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &, const DirectX::ScratchImage &, const ComPtr<ID3D12Device> &, const ComPtr<ID3D12GraphicsCommandList> &);
+DirectX::ScratchImage LoadTexture(const std::string&);
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>&, const DirectX::TexMetadata&);
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>&, const DirectX::ScratchImage&, const ComPtr<ID3D12Device>&, const ComPtr<ID3D12GraphicsCommandList>&);
 
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>&, uint32_t, uint32_t);
 
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &, int32_t, int32_t);
+ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>&, int32_t, int32_t);
 
-ModelData LoadObjFile(const std::string &, const std::string &);
-MaterialData LoadMtlFile(const std::string &, const std::string &);
+ModelData LoadObjFile(const std::string&, const std::string&);
+MaterialData LoadMtlFile(const std::string&, const std::string&);
 #pragma endregion
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
@@ -155,15 +155,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertex.Map();
 
 	Dx12Structs::CBufferResourceMaterial<TransformationMatrix> transformationMatrix{};
-	transformationMatrix.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::SelectTypeNone,99);
+	transformationMatrix.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(TransformationMatrix)), ParamType::SelectTypeNone, 99);
 	transformationMatrix.Map();
 	// ルートパラメータへ追加
 	rootSignature->AddRootParameter("transformationMatrix", transformationMatrix.GetParamsMaterials());
 
-	/*Dx12Structs::CBufferResourceMaterial<WaveBuffer> waveBuffer{};
-	waveBuffer.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(WaveBuffer)), ParamType::SelectTypeNone, 1);
+	Dx12Structs::CBufferResourceMaterial<WaveBuffer> waveBuffer{};
+	waveBuffer.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(WaveBuffer)), ParamType::SelectTypeNone, 98);
 	waveBuffer.Map();
-	rootSignature->AddRootParameter("waveBuffer", waveBuffer.GetParamsMaterials());*/
+	rootSignature->AddRootParameter("waveBuffer", waveBuffer.GetParamsMaterials());
 
 	Dx12Structs::CBufferResourceMaterial<MaterialData> material{};
 	material.Initialize(device->GetDevice(), static_cast<size_t>(sizeof(MaterialData)), ParamType::PixelCBuffer, 0);
@@ -265,11 +265,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model Load
-	ModelData modelData = LoadObjFile("Resources/Models", "Sphere.obj");
+	ModelData modelData = LoadObjFile("Resources/Models", "plane.obj");
 #pragma endregion
 
 #pragma region Texture
-	for (ObjectData &obj : modelData.objects)
+	for (ObjectData& obj : modelData.objects)
 	{
 		obj.texData = texManager->LoadTexrureData(obj.material.textureFileName, obj.name);
 	}
@@ -281,7 +281,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
 	// オブジェクトの数分領域確保
 	vertexResourceModel.reserve(modelData.objects.size());
-	for (ObjectData &obj : modelData.objects)
+	for (ObjectData& obj : modelData.objects)
 	{
 		// 実際に追加
 		vertexResourceModel.push_back(Dx12ObjFuncs::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
@@ -292,7 +292,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region Trinangle
 	// 書き込み先アドレス取得
-	VertexData *vertexDataTriangle = vertex.ptr;
+	VertexData* vertexDataTriangle = vertex.ptr;
 	vertexDataTriangle[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
 	vertexDataTriangle[0].uv = { 0.0f, 1.0f };
 	vertexDataTriangle[1].position = { 0.0f, 0.5, 0.0f, 1.0f };			// top
@@ -344,11 +344,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Model
-	std::vector<VertexData *> vertexDataModel;
+	std::vector<VertexData*> vertexDataModel;
 	vertexDataModel.resize(modelData.objects.size());
 	for (size_t i = 0; i < modelData.objects.size(); ++i)
 	{
-		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataModel[i]));
+		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel[i]));
 		// 頂点データコピー
 		if (vertexDataModel[i] != nullptr)
 		{
@@ -454,7 +454,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	Transform modelTransform = {};
 	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	modelTransform.rotate.y = -1.7f;
+	modelTransform.rotate.y = 0.0f;
 	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
 
 	Vector4 texColor = materialDataTriangle.Kd;
@@ -477,7 +477,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		auto &io = ImGui::GetIO();
+		auto& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight));
 #pragma endregion
 
@@ -550,14 +550,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
 		command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap.Get() };
+		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap.Get() };
 		command->GetCommandList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 		command->GetCommandList()->RSSetViewports(1, &viewport);
 		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
 		command->GetCommandList()->SetGraphicsRootSignature(rootSignature->GetRootSignature());
 		command->GetCommandList()->SetPipelineState(pipelineState->GetPipelineState());
-		command->GetCommandList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST);
+		command->GetCommandList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 #pragma endregion
 
 #pragma region 3D Draw
@@ -579,7 +579,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			// CBuffer Set
 			*transformationMatrix.ptr = wvpDataModel;
 			*material.ptr = materialDataModel;
-			//*waveBuffer.ptr = waveBufferData;
+			*waveBuffer.ptr = waveBufferData;
 			rootSignature->SetGraphicsCommands(command.get(), modelData.objects[i].texData.texSrvHandleGPU);
 			// いざ描画
 			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
@@ -641,7 +641,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 /// </summary>
 /// <param name="filePath"></param>
 /// <returns></returns>
-DirectX::ScratchImage LoadTexture(const std::string &filePath)
+DirectX::ScratchImage LoadTexture(const std::string& filePath)
 {
 	// TextureFileえおプログラム用に読み込む
 	DirectX::ScratchImage image{};
@@ -662,7 +662,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath)
 /// <param name="device">作成してくれるデバイス</param>
 /// <param name="metaData">作成元データ</param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData)
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -704,7 +704,7 @@ ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device,
 /// <param name="commandList">アップロードコマンド積込みと実行用</param>
 /// <returns>中間リソース転送完了まで破棄しないこと</returns>
 [[nodiscard]]
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, const DirectX::ScratchImage &mipImage, const ComPtr<ID3D12Device> &device, const ComPtr<ID3D12GraphicsCommandList> &commandList)
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
@@ -736,7 +736,7 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, 
 /// <param name="width"></param>
 /// <param name="height"></param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &device, int32_t width, int32_t height)
+ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>& device, int32_t width, int32_t height)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -773,14 +773,14 @@ ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Devi
 	return resource;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<SIZE_T>(descriptorSize * index);
 	return result;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<UINT64>(descriptorSize * index);
@@ -792,7 +792,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12Descriptor
 /// </summary>
 /// <param name="filePath">.objファイルのパス</param>
 /// <returns>モデルの頂点情報</returns>
-ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath)
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath)
 {
 	ModelData result;
 	std::unique_ptr<ObjectData> obj = std::make_unique<ObjectData>();
@@ -899,7 +899,7 @@ ModelData LoadObjFile(const std::string &directoryPath, const std::string &fileP
 	return result;
 }
 
-MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)
+MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName)
 {
 	MaterialData result{};
 

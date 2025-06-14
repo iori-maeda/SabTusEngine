@@ -5,8 +5,15 @@ struct TransformationMatrix
     float4x4 wvp;
     float4x4 world;
 };
-
 ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b99);
+
+struct WaveBuffer
+{
+    float time;
+    float frequency;
+    float amplitude;
+};
+ConstantBuffer<WaveBuffer> gWaveBuffer : register(b98);
 
 struct VertexOutput
 {
