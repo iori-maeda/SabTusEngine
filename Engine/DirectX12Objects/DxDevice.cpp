@@ -15,7 +15,8 @@ void DxDevice::Initialize()
 {
 #ifdef _DEBUG
 	ComPtr<ID3D12Debug1> debugController = nullptr;
-	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+	{
 		// デバッグレイヤー有効化
 		debugController->EnableDebugLayer();
 		// GPU側でもチェックを開始
@@ -56,7 +57,7 @@ void DxDevice::Initialize()
 		D3D_FEATURE_LEVEL_12_1,
 		D3D_FEATURE_LEVEL_12_0
 	};
-	const char* featureLevelStrings[] = {
+	const char *featureLevelStrings[] = {
 		"12.2", "12.1", "12.0"
 	};
 	// 性能順に生成テスト
@@ -76,9 +77,21 @@ void DxDevice::Initialize()
 	assert(device_ != nullptr);
 	Logger::Log("Complete Create D3D12Device\n");
 
+	D3D12_FEATURE_DATA_D3D12_OPTIONS7 options{};
+	device_->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options, sizeof(options));
+	if (options.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+	{
+		Logger::Log(StringUtility::ConvertToString(std::format(L"Adapter: is not support MeshShader\n")));
+	}
+	else
+	{
+		Logger::Log("Adapter:{} is support MeshShader\n");
+	}
+
 #ifdef _DEBUG
 	ComPtr<ID3D12InfoQueue> infoQueue = nullptr;
-	if (SUCCEEDED(device_->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {
+	if (SUCCEEDED(device_->QueryInterface(IID_PPV_ARGS(&infoQueue))))
+	{
 		// 重要度 高　エラー
 		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 		// 重要度 中　エラー
@@ -105,12 +118,12 @@ void DxDevice::Initialize()
 #endif
 }
 
-ID3D12Device4* DxDevice::GetDevice()
+ID3D12Device4 *DxDevice::GetDevice()
 {
 	return device_.Get();
 }
 
-IDXGIFactory7* DxDevice::GetFactory()
+IDXGIFactory7 *DxDevice::GetFactory()
 {
 	return dxgiFactory_.Get();
 }

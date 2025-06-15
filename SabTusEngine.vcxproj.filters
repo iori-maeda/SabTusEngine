@@ -217,6 +217,9 @@
     <FxCompile Include="Resources\Shaders\PixelShader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="Resources\Shaders\MeshShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

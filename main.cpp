@@ -189,6 +189,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader("PixelShader.hlsl", L"ps_6_0");
 	ComPtr<IDxcBlob> hullShaderBlob = shaderManager->CompileShader("HullShader.hlsl", L"hs_6_0");
 	ComPtr<IDxcBlob> domainShaderBlob = shaderManager->CompileShader("DomainShader.hlsl", L"ds_6_0");
+	//ComPtr<IDxcBlob> meshShaderBlob = shaderManager->CompileShader("MeshShader.hlsl", L"ms_6_5");
 
 	unique_ptr<DxPipelineStateObject> pipelineState = make_unique<DxPipelineStateObject>();
 	pipelineState->InitializeAndCreate(device.get(), rootSignature.get(), pixelShaderBlob.Get(), vertexShaderBlob.Get(), hullShaderBlob.Get(), domainShaderBlob.Get());
