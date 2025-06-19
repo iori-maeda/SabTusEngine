@@ -13,7 +13,7 @@ class DxDevice
 public:
 	void Initialize();
 
-	ID3D12Device4* GetDevice();
+	ID3D12Device9* GetDevice();
 	IDXGIFactory7* GetFactory();
 
 private:
@@ -36,5 +36,5 @@ private:
 	ComPtr<ID3D12Debug1> debugController_ = nullptr;
 	ComPtr<IDXGIFactory7> dxgiFactory_ = nullptr;
 	ComPtr<IDXGIAdapter4> useAdapter_ = nullptr;
-	ComPtr<ID3D12Device4> device_ = nullptr;
+	ComPtr<ID3D12Device9> device_ = nullptr;
 };

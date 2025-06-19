@@ -118,7 +118,7 @@ void DxDevice::Initialize()
 #endif
 }
 
-ID3D12Device4 *DxDevice::GetDevice()
+ID3D12Device9 *DxDevice::GetDevice()
 {
 	return device_.Get();
 }
