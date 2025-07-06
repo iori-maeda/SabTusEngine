@@ -156,28 +156,8 @@ ID3D12PipelineState *DxPipelineStateObject::GetPipelineState()
 	return graphicsPipelineState.Get();
 }
 
-void DxPipelineStateObject::CreateMeshShaderPipelineStateObject(DxDevice *device, DxRootSignature *rootSignature, IDxcBlob *ms, IDxcBlob *hs, IDxcBlob *ds)
+void DxPipelineStateObject::CreateMeshShaderPipelineStateObject(DxDevice *device, DxRootSignature *rootSignature, IDxcBlob *ms, IDxcBlob *ps)
 {
-#pragma region InputLayout Settings
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
-	inputElementDescs[0].SemanticName = "POSITION";
-	inputElementDescs[0].SemanticIndex = 0;
-	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[1].SemanticName = "TEXCOORD";
-	inputElementDescs[1].SemanticIndex = 0;
-	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[2].SemanticName = "NORMAL";
-	inputElementDescs[2].SemanticIndex = 0;
-	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
-	inputLayoutDesc.pInputElementDescs = inputElementDescs;
-	inputLayoutDesc.NumElements = _countof(inputElementDescs);
-#pragma endregion
-
 #pragma region BlendState Settings
 	D3D12_BLEND_DESC blendDesc{};
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
@@ -202,6 +182,7 @@ void DxPipelineStateObject::CreateMeshShaderPipelineStateObject(DxDevice *device
 	D3DX12_MESH_SHADER_PIPELINE_STATE_DESC meshPipelineStateDesc{};
 	meshPipelineStateDesc.pRootSignature = rootSignature->GetRootSignature();
 	meshPipelineStateDesc.MS = { ms->GetBufferPointer(), ms->GetBufferSize() };
+	meshPipelineStateDesc.PS = { ps->GetBufferPointer(), ps->GetBufferSize() };
 	meshPipelineStateDesc.BlendState = blendDesc;
 	meshPipelineStateDesc.RasterizerState = rasterizerDesc;
 	// 書き込むRTVの情報
@@ -215,8 +196,43 @@ void DxPipelineStateObject::CreateMeshShaderPipelineStateObject(DxDevice *device
 	// 深度情報設定
 	meshPipelineStateDesc.DepthStencilState = depthStencilDesc;
 	meshPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	D3D12_RT_FORMAT_ARRAY rtFormatArray = {};
+	rtFormatArray.NumRenderTargets = 1;
+	rtFormatArray.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
+	D3D12_PIPELINE_STATE_FLAGS flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+	struct PSSubobject
+	{
+		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type;
+		void *data;
+	} streams[] = {
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, static_cast<void *>(rootSignature) },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS, ms->GetBufferPointer() },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, ps->GetBufferPointer() },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND, &blendDesc },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER, &rasterizerDesc },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL, &depthStencilDesc },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS, &rtFormatArray },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT, &depthFormat },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC, &sampleDesc },
+		{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS, &flags }
+	};
+
+	D3D12_PIPELINE_STATE_STREAM_DESC streamDesc = {};
+	streamDesc.SizeInBytes = sizeof(streams);
+	streamDesc.pPipelineStateSubobjectStream = streams;
+
+	//D3D12_PIPELINE_STATE_STREAM_DESC streamDesc{};
+	//streamDesc.SizeInBytes = sizeof(streams);
+	//streamDesc.pPipelineStateSubobjectStream = streams;
+
+
 	// 生成
-	HRESULT hr = device->GetDevice()->CreateMeshShaderPipelineState(&meshPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
+	HRESULT hr = device->GetDevice()->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
 	Logger::Log("Created Mesh Shader PSO\n");
 }

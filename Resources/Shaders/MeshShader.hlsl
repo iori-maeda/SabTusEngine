@@ -1,60 +1,51 @@
 struct VertexInput
 {
-    float4 position : POSITION;
-    float3 normal : NORMAL;
-    float2 texcoord : TEXCOORD0;
+    float3 position : POSITION;
+    float4 color;
 };
 
 struct VertexOutput
 {
-    float4 worldPos : POSITION;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD0;
+    float4 position : SV_Position;
+    float4 color : COLOR0;
 };
 
-struct MeshOutput
+struct PrimitiveOutput
 {
-    float4 position : SV_POSITION;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD0;
+    uint primitiveId : INDEX0;
 };
 
-#define PLANE_RES 8
+StructuredBuffer<VertexInput> tVertices : register(t0);
+StructuredBuffer<uint3> tIndecies : register(t1);
 
-[numthreads(1, 1, 1)]
+
+///
+/// Entry Point Main Function
+///
+[numthreads(32, 1, 1)]
 [outputtopology("triangle")]
 void main(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    out indices uint3 inds[PLANE_RES * PLANE_RES * 2],
-    out vertices MeshOutput verts[(PLANE_RES + 1) * (PLANE_RES + 1)]
+   uint groupIndex : SV_GroupIndex,
+   out vertices VertexOutput verts[3], // 頂点必須
+   out indices uint3 tris[1], // インデックスも必須
+   out primitives PrimitiveOutput prims[1] // オプション
+
 )
 {
-    SetMeshOutputCounts((PLANE_RES + 1) * (PLANE_RES + 1), PLANE_RES * PLANE_RES * 2);
+    SetMeshOutputCounts(3, 1);
     
-    for (uint y = 0; y <= PLANE_RES; ++y)
+    if (groupIndex < 1)
     {
-        for (uint x = 0; x <= PLANE_RES; ++x)
-        {
-            uint index = y * (PLANE_RES + 1) + x;
-            verts[index].position = float4(x / (float) PLANE_RES, 0.0f, y / (float) PLANE_RES, 1.0f);
-            verts[index].normal = float3(0.0f, 1.0f, 0.0f);
-            verts[index].uv = float2(x / (float) PLANE_RES, y / (float) PLANE_RES);
-        }
+        tris[groupIndex] = tIndecies[groupIndex];   // 頂点インデックスの設定
+        prims[groupIndex].primitiveId = groupIndex; // プリミティブインデックス設定
     }
-     // インデックスの生成（2つの三角形で1 quad）
-    uint tri = 0;
-    for (uint row = 0; row < PLANE_RES; ++row)
+    
+    if (groupIndex < 3)
     {
-        for (uint column = 0; column < PLANE_RES; ++column)
-        {
-            uint i0 = row * (PLANE_RES + 1) + column;
-            uint i1 = i0 + 1;
-            uint i2 = i0 + (PLANE_RES + 1);
-            uint i3 = i2 + 1;
-
-            inds[tri++] = uint3(i0, i1, i2); // 1枚目の三角形
-            inds[tri++] = uint3(i1, i3, i2); // 2枚目の三角形
-        }
+        VertexOutput vOut;
+        vOut.position = float4(tVertices[groupIndex].position, 1.0f);
+        vOut.color = tVertices[groupIndex].color;
+        
+        verts[groupIndex] = vOut;  // 出力
     }
-
 }

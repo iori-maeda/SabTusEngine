@@ -20,7 +20,7 @@ public:
 	ID3D12PipelineState *GetPipelineState();
 	//UINT GetRootParamIndex(const std::string&);
 
-	void CreateMeshShaderPipelineStateObject(DxDevice *device, DxRootSignature *rootSignature, IDxcBlob *ms, IDxcBlob *hs = nullptr, IDxcBlob *ds = nullptr);
+	void CreateMeshShaderPipelineStateObject(DxDevice *device, DxRootSignature *rootSignature, IDxcBlob *ms, IDxcBlob *ps);
 
 private:
 
