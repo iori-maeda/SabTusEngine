@@ -31,6 +31,8 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
 void WinApp::Initialize()
 {
+	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+
 	// 使用するプロシージャ
 	windClass_.lpfnWndProc = WindowProcedure;
 	windClass_.lpszClassName = L"WindowClass";
@@ -99,6 +101,8 @@ void WinApp::Finalize()
 		kWindoHeight = checkClientSize.bottom -checkClientSize.top;
 	}
 	CloseWindow(hwnd_);
+	// COM終了
+	CoUninitialize();
 }
 
 HWND WinApp::GetHWND()

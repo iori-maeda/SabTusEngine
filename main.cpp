@@ -111,7 +111,7 @@ MaterialData LoadMtlFile(const std::string &, const std::string &);
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
 	// Texture読み込みのためCOMを初期化
-	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+	
 
 	unique_ptr<WinApp> winApp = make_unique<WinApp>();
 	winApp->Initialize();
@@ -749,8 +749,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexResourceTriangle->Unmap(0, nullptr);
 
 	winApp->Finalize();
-	// COM終了
-	CoUninitialize();
+
 #pragma endregion
 
 	return 0;
