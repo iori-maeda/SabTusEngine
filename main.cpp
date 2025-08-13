@@ -30,6 +30,7 @@
 #include "Engine/DirectX12Objects/DxSwapChain.h"
 #include "Engine//DirectX12Objects/DxFence.h"
 #include "Engine/DirectX12Objects/DxShader.h"
+#include "Engine/DxRenderContext.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -92,17 +93,9 @@ struct ModelData
 	std::vector<ObjectData> objects;
 };
 
-#pragma region functoins
-//ComPtr<IDxcBlob> CompileShader(const std::wstring &, const wchar_t *, const ComPtr<IDxcUtils> &, const ComPtr<IDxcCompiler3> &, const ComPtr<IDxcIncludeHandler> &);
-
-DirectX::ScratchImage LoadTexture(const std::string &filePath);
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData);
+DirectX::ScratchImage LoadTexture(const std::string& filePath);
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData);
 ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
-
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
-
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>& device, int32_t width, int32_t height);
 
 ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath);
 MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName);
@@ -111,23 +104,13 @@ MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMate
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
 	// Texture読み込みのためCOMを初期化
-	
+
 
 	unique_ptr<WinApp> winApp = make_unique<WinApp>();
 	winApp->Initialize();
 
-	unique_ptr<DxDevice> device = make_unique<DxDevice>();
-	device->Initialize();
-
-	unique_ptr<DxCommand> command = make_unique<DxCommand>();
-	command->Initialize(device.get());
-
-	unique_ptr<DxSwapChain> swapChain = make_unique<DxSwapChain>();
-	swapChain->Initialize(winApp.get(), device.get(), command.get());
-	UINT backBufferIndex = swapChain->GetBackBufferIndex();
-
-	unique_ptr<DxFence> fence = make_unique<DxFence>();
-	fence->Initialize(device.get());
+	unique_ptr<DxRenderContext> renderContext = make_unique<DxRenderContext>();
+	renderContext->Initialize(*winApp.get());
 
 	unique_ptr<DxShader> shaderManager = make_unique<DxShader>();
 	shaderManager->Initialize();
@@ -139,76 +122,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
 	assert(pixelShaderBlob != nullptr);
 #pragma endregion
-	
-
-
-#pragma region DescriptorHeap Create
-	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-	ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
-	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = DirectX12ObjectsFunction::CreateDescriptorHeap(device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
-#pragma endregion
-
-#pragma region RenderTargetView Create
-	// RTVSettings
-	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;		// 出力結果をSRGBにして書き込み
-	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// 2Dテクスチャとして書き込み
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	// RTVを2つ作成するためディスクリプタも2つ用意
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2]{};
-	// ディスクリプタの先頭に1つ目を作成
-	rtvHandles[0] = rtvStartHandle;
-	device->GetDevice()->CreateRenderTargetView(swapChain->GetSwapChainResourceByIndex(0), &rtvDesc, rtvHandles[0]);
-	// 先頭からディスクリプタのサイズ分移動した場所のハンドルを取得
-	rtvHandles[1].ptr = rtvHandles[0].ptr + device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	// 2つ目を作成
-	device->GetDevice()->CreateRenderTargetView(swapChain->GetSwapChainResourceByIndex(1), &rtvDesc, rtvHandles[1]);
-
-#pragma endregion
-
-#pragma region DipthStencil Resource & View Create
-	ComPtr<ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device->GetDevice(), WinApp::kWindoWidth, WinApp::kWindoHeight);
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// 基本Resouceにあわせる
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	// DSVHeapの先頭に作成
-	device->GetDevice()->CreateDepthStencilView(depthStencilResource.Get(), &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-#pragma endregion
-
-	// Windor Drawing Step
-	// State Present -> Render
-	// Transition Barrier Set
-	command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	backBufferIndex = swapChain->GetBackBufferIndex();
-
-	// 描画先のRTｖをバックバッファのインデックスをもとに設定
-	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
-	// 画面全体をクリア
-	float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
-	command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
-
-	// Windor Drawing Step
-	// State Render -> Present
-	// Transition Barrier Set
-	command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-#pragma region GPU Work Transfer & Wait
-	// CommandList Close & Kick
-	command->Close();
-	// GPUとOSに画面の交換を依頼を通知
-	swapChain->Present(1, 0);
-	// Fence Wait
-	fence->IncrementFenceValue();
-	command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
-	fence->WaitSignalToGPU();
-	// commandList Reset
-	command->Reset();
-#pragma endregion
-
-#pragma region PipeLine Settings
 
 #pragma region RootParameter Create
 	D3D12_ROOT_PARAMETER rootParameters[4] = {};
@@ -260,12 +173,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	if (FAILED(hr))
 	{
-		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
+		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
 		assert(false);
 	}
 	// バイナリを基に生成
 	ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-	hr = device->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	hr = renderContext->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
 	assert(SUCCEEDED(hr));
 	Logger::Log("Created RootSignature\n");
 #pragma endregion
@@ -326,7 +239,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	graphicsPipelineStateDec.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 生成
 	ComPtr<ID3D12PipelineState> graphicsPipelineState = nullptr;
-	hr = device->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDec, IID_PPV_ARGS(&graphicsPipelineState));
+	hr = renderContext->GetDxDevice()->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDec, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
 	Logger::Log("Created PSO\n");
 #pragma endregion
@@ -336,7 +249,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma region Model Load
 	//ModelData modelData = LoadObjFile("Resources/Models/Syunnya_Tamura/Shield", "cubes.obj");
 	ModelData modelData = LoadObjFile("Resources/Models", "multiMesh.obj");
-	for (ObjectData &obj : modelData.objects)
+	for (ObjectData& obj : modelData.objects)
 	{
 		if (obj.material.textureFilePath.empty())
 		{
@@ -350,26 +263,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// Textureを読み込んで転送
 	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Models/Syunnya_Tamura/shield/shield_Allin_BaseColor.png");
 	DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFilePath);
-	const DirectX::TexMetadata &metaData = mipImages.GetMetadata();
-	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(device->GetDevice(), metaData);
-	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, device->GetDevice(), command->GetCommandList());
+	const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
+	ComPtr<ID3D12Resource> textureResource = CreateTextureResource(renderContext->GetDxDevice()->GetDevice(), metaData);
+	ComPtr<ID3D12Resource> intermediateResource = UploadTextureData(textureResource, mipImages, renderContext->GetDxDevice()->GetDevice(), renderContext->GetCommand()->GetCommandList());
 
 	// Textureを読み込んで転送
 	DirectX::ScratchImage mipImages2 = LoadTexture("Resources/Textures/uvChecker.png");
-	const DirectX::TexMetadata &metaData2 = mipImages2.GetMetadata();
-	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(device->GetDevice(), metaData2);
-	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device->GetDevice(), command->GetCommandList());
-#pragma region テクスチャ転送待ち CommandList Close & Kick & Reset
-	command->Close();
-	// GPUとOSに画面の交換を依頼を通知
-	swapChain->Present(1, 0);
-	// Fence Wait
-	fence->IncrementFenceValue();
-	command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
-	fence->WaitSignalToGPU();
+	const DirectX::TexMetadata& metaData2 = mipImages2.GetMetadata();
+	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(renderContext->GetDxDevice()->GetDevice(), metaData2);
+	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, renderContext->GetDxDevice()->GetDevice(), renderContext->GetCommand()->GetCommandList());
 
-	command->Reset();
-#pragma endregion
+	renderContext->WaitForGPU();
 
 #pragma endregion
 
@@ -380,10 +284,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = static_cast<UINT>(metaData.mipLevels);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
+	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = renderContext->GetSRVDescriptorCPUHandle(1);
+	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = renderContext->GetSRVDescriptorGPUHandle(1);
 
-	device->GetDevice()->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
+	renderContext->GetDxDevice()->GetDevice()->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
 	srvDesc2.Format = metaData2.format;
@@ -391,40 +295,40 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc2.Texture2D.MipLevels = static_cast<UINT>(metaData2.mipLevels);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 2);
+	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU2 = renderContext->GetSRVDescriptorCPUHandle(2);
+	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU2 = renderContext->GetSRVDescriptorGPUHandle(2);
 
-	device->GetDevice()->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, texSrvHandleCPU2);
+	renderContext->GetDxDevice()->GetDevice()->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, texSrvHandleCPU2);
 #pragma endregion
 
 #pragma region Resources Create
-	ComPtr<ID3D12Resource> vertexResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceTriangle = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> vertexResourceTriangle =renderContext->CreataeBufferResource(sizeof(VertexData) * 6);
+	ComPtr<ID3D12Resource> wvpResourceTriangle = renderContext->CreataeBufferResource(sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceTriangle = renderContext->CreataeBufferResource(sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> vertexResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * 6);
-	ComPtr<ID3D12Resource> wvpResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceSprite = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> vertexResourceSprite = renderContext->CreataeBufferResource(sizeof(VertexData) * 6);
+	ComPtr<ID3D12Resource> wvpResourceSprite = renderContext->CreataeBufferResource(sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceSprite = renderContext->CreataeBufferResource(sizeof(MaterialData));
 
 	//ComPtr<ID3D12Resource> vertexResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
 	vertexResourceModel.reserve(modelData.objects.size());
 	for (ObjectData obj : modelData.objects)
 	{
-		vertexResourceModel.push_back(DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * obj.vertices.size()));
+		vertexResourceModel.push_back(renderContext->CreataeBufferResource(sizeof(VertexData) * obj.vertices.size()));
 	}
-	ComPtr<ID3D12Resource> wvpResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(MaterialData));
+	ComPtr<ID3D12Resource> wvpResourceModel = renderContext->CreataeBufferResource(sizeof(TransformationMatrix));
+	ComPtr<ID3D12Resource> materialResourceModel = renderContext->CreataeBufferResource(sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> directionalLightResource = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(DirectionalLight));
+	ComPtr<ID3D12Resource> directionalLightResource = renderContext->CreataeBufferResource(sizeof(DirectionalLight));
 #pragma endregion
 
 #pragma region Resources Writing
 
 #pragma region Trinangle
-	VertexData *vertexDataTriangle = nullptr;
+	VertexData* vertexDataTriangle = nullptr;
 	// 書き込み先アドレス取得
-	vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataTriangle));
+	vertexResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataTriangle));
 	vertexDataTriangle[0].position = { -0.5f, -0.5, 0.0f, 1.0f };		// left bottom
 	vertexDataTriangle[0].uv = { 0.0f, 1.0f };
 	vertexDataTriangle[1].position = { 0.0f, 0.5, 0.0f, 1.0f };			// top
@@ -439,19 +343,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexDataTriangle[5].position = { 0.5f, -0.5, -0.5f, 1.0f };		// right bottom 2
 	vertexDataTriangle[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix *wvpDataTriangle = nullptr;
-	wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataTriangle));
+	TransformationMatrix* wvpDataTriangle = nullptr;
+	wvpResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataTriangle));
 	wvpDataTriangle->wvp = MakeIdentityMatrix();
 
-	MaterialData *materialDataTriangle = nullptr;
-	materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void **>(&materialDataTriangle));
+	MaterialData* materialDataTriangle = nullptr;
+	materialResourceTriangle->Map(0, nullptr, reinterpret_cast<void**>(&materialDataTriangle));
 	materialDataTriangle->Kd = Vector4(0.0f, 0.5f, 0.5f, 1.0f);
 #pragma endregion
 
 #pragma region Sprite
-	VertexData *vertexDataSprite = nullptr;
+	VertexData* vertexDataSprite = nullptr;
 	// 書き込み先アドレス取得
-	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataSprite));
+	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
 	vertexDataSprite[0].position = { 0.0f, static_cast<float>(metaData2.height), 0.0f, 1.0f };								// left bottom
 	vertexDataSprite[0].uv = { 0.0f, 1.0f };
 	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
@@ -466,22 +370,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexDataSprite[5].position = { static_cast<float>(metaData2.width), static_cast<float>(metaData2.height), 0.0f, 1.0f };	// right bottom	2
 	vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix *wvpDataSprite = nullptr;
-	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataSprite));
+	TransformationMatrix* wvpDataSprite = nullptr;
+	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
 	wvpDataSprite->wvp = MakeIdentityMatrix();
 
-	MaterialData *materialDataSprite = nullptr;
-	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void **>(&materialDataSprite));
+	MaterialData* materialDataSprite = nullptr;
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 	materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	materialDataSprite->enableLighting = false;
 #pragma endregion
 
 #pragma region Model
-	std::vector<VertexData *> vertexDataModel;
+	std::vector<VertexData*> vertexDataModel;
 	vertexDataModel.resize(modelData.objects.size());
 	for (size_t i = 0; i < modelData.objects.size(); ++i)
 	{
-		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void **>(&vertexDataModel[i]));
+		vertexResourceModel[i]->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel[i]));
 		// 頂点データコピー
 		if (vertexDataModel[i] != nullptr)
 		{
@@ -489,19 +393,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		}
 	}
 
-	TransformationMatrix *wvpDataModel = nullptr;
-	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void **>(&wvpDataModel));
+	TransformationMatrix* wvpDataModel = nullptr;
+	wvpResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataModel));
 	wvpDataModel->wvp = MakeIdentityMatrix();
 
-	MaterialData *materialDataModel = nullptr;
-	materialResourceModel->Map(0, nullptr, reinterpret_cast<void **>(&materialDataModel));
+	MaterialData* materialDataModel = nullptr;
+	materialResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&materialDataModel));
 	*materialDataModel = modelData.objects[0].material;
 	materialDataModel->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	//materialDataModel->enableLighting = false;
 #pragma endregion
 
-	DirectionalLight *directionalLightData = nullptr;
-	directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData));
+	DirectionalLight* directionalLightData = nullptr;
+	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
 	directionalLightData->intensity = 1.0f;
@@ -531,24 +435,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	}
 #pragma endregion
 
-#pragma region Viewport & Scissor
-	D3D12_VIEWPORT viewport{};
-	// 画面全体に表示
-	viewport.Width = static_cast<FLOAT>(WinApp::kWindoWidth);
-	viewport.Height = static_cast<FLOAT>(WinApp::kWindoHeight);
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-
-	// scissor
-	D3D12_RECT scissorRect{};
-	// 基本的にはviewportと同じ構成で
-	scissorRect.left = 0;
-	scissorRect.right = WinApp::kWindoWidth;
-	scissorRect.top = 0;
-	scissorRect.bottom = WinApp::kWindoHeight;
-#pragma endregion
 
 #pragma region ImGui Initialize
 	// こういうもん
@@ -557,11 +443,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(winApp->GetHWND());
 	ImGui_ImplDX12_Init(
-		device->GetDevice(),
-		swapChain->kBufferCount,
-		rtvDesc.Format, srvDescriptorHeap.Get(),
-		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		renderContext->GetDxDevice()->GetDevice(),
+		renderContext->GetSwapChain()->kBufferCount,
+		renderContext->GetRTVDesc().Format, renderContext->GetSRVDescriptorHeap(),
+		renderContext->GetSRVDescriptorCPUHandle(0),
+		renderContext->GetSRVDescriptorGPUHandle(0)
+	);
 #pragma endregion
 
 #pragma region 変数宣言
@@ -639,94 +526,51 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		wvpDataSprite->world = MakeIdentityMatrix();
 #pragma endregion
 
-#pragma region PreDraw
-		viewport.Width = static_cast<FLOAT>(WinApp::kWindoWidth);
-		viewport.Height = static_cast<FLOAT>(WinApp::kWindoHeight);
-		command->GetCommandList()->RSSetViewports(1, &viewport);
-		scissorRect.right = WinApp::kWindoWidth;
-		scissorRect.bottom = WinApp::kWindoHeight;
-		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
-
-		// Transition Barrier Set
-		command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-		backBufferIndex = swapChain->GetBackBufferIndex();
-
-		// 描画先のRTｖをバックバッファのインデックスをもとに設定
-		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
-		// 画面全体をクリア
-		command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
-
-		command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
-		command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-		ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap.Get() };
-		command->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
-
-		command->GetCommandList()->RSSetViewports(1, &viewport);
-		command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
-		command->GetCommandList()->SetGraphicsRootSignature(rootSignature.Get());
-		command->GetCommandList()->SetPipelineState(graphicsPipelineState.Get());
-		command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-#pragma endregion
+		renderContext->BeginRendering();
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootSignature(rootSignature.Get());
+		renderContext->GetCommand()->GetCommandList()->SetPipelineState(graphicsPipelineState.Get());
 
 #pragma region 3D Draw
-		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
+		renderContext->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewTriangle);
 		// CBuffer Set
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceTriangle->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceTriangle->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
-		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+		renderContext->GetCommand()->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 
 		for (size_t i = 0; i < modelData.objects.size(); ++i)
 		{
-			command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
+			renderContext->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewModel[i]);
 
 			// CBuffer Set
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
-			command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
-			command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceModel->GetGPUVirtualAddress());
+			renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceModel->GetGPUVirtualAddress());
+			renderContext->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU);
+			renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 			// いざ描画
-			command->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
+			renderContext->GetCommand()->GetCommandList()->DrawInstanced(static_cast<UINT>(modelData.objects[i].vertices.size()), 1, 0, 0);
 		}
 #pragma endregion
 
 #pragma region 2D Draw
-		command->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+		renderContext->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 		// CBuffer Set
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-		command->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU2);
-		command->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texSrvHandleGPU2);
+		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 		// いざ描画
-		command->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+		renderContext->GetCommand()->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 #pragma endregion
 
 #pragma region PostDraw
 #pragma region ImGui Set
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command->GetCommandList());
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderContext->GetCommand()->GetCommandList());
 #pragma endregion
 
-#pragma region TransitionBarrier Change To State
-		// Windor Drawing Step
-		// State Render -> Present
-		// Transition Barrier Set
-		command->GetCommandList()->ResourceBarrier(1, swapChain->GetBarrier(D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-#pragma endregion
-#pragma region GPU Work Transfer & Wait
-		// CommandList Close & Kick
-		command->Close();
-		// GPUとOSに画面の交換を依頼を通知
-		swapChain->Present(1, 0);
-		// Fence Wait
-		fence->IncrementFenceValue();
-		command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
-		fence->WaitSignalToGPU();
-		// commandList Reset
-		command->Reset();
-#pragma endregion
+		renderContext->EndRendering();
 	}
 #pragma region Finalize
 	ImGui_ImplDX12_Shutdown();
@@ -760,7 +604,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 /// </summary>
 /// <param name="filePath"></param>
 /// <returns></returns>
-DirectX::ScratchImage LoadTexture(const std::string &filePath)
+DirectX::ScratchImage LoadTexture(const std::string& filePath)
 {
 	// TextureFileえおプログラム用に読み込む
 	DirectX::ScratchImage image{};
@@ -781,7 +625,7 @@ DirectX::ScratchImage LoadTexture(const std::string &filePath)
 /// <param name="device">作成してくれるデバイス</param>
 /// <param name="metaData">作成元データ</param>
 /// <returns></returns>
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData)
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -823,7 +667,7 @@ ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device,
 /// <param name="commandList">アップロードコマンド積込みと実行用</param>
 /// <returns>中間リソース転送完了まで破棄しないこと</returns>
 [[nodiscard]]
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, const DirectX::ScratchImage &mipImage, const ComPtr<ID3D12Device> &device, const ComPtr<ID3D12GraphicsCommandList> &commandList)
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
@@ -849,69 +693,11 @@ ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &texture, 
 }
 
 /// <summary>
-/// 深度バッファ用リソースの作成
-/// </summary>
-/// <param name="device"></param>
-/// <param name="width"></param>
-/// <param name="height"></param>
-/// <returns></returns>
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &device, int32_t width, int32_t height)
-{
-	// metaDataからResourceの設定を取得
-	D3D12_RESOURCE_DESC resourceDesc{};
-	resourceDesc.Width = width;
-	resourceDesc.Height = height;
-	resourceDesc.MipLevels = 1;
-	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	resourceDesc.SampleDesc.Count = 1; // サンプリングカウント1固定
-	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	// Heap設定
-	D3D12_HEAP_PROPERTIES heapProperties{};
-	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	// 深度値のクリア設定
-	CD3DX12_CLEAR_VALUE depthClearValue{};
-	depthClearValue.DepthStencil.Depth = 1.0f;				// 最大値でクリア
-	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// Resourceとあわせる
-
-	// Resource生成
-	ComPtr<ID3D12Resource> resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(
-		&heapProperties,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE, // データ転送設定
-		&depthClearValue,
-		IID_PPV_ARGS(&resource)
-	);
-	assert(SUCCEEDED(hr));
-	Logger::Log("TextureResource Created\n");
-	return resource;
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
-{
-	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
-	result.ptr += static_cast<SIZE_T>(descriptorSize * index);
-	return result;
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
-{
-	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
-	result.ptr += static_cast<UINT64>(descriptorSize * index);
-	return result;
-}
-
-/// <summary>
 /// objファイルの読み込み
 /// </summary>
 /// <param name="filePath">.objファイルのパス</param>
 /// <returns>モデルの頂点情報</returns>
-ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath)
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath)
 {
 	ModelData result;
 	std::unique_ptr<ObjectData> obj = std::make_unique<ObjectData>();
@@ -1015,7 +801,7 @@ ModelData LoadObjFile(const std::string &directoryPath, const std::string &fileP
 	return result;
 }
 
-MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)
+MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName)
 {
 	MaterialData result{};
 
@@ -1038,31 +824,39 @@ MaterialData LoadMtlFile(const std::string &fileName, const std::string &useMate
 			if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ns")
+			}
+			else if (identifier == "Ns")
 			{
 
-			} else if (identifier == "Ka")
+			}
+			else if (identifier == "Ka")
 			{
 				s >> result.Ka.x >> result.Ka.y >> result.Ka.z;
 				result.Ka.w = 1.0f;
-			} else if (identifier == "Kd")
+			}
+			else if (identifier == "Kd")
 			{
 				s >> result.Kd.x >> result.Kd.y >> result.Kd.z;
 				result.Kd.w = 1.0f;
-			} else if (identifier == "Ks")
+			}
+			else if (identifier == "Ks")
 			{
 				s >> result.Ks.x >> result.Ks.y >> result.Ks.z;
 				result.Ks.w = 1.0f;
-			} else if (identifier == "Ke")
+			}
+			else if (identifier == "Ke")
 			{
 
-			} else if (identifier == "Ni")
+			}
+			else if (identifier == "Ni")
 			{
 
-			} else if (identifier == "ilumi")
+			}
+			else if (identifier == "ilumi")
 			{
 
-			} else if (identifier == "map_Kd")
+			}
+			else if (identifier == "map_Kd")
 			{
 				s >> result.textureFilePath;
 			}

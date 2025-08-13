@@ -1,5 +1,4 @@
 #pragma once
-
 #include <wrl.h>
 
 template <typename T>

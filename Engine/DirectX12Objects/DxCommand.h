@@ -10,8 +10,8 @@ class DxCommand
 {
 public:
 	void Initialize(DxDevice*);
-	void Close();
-	void Reset();
+	void CommandListCloseAndExecute();
+	void CommandListReset();
 
 
 	ID3D12CommandQueue* GetCommandQueue();

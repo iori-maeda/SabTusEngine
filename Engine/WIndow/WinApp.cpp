@@ -29,7 +29,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, message, wparam, lparam);
 }
 
-void WinApp::Initialize()
+void WinApp::Initialize(const std::string& title)
 {
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));
@@ -47,9 +47,11 @@ void WinApp::Initialize()
 	// クライアント領域として調整
 	AdjustWindowRect(&windRect_, WS_OVERLAPPEDWINDOW, false);
 
+	std::wstring titleW = StringUtility::ConvertToWString(title);
+
 	hwnd_ = CreateWindow(
 		windClass_.lpszClassName,
-		L"SabTusEngine",
+		titleW.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -90,22 +92,22 @@ void WinApp::Finalize()
 {
 	RECT checkClientSize{};
 	GetClientRect(hwnd_, &checkClientSize);
-	if(checkClientSize.right != windRect_.right)
+	if (checkClientSize.right != windRect_.right)
 	{
 		windRect_.right = checkClientSize.right;
-		kWindoWidth = checkClientSize.right -checkClientSize.left;
+		kWindoWidth = checkClientSize.right - checkClientSize.left;
 	}
-	if(checkClientSize.bottom != windRect_.bottom)
+	if (checkClientSize.bottom != windRect_.bottom)
 	{
 		windRect_.bottom = checkClientSize.bottom;
-		kWindoHeight = checkClientSize.bottom -checkClientSize.top;
+		kWindoHeight = checkClientSize.bottom - checkClientSize.top;
 	}
 	CloseWindow(hwnd_);
 	// COM終了
 	CoUninitialize();
 }
 
-HWND WinApp::GetHWND()
+HWND WinApp::GetHWND()const
 {
 	return hwnd_;
 }

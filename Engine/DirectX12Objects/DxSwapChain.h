@@ -15,7 +15,7 @@ class DxSwapChain
 public:
 	static const UINT kBufferCount = 2;
 
-	void Initialize(WinApp*, DxDevice*, DxCommand*);
+	void Initialize(const WinApp& winApp, DxDevice*, DxCommand*);
 	void Present(UINT, UINT);
 
 

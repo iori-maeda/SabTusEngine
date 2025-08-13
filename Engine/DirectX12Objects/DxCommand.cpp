@@ -25,7 +25,7 @@ void DxCommand::Initialize(DxDevice* device)
 	Logger::Log("CreateCommandList\n");
 }
 
-void DxCommand::Close()
+void DxCommand::CommandListCloseAndExecute()
 {
 	// コマンドリスト積込み終了
 	HRESULT hr = commandList_->Close();
@@ -36,7 +36,7 @@ void DxCommand::Close()
 	commandQueue_->ExecuteCommandLists(1, commandLists);
 }
 
-void DxCommand::Reset()
+void DxCommand::CommandListReset()
 {
 	// 次の準備
 	HRESULT hr = commandAllocator_->Reset();

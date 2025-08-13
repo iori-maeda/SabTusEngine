@@ -13,8 +13,8 @@ class DxDevice
 public:
 	void Initialize();
 
-	ID3D12Device4* GetDevice();
-	IDXGIFactory7* GetFactory();
+	ID3D12Device4* GetDevice()const;
+	IDXGIFactory7* GetFactory()const;
 
 private:
 	struct DxResourceLeakChecker

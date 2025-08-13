@@ -6,7 +6,7 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 
-void DxSwapChain::Initialize(WinApp* winApp, DxDevice* device, DxCommand* command)
+void DxSwapChain::Initialize(const WinApp& winApp, DxDevice* device, DxCommand* command)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChainDesc.Width = WinApp::kWindoWidth;
@@ -17,7 +17,7 @@ void DxSwapChain::Initialize(WinApp* winApp, DxDevice* device, DxCommand* comman
 	swapChainDesc.BufferCount = 2;									// ダブルバッファ
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// 画面に移したら内容破棄
 	// コマンドキュー、オウィンドウハンドル、設定渡して生成
-	HRESULT hr = device->GetFactory()->CreateSwapChainForHwnd(command->GetCommandQueue(), winApp->GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain_.GetAddressOf()));
+	HRESULT hr = device->GetFactory()->CreateSwapChainForHwnd(command->GetCommandQueue(), winApp.GetHWND(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain_.GetAddressOf()));
 	// スワップチェイン生成確認
 	assert(SUCCEEDED(hr));
 	Logger::Log("CreateSwapChain\n");

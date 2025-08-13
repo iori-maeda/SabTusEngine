@@ -12,13 +12,13 @@ public:
 	static int32_t kWindoWidth;
 	static int32_t kWindoHeight;
 
-	void Initialize();
+	void Initialize(const std::string& title = "SubTusEngine");
 	bool PoccesMessage();
 	void Update();
 	void Finalize();
 
 	// getter
-	HWND GetHWND();
+	HWND GetHWND()const;
 	RECT GetWindowRect();
 
 private:

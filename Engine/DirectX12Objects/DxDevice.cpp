@@ -105,12 +105,12 @@ void DxDevice::Initialize()
 #endif
 }
 
-ID3D12Device4* DxDevice::GetDevice()
+ID3D12Device4* DxDevice::GetDevice() const
 {
 	return device_.Get();
 }
 
-IDXGIFactory7* DxDevice::GetFactory()
+IDXGIFactory7* DxDevice::GetFactory() const
 {
 	return dxgiFactory_.Get();
 }
