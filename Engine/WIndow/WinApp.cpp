@@ -32,7 +32,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 void WinApp::Initialize()
 {
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-
+	assert(SUCCEEDED(hr));
 	// 使用するプロシージャ
 	windClass_.lpfnWndProc = WindowProcedure;
 	windClass_.lpszClassName = L"WindowClass";

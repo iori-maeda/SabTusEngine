@@ -95,17 +95,17 @@ struct ModelData
 #pragma region functoins
 //ComPtr<IDxcBlob> CompileShader(const std::wstring &, const wchar_t *, const ComPtr<IDxcUtils> &, const ComPtr<IDxcCompiler3> &, const ComPtr<IDxcIncludeHandler> &);
 
-DirectX::ScratchImage LoadTexture(const std::string &);
-ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &, const DirectX::TexMetadata &);
-ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource> &, const DirectX::ScratchImage &, const ComPtr<ID3D12Device> &, const ComPtr<ID3D12GraphicsCommandList> &);
+DirectX::ScratchImage LoadTexture(const std::string &filePath);
+ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device> &device, const DirectX::TexMetadata &metaData);
+ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
 
-D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
-D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &, uint32_t, uint32_t);
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
 
-ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device> &, int32_t, int32_t);
+ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const ComPtr<ID3D12Device>& device, int32_t width, int32_t height);
 
-ModelData LoadObjFile(const std::string &, const std::string &);
-MaterialData LoadMtlFile(const std::string &, const std::string &);
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath);
+MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName);
 #pragma endregion
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
