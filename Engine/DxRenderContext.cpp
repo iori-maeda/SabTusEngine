@@ -270,3 +270,61 @@ ComPtr<ID3D12Resource> DxRenderContext::CreataeBufferResource(size_t sizeInBytes
 	Logger::Log("Created Resource\n");
 	return resource;
 }
+
+ComPtr<ID3D12Resource> DxRenderContext::CreateTextureResource(const DirectX::TexMetadata& metaData)
+{
+	// metaDataからResourceの設定を取得
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = static_cast<UINT>(metaData.width);
+	resourceDesc.Height = static_cast<UINT>(metaData.height);
+	resourceDesc.MipLevels = static_cast<UINT16>(metaData.mipLevels);
+	resourceDesc.DepthOrArraySize = static_cast<UINT16>(metaData.arraySize);
+	resourceDesc.Format = metaData.format;
+	resourceDesc.SampleDesc.Count = 1; // サンプリングカウント1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION(metaData.dimension);
+
+	// Heap設定
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+	//heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// writeBackポリシーでcpuアクセス許可
+	//heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// プロセッサの近くに配置
+
+	// Resource生成
+	ComPtr<ID3D12Resource> resource = nullptr;
+	HRESULT hr = device->GetDevice()->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, // データ転送設定
+		nullptr,
+		IID_PPV_ARGS(&resource)
+	);
+	assert(SUCCEEDED(hr));
+	Logger::Log("TextureResource Created\n");
+	return resource;
+}
+
+ComPtr<ID3D12Resource> DxRenderContext::UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage)
+{
+	// 中間リソースの作成までを別関数にわかるべきか？
+	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+	DirectX::PrepareUpload(device->GetDevice(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
+	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
+	ComPtr<ID3D12Resource> intermediateResource = CreataeBufferResource(intermediateSize);
+
+	// どうやったらこの関数の使用をやめれる？
+	UpdateSubresources(command->GetCommandList(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
+
+	// プロシージャかなんかで裏で待機させたいよね
+	// 転送後、コピーからリードへ変更
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = texture.Get();
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+	command->GetCommandList()->ResourceBarrier(1, &barrier);
+	Logger::Log("MipMap Upload To Texture\n");
+	return intermediateResource;
+}
