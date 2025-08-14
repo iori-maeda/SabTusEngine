@@ -94,10 +94,6 @@ struct ModelData
 	std::vector<ObjectData> objects;
 };
 
-//DirectX::ScratchImage LoadTexture(const std::string& filePath);
-//ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData);
-//ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
-
 ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath);
 MaterialData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName);
 #pragma endregion
@@ -263,49 +259,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	TextureDataCPU textureDataCPU = TextureManager::GetInstace().Load("Resources/Models/", modelData.objects[0].material.textureFilePath);
 	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");
-
-#pragma region TextureResource Create
-
-	// Textureを読み込んで転送
-	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Models/Syunnya_Tamura/shield/shield_Allin_BaseColor.png");
-	//DirectX::ScratchImage mipImages = LoadTexture("Resources/Textures/" + modelData.objects[0].material.textureFilePath);
-	//const DirectX::TexMetadata& metaData = mipImages.GetMetadata();
-	//ComPtr<ID3D12Resource> textureResource = renderContext->CreateTextureResource(metaData);
-	//ComPtr<ID3D12Resource> intermediateResource = renderContext->UploadTextureData(textureResource, mipImages);
-
-	// Textureを読み込んで転送
-	/*DirectX::ScratchImage mipImages2 = LoadTexture("Resources/Textures/uvChecker.png");
-	const DirectX::TexMetadata& metaData2 = mipImages2.GetMetadata();
-	ComPtr<ID3D12Resource> textureResource2 = CreateTextureResource(renderContext->GetDxDevice()->GetDevice(), metaData2);
-	ComPtr<ID3D12Resource> intermediateResource2 = UploadTextureData(textureResource2, mipImages2, renderContext->GetDxDevice()->GetDevice(), renderContext->GetCommand()->GetCommandList());
-
-	renderContext->WaitForGPU();*/
-
-#pragma endregion
-
-#pragma region textureSRV Create
-	/*D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = metaData.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = static_cast<UINT>(metaData.mipLevels);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU = renderContext->GetSRVDescriptorCPUHandle(1);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU = renderContext->GetSRVDescriptorGPUHandle(1);
-
-	renderContext->GetDxDevice()->GetDevice()->CreateShaderResourceView(textureResource.Get(), &srvDesc, texSrvHandleCPU);
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
-	srvDesc2.Format = metaData2.format;
-	srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc2.Texture2D.MipLevels = static_cast<UINT>(metaData2.mipLevels);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE texSrvHandleCPU2 = renderContext->GetSRVDescriptorCPUHandle(2);
-	D3D12_GPU_DESCRIPTOR_HANDLE texSrvHandleGPU2 = renderContext->GetSRVDescriptorGPUHandle(2);
-
-	renderContext->GetDxDevice()->GetDevice()->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, texSrvHandleCPU2);*/
-#pragma endregion
 
 #pragma region Resources Create
 	ComPtr<ID3D12Resource> vertexResourceTriangle =renderContext->CreataeBufferResource(sizeof(VertexData) * 6);
@@ -605,100 +558,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 	return 0;
+
 }
-
-/// <summary>
-/// ミップマップ付きデータの取得
-/// </summary>
-/// <param name="filePath"></param>
-/// <returns></returns>
-//DirectX::ScratchImage LoadTexture(const std::string& filePath)
-//{
-//	// TextureFileえおプログラム用に読み込む
-//	DirectX::ScratchImage image{};
-//	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
-//	HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
-//	assert(SUCCEEDED(hr));
-//	Logger::Log("Texture Load\n");
-//
-//	DirectX::ScratchImage mipImage{};
-//	hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImage);
-//	Logger::Log("MipMap Create\n");
-//	return mipImage;
-//}
-
-/// <summary>
-/// テクスチャリソースの作成
-/// </summary>
-/// <param name="device">作成してくれるデバイス</param>
-/// <param name="metaData">作成元データ</param>
-/// <returns></returns>
-//ComPtr<ID3D12Resource> CreateTextureResource(const ComPtr<ID3D12Device>& device, const DirectX::TexMetadata& metaData)
-//{
-//	// metaDataからResourceの設定を取得
-//	D3D12_RESOURCE_DESC resourceDesc{};
-//	resourceDesc.Width = static_cast<UINT>(metaData.width);
-//	resourceDesc.Height = static_cast<UINT>(metaData.height);
-//	resourceDesc.MipLevels = static_cast<UINT16>(metaData.mipLevels);
-//	resourceDesc.DepthOrArraySize = static_cast<UINT16>(metaData.arraySize);
-//	resourceDesc.Format = metaData.format;
-//	resourceDesc.SampleDesc.Count = 1; // サンプリングカウント1固定
-//	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION(metaData.dimension);
-//
-//	// Heap設定
-//	D3D12_HEAP_PROPERTIES heapProperties{};
-//	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-//	//heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// writeBackポリシーでcpuアクセス許可
-//	//heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// プロセッサの近くに配置
-//
-//	// Resource生成
-//	ComPtr<ID3D12Resource> resource = nullptr;
-//	HRESULT hr = device->CreateCommittedResource(
-//		&heapProperties,
-//		D3D12_HEAP_FLAG_NONE,
-//		&resourceDesc,
-//		D3D12_RESOURCE_STATE_COPY_DEST, // データ転送設定
-//		nullptr,
-//		IID_PPV_ARGS(&resource)
-//	);
-//	assert(SUCCEEDED(hr));
-//	Logger::Log("TextureResource Created\n");
-//	return resource;
-//}
-
-/// <summary>
-/// 中間リソースの作成とアップロード
-/// </summary>
-/// <param name="texture">中間リソースを作成するリソース</param>
-/// <param name="mipImage">元データ</param>
-/// <param name="device">作成してくれるデバイス</param>
-/// <param name="commandList">アップロードコマンド積込みと実行用</param>
-/// <returns>中間リソース転送完了まで破棄しないこと</returns>
-//[[nodiscard]]
-//ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage, const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
-//{
-//	// 中間リソースの作成までを別関数にわかるべきか？
-//	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-//	DirectX::PrepareUpload(device.Get(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
-//	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
-//	ComPtr<ID3D12Resource> intermediateResource = DirectX12ObjectsFunction::CreataeBufferResource(device, intermediateSize);
-//
-//	// どうやったらこの関数の使用をやめれる？
-//	UpdateSubresources(commandList.Get(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
-//
-//	// プロシージャかなんかで裏で待機させたいよね
-//	// 転送後、コピーからリードへ変更
-//	D3D12_RESOURCE_BARRIER barrier{};
-//	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-//	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-//	barrier.Transition.pResource = texture.Get();
-//	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-//	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-//	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-//	commandList->ResourceBarrier(1, &barrier);
-//	Logger::Log("MipMap Upload To Texture\n");
-//	return intermediateResource;
-//}
 
 /// <summary>
 /// objファイルの読み込み
