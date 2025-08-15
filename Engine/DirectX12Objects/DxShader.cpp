@@ -6,7 +6,13 @@
 #include "../Logger.h"
 #include "../StringUtility.h"
 
-void DxShader::Initialize()
+DxShaderCompiler& DxShaderCompiler::GetInstancxe()
+{
+	static DxShaderCompiler instance;
+	return instance;
+}
+
+void DxShaderCompiler::Initialize()
 {
 	HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils_));
 	assert(SUCCEEDED(hr));
@@ -19,8 +25,15 @@ void DxShader::Initialize()
 	assert(SUCCEEDED(hr));
 }
 
-ComPtr<IDxcBlob> DxShader::CompileShader(const std::string& filePath, const wchar_t* profile)
+ComPtr<IDxcBlob> DxShaderCompiler::CompileShader(const std::string& filePath, const wchar_t* profile)
 {
+	if(dxcUtils_ == nullptr || dxcCompiler_ == nullptr)
+	{
+		Logger::Log("DxShaderCompiler is not initialized.\n");
+		assert(false);
+		return nullptr;
+	}
+
 	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
 
 #pragma region HLSL Loading

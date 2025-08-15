@@ -32,6 +32,8 @@
 #include "Engine/DirectX12Objects/DxShader.h"
 #include "Engine/DxRenderContext.h"
 #include "Engine//TextureManager.h"
+#include "Engine/2D/SpriteRenderer.h"
+#include "Engine/2D/Sprite.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -110,15 +112,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	renderContext->Initialize(*winApp.get());
 
 	TextureManager::GetInstace().Initialize(renderContext.get());
+	DxShaderCompiler::GetInstancxe().Initialize();
 
-	unique_ptr<DxShader> shaderManager = make_unique<DxShader>();
-	shaderManager->Initialize();
+	unique_ptr<SpriteRenderer> spriteRenderer = make_unique<SpriteRenderer>();
+	spriteRenderer->Initialize(renderContext.get());
+
+	unique_ptr<Sprite> sprite = make_unique<Sprite>();
+	sprite->Initiazlize(spriteRenderer.get(), "uvChecker.png");
 
 #pragma region Shader Compile
 	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> vertexShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = shaderManager->CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
+	ComPtr<IDxcBlob> pixelShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
 	assert(pixelShaderBlob != nullptr);
 #pragma endregion
 
@@ -265,9 +271,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ComPtr<ID3D12Resource> wvpResourceTriangle = renderContext->CreataeBufferResource(sizeof(TransformationMatrix));
 	ComPtr<ID3D12Resource> materialResourceTriangle = renderContext->CreataeBufferResource(sizeof(MaterialData));
 
-	ComPtr<ID3D12Resource> vertexResourceSprite = renderContext->CreataeBufferResource(sizeof(VertexData) * 6);
+	/*ComPtr<ID3D12Resource> vertexResourceSprite = renderContext->CreataeBufferResource(sizeof(VertexData) * 6);
 	ComPtr<ID3D12Resource> wvpResourceSprite = renderContext->CreataeBufferResource(sizeof(TransformationMatrix));
-	ComPtr<ID3D12Resource> materialResourceSprite = renderContext->CreataeBufferResource(sizeof(MaterialData));
+	ComPtr<ID3D12Resource> materialResourceSprite = renderContext->CreataeBufferResource(sizeof(MaterialData));*/
 
 	//ComPtr<ID3D12Resource> vertexResourceModel = DirectX12ObjectsFunction::CreataeBufferResource(device->GetDevice(), sizeof(VertexData) * modelData.objects[1].vertices.size());
 	std::vector<ComPtr<ID3D12Resource>> vertexResourceModel;
@@ -312,31 +318,31 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region Sprite
-	VertexData* vertexDataSprite = nullptr;
-	// 書き込み先アドレス取得
-	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
-	vertexDataSprite[0].position = { 0.0f, static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };								// left bottom
-	vertexDataSprite[0].uv = { 0.0f, 1.0f };
-	vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
-	vertexDataSprite[1].uv = { 0.0f, 0.0f };
-	vertexDataSprite[2].position = { static_cast<float>(textureDataCPU2.metaData.width), static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };	// right bottom
-	vertexDataSprite[2].uv = { 1.0f, 1.0f };
+	//VertexData* vertexDataSprite = nullptr;
+	//// 書き込み先アドレス取得
+	//vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
+	//vertexDataSprite[0].position = { 0.0f, static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };								// left bottom
+	//vertexDataSprite[0].uv = { 0.0f, 1.0f };
+	//vertexDataSprite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	//vertexDataSprite[1].uv = { 0.0f, 0.0f };
+	//vertexDataSprite[2].position = { static_cast<float>(textureDataCPU2.metaData.width), static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };	// right bottom
+	//vertexDataSprite[2].uv = { 1.0f, 1.0f };
 
-	vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
-	vertexDataSprite[3].uv = { 0.0f, 0.0f };
-	vertexDataSprite[4].position = { static_cast<float>(textureDataCPU2.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
-	vertexDataSprite[4].uv = { 1.0f, 0.0f };
-	vertexDataSprite[5].position = { static_cast<float>(textureDataCPU2.metaData.width), static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };	// right bottom	2
-	vertexDataSprite[5].uv = { 1.0f, 1.0f };
+	//vertexDataSprite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };																// left top
+	//vertexDataSprite[3].uv = { 0.0f, 0.0f };
+	//vertexDataSprite[4].position = { static_cast<float>(textureDataCPU2.metaData.width), 0.0f, 0.0f, 1.0f };								// right top
+	//vertexDataSprite[4].uv = { 1.0f, 0.0f };
+	//vertexDataSprite[5].position = { static_cast<float>(textureDataCPU2.metaData.width), static_cast<float>(textureDataCPU2.metaData.height), 0.0f, 1.0f };	// right bottom	2
+	//vertexDataSprite[5].uv = { 1.0f, 1.0f };
 
-	TransformationMatrix* wvpDataSprite = nullptr;
-	wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
-	wvpDataSprite->wvp = MakeIdentityMatrix();
+	//TransformationMatrix* wvpDataSprite = nullptr;
+	//wvpResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSprite));
+	//wvpDataSprite->wvp = MakeIdentityMatrix();
 
-	MaterialData* materialDataSprite = nullptr;
-	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
-	materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSprite->enableLighting = false;
+	//MaterialData* materialDataSprite = nullptr;
+	//materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+	//materialDataSprite->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	//materialDataSprite->enableLighting = false;
 #pragma endregion
 
 #pragma region Model
@@ -377,10 +383,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	vertexBufferViewTriangle.SizeInBytes = sizeof(VertexData) * 6;
 	vertexBufferViewTriangle.StrideInBytes = sizeof(VertexData);
 
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
+	/*D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
 	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
 	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
-	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
+	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);*/
 
 	std::vector<D3D12_VERTEX_BUFFER_VIEW>vertexBufferViewModel;
 	vertexBufferViewModel.reserve(modelData.objects.size());
@@ -418,8 +424,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
 
-	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+	/*Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);*/
 
 	Transform triangleTransform = {};
 	triangleTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
@@ -463,7 +469,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region GameUpdate
 		projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
-		projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+		//projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
 
 		mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
 		mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
@@ -480,9 +486,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		wvpDataModel->wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
 		wvpDataModel->world = modelWorldMatrix;
 
-		spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
+		/*spriteWorldMatrix = MakeAffineMatrix(spriteTransform.scale, spriteTransform.rotate, spriteTransform.translate);
 		wvpDataSprite->wvp = spriteWorldMatrix * viewMatrix2D * projectionMatrix2D;
-		wvpDataSprite->world = MakeIdentityMatrix();
+		wvpDataSprite->world = MakeIdentityMatrix();*/
 #pragma endregion
 
 		renderContext->BeginRendering();
@@ -514,14 +520,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region 2D Draw
-		renderContext->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-		// CBuffer Set
-		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
-		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstace().GetSRVDescriptorGPUHandle(textureDataCPU2.fileName));
-		renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
-		// いざ描画
-		renderContext->GetCommand()->GetCommandList()->DrawInstanced(6, 1, 0, 0);
+		spriteRenderer->PreDraw();
+		sprite->Draw();
+
+		//renderContext->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+		//// CBuffer Set
+		//renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResourceSprite->GetGPUVirtualAddress());
+		//renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+		//renderContext->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstace().GetSRVDescriptorGPUHandle(textureDataCPU2.fileName));
+		//renderContext->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		//// いざ描画
+		//renderContext->GetCommand()->GetCommandList()->DrawInstanced(6, 1, 0, 0);
 #pragma endregion
 
 #pragma region PostDraw
@@ -543,9 +552,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		resource->Unmap(0, nullptr);
 	}
 
-	materialResourceSprite->Unmap(0, nullptr);
-	wvpResourceSprite->Unmap(0, nullptr);
-	vertexResourceSprite->Unmap(0, nullptr);
+	//materialResourceSprite->Unmap(0, nullptr);
+	//wvpResourceSprite->Unmap(0, nullptr);
+	//vertexResourceSprite->Unmap(0, nullptr);
 
 	materialResourceTriangle->Unmap(0, nullptr);
 	wvpResourceTriangle->Unmap(0, nullptr);

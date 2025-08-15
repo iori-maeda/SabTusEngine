@@ -7,11 +7,17 @@
 
 #include "../ComPtr.h"
 
-class DxShader
+class DxShaderCompiler
 {
 public:
+	static DxShaderCompiler& GetInstancxe();
 	void Initialize();
 	ComPtr<IDxcBlob> CompileShader(const std::string&, const wchar_t*);
+
+private:
+	DxShaderCompiler() = default;
+	DxShaderCompiler(const DxShaderCompiler&) = delete;
+	DxShaderCompiler& operator=(const DxShaderCompiler&) = delete;
 
 private:
 

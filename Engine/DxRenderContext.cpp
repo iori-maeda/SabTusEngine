@@ -7,6 +7,7 @@
 #include "DirectX12Objects/DxCommand.h"
 #include "DirectX12Objects/DxSwapChain.h"
 #include "DirectX12Objects/DxFence.h"
+#include "DirectX12Objects/DxShader.h"
 
 #include"Logger.h"
 #include "../externals/DirectXTex/d3dx12.h"
@@ -34,7 +35,8 @@ void DxRenderContext::Initialize(const WinApp& winApp)
 	CreateDepthStencilView();
 	CreateViewPortAndSiccorRect();
 
-
+	// いろいろなところで使われるので一緒に初期化
+	DxShaderCompiler::GetInstancxe().Initialize();
 }
 
 void DxRenderContext::BeginRendering()

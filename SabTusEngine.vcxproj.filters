@@ -106,7 +106,13 @@
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine\TextureManager.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\2D\Sprite.cpp">
+      <Filter>ソース ファイル\Engine\DxObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\2D\SpriteRenderer.cpp">
+      <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,13 +188,29 @@
     <ClInclude Include="Engine\DxRenderContext.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\2D\SpriteRenderer.h">
+      <Filter>ヘッダー ファイル\Engine</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\TextureManager.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\2D\Sprite.h">
+      <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl" />
-    <FxCompile Include="Resources\Shaders\Basic3DPS.hlsl" />
+    <FxCompile Include="Resources\Shaders\Basic2DPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\Basic2DVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\Basic3DPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -197,6 +219,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Basic3D.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Resources\Shaders\Basic2D.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
