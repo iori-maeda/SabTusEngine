@@ -4,7 +4,7 @@
 
 #include "StringUtility.h"
 #include "Logger.h"
-#include "DxRenderContext.h"
+#include "DirectXCommon.h"
 #include "DirectX12Objects//DxDevice.h"
 
 std::string TextureManager::defaultDirectoryPath = "Resources/Textures/";
@@ -17,7 +17,7 @@ TextureManager& TextureManager::GetInstace()
 	return instance;
 }
 
-void TextureManager::Initialize(DxRenderContext* renderContext)
+void TextureManager::Initialize(DirectXCommon* renderContext)
 {
 	assert(renderContext != nullptr);
 

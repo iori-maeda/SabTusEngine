@@ -2,19 +2,19 @@
 #include <d3d12.h>
 
 #include "../ComPtr.h"
-#include "../DxRenderContext.h"
+#include "../DirectXCommon.h"
 
-class DxRenderContext;
+class DirectXCommon;
 
-class SpriteRenderer
+class SpriteCommon
 {
 public:
-	SpriteRenderer() = default;
+	SpriteCommon() = default;
 
-	void Initialize(DxRenderContext* renderContext);
+	void Initialize(DirectXCommon* dxCommon);
 	void PreDraw();
 
-	DxRenderContext* GetRenderContext() const { return renderContext_; }
+	DirectXCommon* GetDirectXCommon() const { return dxCommon_; }
 
 private:
 	
@@ -23,7 +23,7 @@ private:
 
 private:
 
-	DxRenderContext* renderContext_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 
 	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
 	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;

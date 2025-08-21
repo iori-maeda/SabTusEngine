@@ -1,4 +1,4 @@
-#include "DxRenderContext.h"
+#include "DirectXCommon.h"
 
 #include <assert.h>
 
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-void DxRenderContext::Initialize(const WinApp& winApp)
+void DirectXCommon::Initialize(const WinApp& winApp)
 {
 	device = make_unique<DxDevice>();
 	device->Initialize();
@@ -39,7 +39,7 @@ void DxRenderContext::Initialize(const WinApp& winApp)
 	DxShaderCompiler::GetInstancxe().Initialize();
 }
 
-void DxRenderContext::BeginRendering()
+void DirectXCommon::BeginRendering()
 {
 	command->GetCommandList()->RSSetViewports(1, &viewport);
 	command->GetCommandList()->RSSetScissorRects(1, &scissorRect);
@@ -64,7 +64,7 @@ void DxRenderContext::BeginRendering()
 	command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void DxRenderContext::EndRendering()
+void DirectXCommon::EndRendering()
 {
 	// Windor Drawing Step
 	// State Render -> Present
@@ -82,7 +82,7 @@ void DxRenderContext::EndRendering()
 	command->CommandListReset();
 }
 
-void DxRenderContext::WaitForGPU()
+void DirectXCommon::WaitForGPU()
 {
 	// CommandList Close & Kick
 	command->CommandListCloseAndExecute();
@@ -94,51 +94,51 @@ void DxRenderContext::WaitForGPU()
 	command->CommandListReset();
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRenderContext::GetRTVDescriptorCPUHandle(uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetRTVDescriptorCPUHandle(uint32_t index)
 {
 	return GetCPUDescriptorHandle(rtvDescriptorHeap, rtvDescriptorSize, index);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxRenderContext::GetRTVDescriptorGPUHandle(uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetRTVDescriptorGPUHandle(uint32_t index)
 {
 	return GetGPUDescriptorHandle(rtvDescriptorHeap, rtvDescriptorSize, index);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRenderContext::GetSRVDescriptorCPUHandle(uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetSRVDescriptorCPUHandle(uint32_t index)
 {
 	return GetCPUDescriptorHandle(srvDescriptorHeap, srvDescriptorSize, index);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxRenderContext::GetSRVDescriptorGPUHandle(uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetSRVDescriptorGPUHandle(uint32_t index)
 {
 	return GetGPUDescriptorHandle(srvDescriptorHeap, srvDescriptorSize, index);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRenderContext::GetDSVDescriptorCPUHandle(uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetDSVDescriptorCPUHandle(uint32_t index)
 {
 	return GetCPUDescriptorHandle(dsvDescriptorHeap, dsvDescriptorSize, index);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxRenderContext::GetDSVDescriptorGPUHandle(uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetDSVDescriptorGPUHandle(uint32_t index)
 {
 	return GetGPUDescriptorHandle(dsvDescriptorHeap, dsvDescriptorSize, index);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRenderContext::GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<SIZE_T>(descriptorSize * index);
 	return result;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxRenderContext::GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<UINT64>(descriptorSize * index);
 	return result;
 }
 
-void DxRenderContext::CreateDescriptorHeaps()
+void DirectXCommon::CreateDescriptorHeaps()
 {
 	rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
@@ -149,7 +149,7 @@ void DxRenderContext::CreateDescriptorHeaps()
 	dsvDescriptorSize = device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
-void DxRenderContext::CreateRenderTaegetrView()
+void DirectXCommon::CreateRenderTaegetrView()
 {
 	// RTVSettings
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;		// 出力結果をSRGBにして書き込み
@@ -170,7 +170,7 @@ void DxRenderContext::CreateRenderTaegetrView()
 	}
 }
 
-void DxRenderContext::CreateDepthStencilView()
+void DirectXCommon::CreateDepthStencilView()
 {
 	depthStencilResource = CreateDepthStencilTextureResource(WinApp::kWindoWidth, WinApp::kWindoHeight);
 
@@ -183,7 +183,7 @@ void DxRenderContext::CreateDepthStencilView()
 	dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DxRenderContext::CreateViewPortAndSiccorRect()
+void DirectXCommon::CreateViewPortAndSiccorRect()
 {
 	// 画面全体に表示
 	viewport.Width = static_cast<FLOAT>(WinApp::kWindoWidth);
@@ -201,7 +201,7 @@ void DxRenderContext::CreateViewPortAndSiccorRect()
 	scissorRect.bottom = WinApp::kWindoHeight;
 }
 
-ComPtr<ID3D12DescriptorHeap> DxRenderContext::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
+ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
 {
 	ComPtr<ID3D12DescriptorHeap> descriptorHeap = nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
@@ -215,7 +215,7 @@ ComPtr<ID3D12DescriptorHeap> DxRenderContext::CreateDescriptorHeap(D3D12_DESCRIP
 	return descriptorHeap;
 }
 
-ComPtr<ID3D12Resource> DxRenderContext::CreateDepthStencilTextureResource(int32_t width, int32_t height)
+ComPtr<ID3D12Resource> DirectXCommon::CreateDepthStencilTextureResource(int32_t width, int32_t height)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -252,7 +252,7 @@ ComPtr<ID3D12Resource> DxRenderContext::CreateDepthStencilTextureResource(int32_
 	return resource;
 }
 
-ComPtr<ID3D12Resource> DxRenderContext::CreataeBufferResource(size_t sizeInBytes)
+ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(size_t sizeInBytes) const
 {
 	D3D12_HEAP_PROPERTIES uploadHeapPoperties{};
 	uploadHeapPoperties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -273,7 +273,7 @@ ComPtr<ID3D12Resource> DxRenderContext::CreataeBufferResource(size_t sizeInBytes
 	return resource;
 }
 
-ComPtr<ID3D12Resource> DxRenderContext::CreateTextureResource(const DirectX::TexMetadata& metaData)
+ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(const DirectX::TexMetadata& metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -306,13 +306,13 @@ ComPtr<ID3D12Resource> DxRenderContext::CreateTextureResource(const DirectX::Tex
 	return resource;
 }
 
-ComPtr<ID3D12Resource> DxRenderContext::UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage)
+ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device->GetDevice(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
-	ComPtr<ID3D12Resource> intermediateResource = CreataeBufferResource(intermediateSize);
+	ComPtr<ID3D12Resource> intermediateResource = CreateBufferResource(intermediateSize);
 
 	// どうやったらこの関数の使用をやめれる？
 	UpdateSubresources(command->GetCommandList(), texture.Get(), intermediateResource.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());

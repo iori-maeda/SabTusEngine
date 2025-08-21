@@ -9,7 +9,7 @@
 #include "../Math/Vector2.h"
 #include "../Math/Matrix4x4.h"
 
-class SpriteRenderer;
+class SpriteCommon;
 
 class Sprite
 {
@@ -36,7 +36,7 @@ public:
 
 	Sprite() = default;
 
-	void Initiazlize(SpriteRenderer* renderer, const std::string& fileName);
+	void Initiazlize(SpriteCommon* renderer, const std::string& fileName);
 	void Upadate();
 	void Draw();
 
@@ -50,7 +50,7 @@ public:
 
 private:
 
-	SpriteRenderer* renderer_ = nullptr;
+	SpriteCommon* spriteCommon_ = nullptr;
 
 	Vector2 position_{};
 	float rotation_ = 0.0f;

@@ -1,27 +1,27 @@
 #include "Sprite.h"
-#include "SpriteRenderer.h"
+#include "SpriteCommon.h"
 #include "../TextureManager.h"
 #include "../WIndow/WinApp.h"
 #include "../DirectX12Objects/DxCommand.h"
 
-void Sprite::Initiazlize(SpriteRenderer* renderer, const std::string& fileName)
+void Sprite::Initiazlize(SpriteCommon* spriteCommon, const std::string& fileName)
 {
-	renderer_ = renderer;
+	spriteCommon_ = spriteCommon;
 
 	TextureDataCPU textureDataCPU = TextureManager::GetInstace().Load(fileName);
 	texSize_ = { static_cast<float>(textureDataCPU.metaData.width), static_cast<float>(textureDataCPU.metaData.height) };
 	texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(textureDataCPU.fileName);
 
-	vertexResource_ = renderer_->GetRenderContext()->CreataeBufferResource(sizeof(VertexData) * 4);
-	materialResource_ = renderer_->GetRenderContext()->CreataeBufferResource(sizeof(MaterialData));
-	transformationMatrixResource_ = renderer_->GetRenderContext()->CreataeBufferResource(sizeof(TransformationMatrix));
+	vertexResource_ = spriteCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(VertexData) * 4);
+	materialResource_ = spriteCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(MaterialData));
+	transformationMatrixResource_ = spriteCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(TransformationMatrix));
 
 
 	vertexBufferView_.BufferLocation = vertexResource_->GetGPUVirtualAddress();
 	vertexBufferView_.SizeInBytes = sizeof(VertexData) * 4;
 	vertexBufferView_.StrideInBytes = sizeof(VertexData);
 
-	indexResource_ = renderer_->GetRenderContext()->CreataeBufferResource(sizeof(uint32_t) * 6);
+	indexResource_ = spriteCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(uint32_t) * 6);
 	indexBufferView_.BufferLocation = indexResource_->GetGPUVirtualAddress();
 	indexBufferView_.SizeInBytes = sizeof(uint32_t) * 6;
 	indexBufferView_.Format = DXGI_FORMAT_R32_UINT;
@@ -85,12 +85,12 @@ void Sprite::Upadate()
 
 void Sprite::Draw()
 {
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->IASetIndexBuffer(&indexBufferView_);
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->IASetIndexBuffer(&indexBufferView_);
 	// CBuffer Set
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texHandle_);
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texHandle_);
 	// いざ描画
-	renderer_->GetRenderContext()->GetCommand()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }

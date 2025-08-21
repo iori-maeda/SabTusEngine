@@ -91,14 +91,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\2D\Sprite.cpp" />
-    <ClCompile Include="Engine\2D\SpriteRenderer.cpp" />
+    <ClCompile Include="Engine\2D\SpriteCommon.cpp" />
+    <ClCompile Include="Engine\3D\Model.cpp" />
+    <ClCompile Include="Engine\3D\Object3d.cpp" />
+    <ClCompile Include="Engine\3D\Object3dCommon.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DirectX12ObjectsFunction.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxCommand.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp" />
     <ClCompile Include="Engine\DirectX12Objects\DxSwapChain.cpp" />
-    <ClCompile Include="Engine\DxRenderContext.cpp" />
+    <ClCompile Include="Engine\DirectXCommon.cpp" />
     <ClCompile Include="Engine\Logger.cpp" />
     <ClCompile Include="Engine\Math\Matrix3x3.cpp" />
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
@@ -119,7 +122,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\2D\Sprite.h" />
-    <ClInclude Include="Engine\2D\SpriteRenderer.h" />
+    <ClInclude Include="Engine\2D\SpriteCommon.h" />
+    <ClInclude Include="Engine\3D\Model.h" />
+    <ClInclude Include="Engine\3D\Object3d.h" />
+    <ClInclude Include="Engine\3D\Object3dCommon.h" />
     <ClInclude Include="Engine\ComPtr.h" />
     <ClInclude Include="Engine\DirectX12Objects\DirectX12ObjectsFunction.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxCommand.h" />
@@ -127,7 +133,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\DirectX12Objects\DxFence.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxShader.h" />
     <ClInclude Include="Engine\DirectX12Objects\DxSwapChain.h" />
-    <ClInclude Include="Engine\DxRenderContext.h" />
+    <ClInclude Include="Engine\DirectXCommon.h" />
     <ClInclude Include="Engine\Logger.h" />
     <ClInclude Include="Engine\Math\Matrix3x3.h" />
     <ClInclude Include="Engine\Math\Matrix4x4.h" />

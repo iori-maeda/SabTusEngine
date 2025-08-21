@@ -7,7 +7,7 @@
 
 #include "ComPtr.h"
 
-class DxRenderContext;
+class DirectXCommon;
 
 struct TextureDataCPU
 {
@@ -23,7 +23,7 @@ public:
 	// シングルトンパターンで作成
 	static TextureManager& GetInstace();
 
-	void Initialize(DxRenderContext* renderContext);
+	void Initialize(DirectXCommon* renderContext);
 	void Finalize();
 
 	/// <summary>
@@ -56,7 +56,7 @@ private:
 
 
 private:
-	DxRenderContext* renderContext_ = nullptr;
+	DirectXCommon* renderContext_ = nullptr;
 
 
 	struct TextureDataGPU {

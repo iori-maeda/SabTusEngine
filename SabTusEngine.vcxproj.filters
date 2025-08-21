@@ -34,6 +34,30 @@
     <Filter Include="ヘッダー ファイル\Engine\DxObjects">
       <UniqueIdentifier>{a21fdb1e-3c00-4b24-a575-219d29148210}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Engine\2D">
+      <UniqueIdentifier>{94efe4a6-bed3-4173-a522-1f62344f2383}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Engine\Window">
+      <UniqueIdentifier>{55553ddb-88f9-4e28-a591-6dfd4008be54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Engine\3D">
+      <UniqueIdentifier>{ec0e4c20-820a-4c86-8f0f-327d14daf7d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\2D">
+      <UniqueIdentifier>{7be1f2f7-1d63-4109-8cc4-8ef59a3f1217}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\3D">
+      <UniqueIdentifier>{6e9bcded-6167-4417-9c18-b57bff83d2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\Utility">
+      <UniqueIdentifier>{f1918abe-8927-4bdf-9137-92541756861e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\Window">
+      <UniqueIdentifier>{71fc3754-a39a-4005-bb33-ee7b8ee11539}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Engine\Utility">
+      <UniqueIdentifier>{96a4fec1-a0b2-4f1c-9fe1-b5464bd94818}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -75,15 +99,6 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Logger.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\WIndow\WinApp.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\StringUtility.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
@@ -99,20 +114,38 @@
     <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\DxRenderContext.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\TextureManager.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\2D\Sprite.cpp">
+    <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\2D\SpriteRenderer.cpp">
-      <Filter>ソース ファイル\Engine</Filter>
+    <ClCompile Include="Engine\2D\Sprite.cpp">
+      <Filter>ソース ファイル\Engine\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\WIndow\WinApp.cpp">
+      <Filter>ソース ファイル\Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3D\Object3dCommon.cpp">
+      <Filter>ソース ファイル\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Logger.cpp">
+      <Filter>ソース ファイル\Engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\StringUtility.cpp">
+      <Filter>ソース ファイル\Engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\2D\SpriteCommon.cpp">
+      <Filter>ソース ファイル\Engine\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3D\Object3d.cpp">
+      <Filter>ソース ファイル\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\DirectXCommon.cpp">
+      <Filter>ソース ファイル\Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3D\Model.cpp">
+      <Filter>ソース ファイル\Engine\3D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,18 +188,6 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\ComPtr.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Logger.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\StringUtility.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\WIndow\WinApp.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\DirectX12Objects\DxCommand.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
@@ -185,17 +206,38 @@
     <ClInclude Include="Engine\DirectX12Objects\DxShader.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DxRenderContext.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\2D\SpriteRenderer.h">
+    <ClInclude Include="Engine\DirectXCommon.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\TextureManager.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\2D\Sprite.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
+      <Filter>ヘッダー ファイル\Engine\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\2D\SpriteCommon.h">
+      <Filter>ヘッダー ファイル\Engine\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\3D\Object3dCommon.h">
+      <Filter>ヘッダー ファイル\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ComPtr.h">
+      <Filter>ヘッダー ファイル\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Logger.h">
+      <Filter>ヘッダー ファイル\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\StringUtility.h">
+      <Filter>ヘッダー ファイル\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\WIndow\WinApp.h">
+      <Filter>ヘッダー ファイル\Engine\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\3D\Object3d.h">
+      <Filter>ヘッダー ファイル\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\3D\Model.h">
+      <Filter>ソース ファイル\Engine\3D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

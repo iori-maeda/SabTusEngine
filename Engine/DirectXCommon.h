@@ -15,11 +15,11 @@ class DxCommand;
 class DxSwapChain;
 class DxFence;
 
-class DxRenderContext
+class DirectXCommon
 {
 public:
 
-	DxRenderContext() = default;
+	DirectXCommon() = default;
 	void Initialize(const WinApp& winApp);
 	void BeginRendering();
 	void EndRendering();
@@ -28,7 +28,7 @@ public:
 
 	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptor, bool shaderVisible);
 	ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(int32_t width, int32_t height);
-	ComPtr<ID3D12Resource> CreataeBufferResource(size_t sizeInBytes);
+	ComPtr<ID3D12Resource> CreateBufferResource(size_t sizeInBytes) const;
 	ComPtr<ID3D12Resource> CreateTextureResource(const DirectX::TexMetadata& metaData);
 	[[nodiscard]] ComPtr<ID3D12Resource> UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage);
 

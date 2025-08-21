@@ -1,27 +1,37 @@
-#include "SpriteRenderer.h"
+#include "Object3dCommon.h"
 #include "../DirectX12Objects/DxDevice.h"
 #include "../DirectX12Objects/DxCommand.h"
 #include "../DirectX12Objects/DxShader.h"
 #include "../Logger.h" 
 
-
-void SpriteRenderer::Initialize(DxRenderContext* renderContext)
+void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 {
-	renderContext_ = renderContext;
+	dxCommon_ = dxCommon;
 	CreateRootSignature();
 	CreatePipelineStateObject();
+
+	directionalLightResource = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
+	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
+	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
+	directionalLightData->intensity = 1.0f;
 }
 
-void SpriteRenderer::PreDraw()
+void Object3dCommon::PreDraw()
 {
-	renderContext_->GetCommand()->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
-	renderContext_->GetCommand()->GetCommandList()->SetPipelineState(pipelineStateObject_.Get());
+	// 描画コマンドリストの取得
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
+
+	commandList->SetGraphicsRootSignature(rootSignature_.Get());
+	commandList->SetPipelineState(pipelineStateObject_.Get());
+
+	commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 }
 
-void SpriteRenderer::CreateRootSignature()
+void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -41,6 +51,10 @@ void SpriteRenderer::CreateRootSignature()
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].Descriptor.ShaderRegister = 1;
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
@@ -69,25 +83,25 @@ void SpriteRenderer::CreateRootSignature()
 		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
 		assert(false);
 	}
-	hr = renderContext_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
+	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
 	assert(SUCCEEDED(hr));
 	Logger::Log("Created RootSignature\n");
 #pragma endregion
 }
 
-void SpriteRenderer::CreatePipelineStateObject()
+void Object3dCommon::CreatePipelineStateObject()
 {
 
 #pragma region Shader Compile
 	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic2DVS.hlsl", L"vs_6_0");
+	ComPtr<IDxcBlob> vertexShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic2DPS.hlsl", L"ps_6_0");
+	ComPtr<IDxcBlob> pixelShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic3DPS.hlsl", L"ps_6_0");
 	assert(pixelShaderBlob != nullptr);
 #pragma endregion
 
 #pragma region InputLayout Settings
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
 	inputElementDescs[0].SemanticIndex = 0;
 	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -96,6 +110,10 @@ void SpriteRenderer::CreatePipelineStateObject()
 	inputElementDescs[1].SemanticIndex = 0;
 	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDescs[2].SemanticName = "NORMAL";
+	inputElementDescs[2].SemanticIndex = 0;
+	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -142,7 +160,7 @@ void SpriteRenderer::CreatePipelineStateObject()
 	graphicsPipelineStateDec.DepthStencilState = depthStencilDesc;
 	graphicsPipelineStateDec.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 生成
-	HRESULT hr = renderContext_->GetDxDevice()->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDec, IID_PPV_ARGS(&pipelineStateObject_));
+	HRESULT hr = dxCommon_->GetDxDevice()->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDec, IID_PPV_ARGS(&pipelineStateObject_));
 	assert(SUCCEEDED(hr));
 	Logger::Log("SpriteRenderer Created PSO\n");
 #pragma endregion

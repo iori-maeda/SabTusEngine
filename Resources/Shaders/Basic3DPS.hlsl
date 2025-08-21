@@ -28,7 +28,8 @@ struct Output
 
 Output main(VertexOutput input)
 {
-	Output output;
+    Output output;
+    output.color = float4(0.0, 0.0, 0.0, 1.0); // Initialize output color
 
 	float reflectIntensity= dot(normalize(input.normal), -gDirectionalLight.direction);
 	float halfLambert = pow(reflectIntensity * 0.5 + 0.5, 2.0f);
@@ -39,7 +40,7 @@ Output main(VertexOutput input)
 	float4 ambient = gMaterial.enableLighting ? gMaterial.Ka * texColor : float4(0.0, 0.0, 0.0, 0.0);
 	float4 diffuse = gMaterial.Kd * texColor;
 
-	output.color = ambient;
+	//output.color = ambient;
 	output.color += gMaterial.enableLighting ? diffuse * lightColor : diffuse;
 	
 	return output;
