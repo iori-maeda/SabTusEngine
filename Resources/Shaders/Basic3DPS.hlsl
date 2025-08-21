@@ -40,7 +40,7 @@ Output main(VertexOutput input)
 	float4 ambient = gMaterial.enableLighting ? gMaterial.Ka * texColor : float4(0.0, 0.0, 0.0, 0.0);
 	float4 diffuse = gMaterial.Kd * texColor;
 
-	//output.color = ambient;
+	output.color = ambient;
 	output.color += gMaterial.enableLighting ? diffuse * lightColor : diffuse;
 	
 	return output;
