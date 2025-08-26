@@ -98,7 +98,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ModelManager::GetInstace().Load("sphere.obj");
 
 	unique_ptr<Object3d> object3d = make_unique<Object3d>();
-	object3d->Initiazlize(object3dCommon.get(), "sphere.obj");
+	object3d->Initiazlize(object3dCommon.get(), "axis.obj");
 
 
 	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");

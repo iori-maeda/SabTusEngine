@@ -20,7 +20,7 @@ void Object3d::Initiazlize(Object3dCommon* obj3dCommon, const std::string& fileN
 	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
 
 	ModelManager::GetInstace().Initialize(obj3dCommon_->GetDirectXCommon());
-	model_ = ModelManager::GetInstace().GetModel(fileName);
+	model_ = ModelManager::GetInstace().Load(fileName);
 }
 
 void Object3d::Upadate()
