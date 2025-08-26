@@ -1,0 +1,34 @@
+﻿  Sprite.cpp
+  SpriteCommon.cpp
+  Model.cpp
+  Object3d.cpp
+  Object3dCommon.cpp
+  DirectXCommon.cpp
+  DirectX12ObjectsFunction.cpp
+  DxCommand.cpp
+  DxDevice.cpp
+  DxFence.cpp
+  DxShader.cpp
+  DxSwapChain.cpp
+  Logger.cpp
+  Matrix3x3.cpp
+  Matrix4x4.cpp
+  Vector2.cpp
+  Vector3.cpp
+  Vector4.cpp
+  ModelManager.cpp
+  StringUtility.cpp
+  TextureManager.cpp
+  WinApp.cpp
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_dx12.cpp
+  imgui_impl_win32.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  main.cpp
+  LINK : 前回のインクリメンタル リンクで C:\Users\GSMAnager\Desktop\SabTusEngine\Project\x64\Debug\SabTusEngine.exe が見つからなかったか、ビルドされませんでした。フル リンクを行います。
+  SabTusEngine.vcxproj -> C:\Users\GSMAnager\Desktop\SabTusEngine\Project\x64\Debug\SabTusEngine.exe
+          1 個のファイルをコピーしました。
+          1 個のファイルをコピーしました。
