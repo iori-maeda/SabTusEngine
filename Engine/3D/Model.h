@@ -16,6 +16,8 @@ class DirectXCommon;
 class Model
 {
 public:
+	static std::string defaultDirectoryPath;
+
 
 	struct VertexData
 	{

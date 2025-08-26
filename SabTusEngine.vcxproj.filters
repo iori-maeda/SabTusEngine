@@ -147,6 +147,9 @@
     <ClCompile Include="Engine\3D\Model.cpp">
       <Filter>ソース ファイル\Engine\3D</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\ModelManager.cpp">
+      <Filter>ソース ファイル\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -237,7 +240,10 @@
       <Filter>ヘッダー ファイル\Engine\3D</Filter>
     </ClInclude>
     <ClInclude Include="Engine\3D\Model.h">
-      <Filter>ソース ファイル\Engine\3D</Filter>
+      <Filter>ヘッダー ファイル\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ModelManager.h">
+      <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

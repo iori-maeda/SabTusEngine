@@ -9,11 +9,13 @@
 #include "../DirectX12Objects/DxCommand.h"
 #include "../TextureManager.h"
 
+std::string Model::defaultDirectoryPath = "Resources/Models/";
+
 void Model::Initialize(DirectXCommon* dxCommon)
 {
 	dxCommon_ = dxCommon;
 
-	modelData_ = LoadObjFile("Resources/Models", "axis.obj");
+	modelData_ = LoadObjFile(defaultDirectoryPath, "axis.obj");
 	for (auto& object : modelData_.objects)
 	{
 		ObjectDataCPU& objCPU = object.first;
@@ -25,7 +27,7 @@ void Model::Initialize(DirectXCommon* dxCommon)
 
 		objGPU.name = objCPU.name;
 
-		TextureManager::GetInstace().Load("Resources/Models/", objCPU.textureFilePath);
+		TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
 		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.textureFilePath);
 
 		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
@@ -51,7 +53,7 @@ void Model::Initialize(DirectXCommon* dxCommon, const std::string& fileName)
 {
 	dxCommon_ = dxCommon;
 
-	modelData_ = LoadObjFile("Resources/Models", fileName);
+	modelData_ = LoadObjFile(defaultDirectoryPath, fileName);
 	for (auto& object : modelData_.objects)
 	{
 		ObjectDataCPU& objCPU = object.first;
@@ -63,7 +65,7 @@ void Model::Initialize(DirectXCommon* dxCommon, const std::string& fileName)
 
 		objGPU.name = objCPU.name;
 
-		TextureManager::GetInstace().Load("Resources/Models/", objCPU.textureFilePath);
+		TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
 		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.textureFilePath);
 
 		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());

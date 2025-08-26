@@ -36,6 +36,7 @@
 #include "Engine/2D/Sprite.h"
 #include "Engine//3D/Object3dCommon.h"
 #include "Engine/3D/Object3d.h"
+#include "Engine/ModelManager.h"
 
 #include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
 
@@ -83,6 +84,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	TextureManager::GetInstace().Initialize(dxCommon.get());
 	DxShaderCompiler::GetInstancxe().Initialize();
 
+	ModelManager::GetInstace().Initialize(dxCommon.get());
+
 	unique_ptr<SpriteCommon> spriteCommon = make_unique<SpriteCommon>();
 	spriteCommon->Initialize(dxCommon.get());
 
@@ -92,11 +95,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	unique_ptr<Sprite> sprite = make_unique<Sprite>();
 	sprite->Initiazlize(spriteCommon.get(), "uvChecker.png");
 
+	ModelManager::GetInstace().Load("sphere.obj");
+
 	unique_ptr<Object3d> object3d = make_unique<Object3d>();
-	object3d->Initiazlize(object3dCommon.get(), "sphere.obj");
+	object3d->Initiazlize(object3dCommon.get(), "axis.obj");
 
 
 	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");
+
 
 #pragma region Resources Create
 
@@ -264,6 +270,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	wvpResourceTriangle->Unmap(0, nullptr);
 	vertexResourceTriangle->Unmap(0, nullptr);*/
 
+	ModelManager::GetInstace().Finalize();
 	TextureManager::GetInstace().Finalize();
 
 	winApp->Finalize();

@@ -4,6 +4,7 @@
 #include "../TextureManager.h"
 #include "../WIndow/WinApp.h"
 #include "../DirectX12Objects/DxCommand.h"
+#include "../ModelManager.h"
 
 void Object3d::Initiazlize(Object3dCommon* obj3dCommon, const std::string& fileName)
 {
@@ -18,8 +19,8 @@ void Object3d::Initiazlize(Object3dCommon* obj3dCommon, const std::string& fileN
 	transformationMatrixData_->world = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
 
-	model_ = std::make_unique<Model>();
-	model_->Initialize(obj3dCommon_->GetDirectXCommon(), fileName);
+	ModelManager::GetInstace().Initialize(obj3dCommon_->GetDirectXCommon());
+	model_ = ModelManager::GetInstace().GetModel(fileName);
 }
 
 void Object3d::Upadate()

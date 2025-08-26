@@ -17,11 +17,11 @@ TextureManager& TextureManager::GetInstace()
 	return instance;
 }
 
-void TextureManager::Initialize(DirectXCommon* renderContext)
+void TextureManager::Initialize(DirectXCommon* dxCommon)
 {
-	assert(renderContext != nullptr);
+	assert(dxCommon != nullptr);
 
-	renderContext_ = renderContext;
+	renderContext_ = dxCommon;
 }
 void TextureManager::Finalize()
 {
