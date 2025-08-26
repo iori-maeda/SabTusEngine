@@ -31,7 +31,7 @@
 #[Ll]ogs/
 
 # 自作のフォルダを除外
-externels/Bin/
+x64/
 Generated/
 
 # Visual Studio 2015/2017 cache/options directory
