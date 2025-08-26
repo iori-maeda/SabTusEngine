@@ -53,8 +53,10 @@ Model *ModelManager::GetModel(const std::string &fileName)
 	auto modelData = models_.find(fileName);
 	if (modelData != models_.end())
 	{
+		Logger::Log(std::format("ModelManager::SearchSuccess::{}\n", fileName));
 		return modelData->second.get();
 	}
+	
 	Logger::Log(std::format("ModelManager::SearchFailed::{}\n", fileName));
 	assert(nullptr);
 	return nullptr;
