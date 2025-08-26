@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "../ComPtr.h"
+#include "ComPtr.h"
 
 class DxShaderCompiler
 {

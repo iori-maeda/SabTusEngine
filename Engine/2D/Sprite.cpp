@@ -1,8 +1,8 @@
 #include "Sprite.h"
 #include "SpriteCommon.h"
-#include "../TextureManager.h"
-#include "../WIndow/WinApp.h"
-#include "../DirectX12Objects/DxCommand.h"
+#include "TextureManager.h"
+#include "WIndow/WinApp.h"
+#include "DxCommand.h"
 
 void Sprite::Initiazlize(SpriteCommon* spriteCommon, const std::string& fileName)
 {

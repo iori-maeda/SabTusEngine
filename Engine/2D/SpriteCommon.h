@@ -1,8 +1,8 @@
 #pragma once
 #include <d3d12.h>
 
-#include "../ComPtr.h"
-#include "../DirectXCommon.h"
+#include "ComPtr.h"
+#include "DirectXCommon.h"
 
 class DirectXCommon;
 

@@ -1,8 +1,8 @@
 #include "Object3dCommon.h"
-#include "../DirectX12Objects/DxDevice.h"
-#include "../DirectX12Objects/DxCommand.h"
-#include "../DirectX12Objects/DxShader.h"
-#include "../Logger.h" 
+#include "DxDevice.h"
+#include "DxCommand.h"
+#include "DxShader.h"
+#include "Logger.h" 
 
 void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 {

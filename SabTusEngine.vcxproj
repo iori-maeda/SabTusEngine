@@ -54,6 +54,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Engine;$(ProjectDir)Engine\Utility;$(ProjectDir)Engine\DxObjects;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -77,6 +78,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Engine;$(ProjectDir)Engine\Utility;$(ProjectDir)Engine\DxObjects;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,21 +97,21 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3D\Model.cpp" />
     <ClCompile Include="Engine\3D\Object3d.cpp" />
     <ClCompile Include="Engine\3D\Object3dCommon.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DirectX12ObjectsFunction.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DxCommand.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DxDevice.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DxFence.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DxShader.cpp" />
-    <ClCompile Include="Engine\DirectX12Objects\DxSwapChain.cpp" />
     <ClCompile Include="Engine\DirectXCommon.cpp" />
-    <ClCompile Include="Engine\Logger.cpp" />
+    <ClCompile Include="Engine\DxObjects\DirectX12ObjectsFunction.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxCommand.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxDevice.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxFence.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxShader.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxSwapChain.cpp" />
+    <ClCompile Include="Engine\Utility\Logger.cpp" />
     <ClCompile Include="Engine\Math\Matrix3x3.cpp" />
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Engine\Math\Vector2.cpp" />
     <ClCompile Include="Engine\Math\Vector3.cpp" />
     <ClCompile Include="Engine\Math\Vector4.cpp" />
     <ClCompile Include="Engine\ModelManager.cpp" />
-    <ClCompile Include="Engine\StringUtility.cpp" />
+    <ClCompile Include="Engine\Utility\StringUtility.cpp" />
     <ClCompile Include="Engine\TextureManager.cpp" />
     <ClCompile Include="Engine\WIndow\WinApp.cpp" />
     <ClCompile Include="externals\imgui\imgui.cpp" />
@@ -128,21 +130,21 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\3D\Object3d.h" />
     <ClInclude Include="Engine\3D\Object3dCommon.h" />
     <ClInclude Include="Engine\ComPtr.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DirectX12ObjectsFunction.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DxCommand.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DxDevice.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DxFence.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DxShader.h" />
-    <ClInclude Include="Engine\DirectX12Objects\DxSwapChain.h" />
     <ClInclude Include="Engine\DirectXCommon.h" />
-    <ClInclude Include="Engine\Logger.h" />
+    <ClInclude Include="Engine\DxObjects\DirectX12ObjectsFunction.h" />
+    <ClInclude Include="Engine\DxObjects\DxCommand.h" />
+    <ClInclude Include="Engine\DxObjects\DxDevice.h" />
+    <ClInclude Include="Engine\DxObjects\DxFence.h" />
+    <ClInclude Include="Engine\DxObjects\DxShader.h" />
+    <ClInclude Include="Engine\DxObjects\DxSwapChain.h" />
+    <ClInclude Include="Engine\Utility\Logger.h" />
     <ClInclude Include="Engine\Math\Matrix3x3.h" />
     <ClInclude Include="Engine\Math\Matrix4x4.h" />
     <ClInclude Include="Engine\Math\Vector2.h" />
     <ClInclude Include="Engine\Math\Vector3.h" />
     <ClInclude Include="Engine\Math\Vector4.h" />
     <ClInclude Include="Engine\ModelManager.h" />
-    <ClInclude Include="Engine\StringUtility.h" />
+    <ClInclude Include="Engine\Utility\StringUtility.h" />
     <ClInclude Include="Engine\TextureManager.h" />
     <ClInclude Include="Engine\WIndow\WinApp.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />

@@ -23,30 +23,30 @@
 
 
 // MyCrassies
-#include "Engine/ComPtr.h"
-#include "Engine/Window/WinApp.h"
-#include "Engine/DirectX12Objects/DxDevice.h"
-#include "Engine/DirectX12Objects/DxCommand.h"
-#include "Engine/DirectX12Objects/DxSwapChain.h"
-#include "Engine//DirectX12Objects/DxFence.h"
-#include "Engine/DirectX12Objects/DxShader.h"
-#include "Engine/DirectXCommon.h"
-#include "Engine//TextureManager.h"
-#include "Engine/2D/SpriteCommon.h"
-#include "Engine/2D/Sprite.h"
-#include "Engine//3D/Object3dCommon.h"
-#include "Engine/3D/Object3d.h"
-#include "Engine/ModelManager.h"
+#include "ComPtr.h"
+#include "Window/WinApp.h"
+#include "DxDevice.h"
+#include "DxCommand.h"
+#include "DxSwapChain.h"
+#include "DxFence.h"
+#include "DxShader.h"
+#include "DirectXCommon.h"
+#include "TextureManager.h"
+#include "2D/SpriteCommon.h"
+#include "2D/Sprite.h"
+#include "3D/Object3dCommon.h"
+#include "3D/Object3d.h"
+#include "ModelManager.h"
 
-#include "Engine/DirectX12Objects/DirectX12ObjectsFunction.h"
+#include "DirectX12ObjectsFunction.h"
 
 // Math
-#include "Engine/Math/Vector2.h"
-#include "Engine/Math/Vector4.h"
-#include "Engine/Math/Matrix4x4.h"
+#include "Math/Vector2.h"
+#include "Math/Vector4.h"
+#include "Math/Matrix4x4.h"
 
-#include "Engine/Logger.h"
-#include "Engine/StringUtility.h"
+#include "Logger.h"
+#include "StringUtility.h"
 
 using namespace std;
 

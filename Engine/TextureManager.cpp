@@ -5,7 +5,7 @@
 #include "StringUtility.h"
 #include "Logger.h"
 #include "DirectXCommon.h"
-#include "DirectX12Objects//DxDevice.h"
+#include "DxDevice.h"
 
 std::string TextureManager::defaultDirectoryPath = "Resources/Textures/";
 

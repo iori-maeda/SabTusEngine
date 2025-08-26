@@ -4,10 +4,10 @@
 #include <sstream>
 #include <cassert>
 
-#include "../DirectXCommon.h"
-#include "../DirectX12Objects/DxDevice.h"
-#include "../DirectX12Objects/DxCommand.h"
-#include "../TextureManager.h"
+#include "DirectXCommon.h"
+#include "DxDevice.h"
+#include "DxCommand.h"
+#include "TextureManager.h"
 
 std::string Model::defaultDirectoryPath = "Resources/Models/";
 

@@ -4,7 +4,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include "../ComPtr.h"
+#include "ComPtr.h"
 
 class WinApp;
 class DxDevice;

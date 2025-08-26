@@ -1,10 +1,10 @@
 #pragma once
 #include <d3d12.h>
 
-#include "../ComPtr.h"
-#include "../DirectXCommon.h"
-#include "../Math/Vector4.h"
-#include "../Math/Vector3.h"
+#include "ComPtr.h"
+#include "DirectXCommon.h"
+#include "Math/Vector4.h"
+#include "Math/Vector3.h"
 
 class DirectXCommon;
 

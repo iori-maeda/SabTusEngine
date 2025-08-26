@@ -1,8 +1,8 @@
 #include "DxCommand.h"
 
 #include "DxDevice.h"
-#include "../Logger.h"
-#include "../StringUtility.h"
+#include "Logger.h"
+#include "StringUtility.h"
 #include <cassert>
 
 void DxCommand::Initialize(DxDevice* device)

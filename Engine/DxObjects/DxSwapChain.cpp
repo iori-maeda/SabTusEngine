@@ -1,8 +1,8 @@
 #include "DxSwapChain.h"
 
 #include <cassert>
-#include "../Logger.h"
-#include "../Window/WinApp.h"
+#include "Logger.h"
+#include "Window/WinApp.h"
 #include "DxDevice.h"
 #include "DxCommand.h"
 

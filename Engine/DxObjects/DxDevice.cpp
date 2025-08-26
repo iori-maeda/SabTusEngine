@@ -3,8 +3,8 @@
 #include <cassert>
 #include <format>
 
-#include "../Logger.h"
-#include "../StringUtility.h"
+#include "Logger.h"
+#include "StringUtility.h"
 
 // DirectX12
 #pragma comment(lib, "dxgi.lib")

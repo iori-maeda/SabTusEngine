@@ -2,8 +2,8 @@
 #include <format>
 
 #include "../../externals/imgui/imgui.h"
-#include "../Logger.h"
-#include "../StringUtility.h"
+#include "Logger.h"
+#include "StringUtility.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 

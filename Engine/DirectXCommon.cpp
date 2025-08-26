@@ -3,11 +3,11 @@
 #include <assert.h>
 
 #include "WIndow/WinApp.h"
-#include "DirectX12Objects/DxDevice.h"
-#include "DirectX12Objects/DxCommand.h"
-#include "DirectX12Objects/DxSwapChain.h"
-#include "DirectX12Objects/DxFence.h"
-#include "DirectX12Objects/DxShader.h"
+#include "DxDevice.h"
+#include "DxCommand.h"
+#include "DxSwapChain.h"
+#include "DxFence.h"
+#include "DxShader.h"
 
 #include"Logger.h"
 #include "../externals/DirectXTex/d3dx12.h"

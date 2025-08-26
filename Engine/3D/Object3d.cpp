@@ -1,10 +1,10 @@
 #include "Object3d.h"
 
 #include "Object3dCommon.h"
-#include "../TextureManager.h"
-#include "../WIndow/WinApp.h"
-#include "../DirectX12Objects/DxCommand.h"
-#include "../ModelManager.h"
+#include "TextureManager.h"
+#include "WIndow/WinApp.h"
+#include "DxCommand.h"
+#include "ModelManager.h"
 
 void Object3d::Initiazlize(Object3dCommon* obj3dCommon, const std::string& fileName)
 {

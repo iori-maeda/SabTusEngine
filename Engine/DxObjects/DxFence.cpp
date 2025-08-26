@@ -1,6 +1,6 @@
 #include "DxFence.h"
 
-#include "../Logger.h"
+#include "Logger.h"
 #include "DxDevice.h"
 #include <cassert>
 

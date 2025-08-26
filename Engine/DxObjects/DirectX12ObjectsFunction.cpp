@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "../Logger.h"
+#include "Logger.h"
 
 namespace DirectX12ObjectsFunction
 {
