@@ -33,11 +33,11 @@ Model *ModelManager::Load(const std::string &fileName)
 	auto modelData = models_.find(fileName);
 	if (modelData != models_.end())
 	{
-		Logger::Log(std::format("ModelManager::Search : {}", fileName));
+		Logger::Log(std::format("ModelManager::Search::{}\n", fileName));
 		return modelData->second.get();
 	}
 
-	Logger::Log(std::format("ModelManager::Loading : {}", fileName));
+	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
 	Model *loadModel = new Model();
 	loadModel->Initialize(dxCommon_, fileName);
 
@@ -55,7 +55,7 @@ Model *ModelManager::GetModel(const std::string &fileName)
 	{
 		return modelData->second.get();
 	}
-	Logger::Log(std::format("ModelManager::SearchFailed : {}", fileName));
+	Logger::Log(std::format("ModelManager::SearchFailed::{}\n", fileName));
 	assert(nullptr);
 	return nullptr;
 }
