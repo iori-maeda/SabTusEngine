@@ -4,23 +4,23 @@
 #include <cassert>
 
 // MyCrassies
-#include "ComPtr.h"
-#include "Window/WinApp.h"
-#include "DxDevice.h"
-#include "DxCommand.h"
-#include "DxSwapChain.h"
-#include "DxFence.h"
-#include "DxShader.h"
-#include "DirectXCommon.h"
-#include "TextureManager.h"
-#include "2D/SpriteCommon.h"
-#include "2D/Sprite.h"
-#include "3D/Object3dCommon.h"
-#include "3D/Object3d.h"
-#include "ModelManager.h"
-
-#include "DirectX12ObjectsFunction.h"
-#include "ImGuiManager.h"
+//#include "ComPtr.h"
+//#include "Window/WinApp.h"
+//#include "DxDevice.h"
+//#include "DxCommand.h"
+//#include "DxSwapChain.h"
+//#include "DxFence.h"
+//#include "DxShader.h"
+//#include "DirectXCommon.h"
+//#include "TextureManager.h"
+//#include "2D/SpriteCommon.h"
+//#include "2D/Sprite.h"
+//#include "3D/Object3dCommon.h"
+//#include "3D/Object3d.h"
+//#include "ModelManager.h"
+//
+//#include "DirectX12ObjectsFunction.h"
+//#include "ImGuiManager.h"
 
 // Math
 #include "Math/Vector2.h"
@@ -29,6 +29,8 @@
 
 #include "Logger.h"
 #include "StringUtility.h"
+
+#include "BaseGame.h"
 
 using namespace std;
 
@@ -57,7 +59,7 @@ struct DirectionalLight
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
-	unique_ptr<WinApp> winApp = make_unique<WinApp>();
+	/*unique_ptr<WinApp> winApp = make_unique<WinApp>();
 	winApp->Initialize();
 
 	unique_ptr<DirectXCommon> dxCommon = make_unique<DirectXCommon>();
@@ -85,17 +87,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	object3d->Initiazlize(object3dCommon.get(), "axis.obj");
 
 
-	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");
+	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");*/
 
-
+	unique_ptr<BaseGame> baseGame = make_unique<BaseGame>();
+	baseGame->Initialize();
 #pragma region Resources Create
 
-	ComPtr<ID3D12Resource> directionalLightResource = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
+	/*ComPtr<ID3D12Resource> directionalLightResource = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
 	DirectionalLight* directionalLightData = nullptr;
 	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
-	directionalLightData->intensity = 1.0f;
+	directionalLightData->intensity = 1.0f;*/
 #pragma endregion
 
 #pragma region Resources Writing
@@ -134,92 +137,24 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 
 #pragma region 変数宣言
-	Transform mainCameraTransform = {};
-	mainCameraTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	mainCameraTransform.translate.z = -200.0f;
-	Matrix4x4 mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
-	Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
-	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
-
+	
 	/*Transform triangleTransform = {};
 	triangleTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
 	triangleTransform.translate.x = 100.0f;
 	Matrix4x4 triangleWorldMatrix = MakeIdentityMatrix();*/
 
-	Transform spriteTransform = {};
-	spriteTransform.scale = Vector3(0.5f, 0.5f, 0.5f);
-	Matrix4x4 spriteWorldMatrix = MakeIdentityMatrix();
+	
 
-	Object3d::Transform modelTransform = {};
-	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	modelTransform.rotate.y = -1.7f;
-	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
-
-	Vector4 texColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	
 #pragma endregion
 
-	while (!winApp->PoccesMessage())
+	while (!baseGame->EndRequest())
 	{
-
-#ifdef USE_IMGUI
-
-		ImGuiManager::Begin();
-		ImGui::Begin("Debug");
-		ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
-		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
-		ImGui::DragFloat3("Light Dir", &directionalLightData->direction.x, 0.01f);
-		ImGui::End();
-		ImGuiManager::End();
-#endif
-
-		winApp->Update();
-
-#pragma region GameUpdate
-		projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), 0.1f, 100.0f);
-		//projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
-
-		mainCameraMatrix = MakeAffineMatrix(mainCameraTransform.scale, mainCameraTransform.rotate, mainCameraTransform.translate);
-		mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
-
-		object3d->SetColor(texColor);
-		object3d->SetTransform(modelTransform);
-		object3d->Upadate();
-	/*	materialDataTriangle->Kd = texColor;
-
-		triangleTransform.rotate.y += 0.01f;
-		triangleWorldMatrix = MakeAffineMatrix(triangleTransform.scale, triangleTransform.rotate, triangleTransform.translate);
-		wvpDataTriangle->wvp = triangleWorldMatrix * mainCameraViewMatrix * projectionMatrix;
-		wvpDataTriangle->world = triangleWorldMatrix;*/
-
-		//modelTransform.rotate.y += 0.03f;
-		/*modelWorldMatrix = MakeAffineMatrix(modelTransform.scale, modelTransform.rotate, modelTransform.translate);
-		wvpDataModel->wvp = modelWorldMatrix * mainCameraViewMatrix * projectionMatrix;
-		wvpDataModel->world = modelWorldMatrix;*/
-#pragma endregion
-
-		dxCommon->BeginRendering();
-
-#pragma region 3D Draw
-		object3dCommon->PreDraw();
-
-		object3d->Draw();
-#pragma endregion
-
-#pragma region 2D Draw
-		spriteCommon->PreDraw();
-		sprite->Draw();
-#pragma endregion
-
-#pragma region PostDraw
-#pragma region ImGui Set
-		ImGuiManager::Draw(dxCommon.get());
-#pragma endregion
-
-		dxCommon->EndRendering();
+		baseGame->Upate();
+		baseGame->Draw();
 	}
 #pragma region Finalize
-
+	baseGame->Finalize();
 
 	/*materialResourceModel->Unmap(0, nullptr);
 	wvpResourceModel->Unmap(0, nullptr);
@@ -231,11 +166,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	materialResourceTriangle->Unmap(0, nullptr);
 	wvpResourceTriangle->Unmap(0, nullptr);
 	vertexResourceTriangle->Unmap(0, nullptr);*/
-	ImGuiManager::Finalize();
-	ModelManager::GetInstace().Finalize();
-	TextureManager::GetInstace().Finalize();
-
-	winApp->Finalize();
 
 #pragma endregion
 

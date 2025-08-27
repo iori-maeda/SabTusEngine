@@ -58,6 +58,12 @@
     <Filter Include="ソース ファイル\Engine\Utility">
       <UniqueIdentifier>{96a4fec1-a0b2-4f1c-9fe1-b5464bd94818}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Engine\GameClass">
+      <UniqueIdentifier>{965156f8-cb0a-4c93-9dbf-98cee04743b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Engine\GameClass">
+      <UniqueIdentifier>{44f5fe83-c523-4882-a920-5ecdfe917bc3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -152,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="Engine\DirectXCommon.cpp">
       <Filter>ソース ファイル\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\GameClass\BaseGame.cpp">
+      <Filter>ソース ファイル\Engine\GameClass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +259,9 @@
     </ClInclude>
     <ClInclude Include="Engine\ImGuiManager\ImGuiManager.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\GameClass\BaseGame.h">
+      <Filter>ヘッダー ファイル\Engine\GameClass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
