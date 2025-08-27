@@ -2,22 +2,6 @@
 #include <memory>
 #include <format>
 #include <cassert>
-#include <vector>
-#include <fstream>
-#include <sstream>
-
-// DirectX12
-#include <d3d12.h>
-#include <dxgi1_6.h>
-#pragma comment(lib, "d3d12.lib")
-// ShaderComplier
-#include <dxcapi.h>
-#pragma comment(lib, "dxcompiler.lib")
-// ImGui
-
-#include "externals/DirectXTex/DirectXTex.h"
-#include "externals/DirectXTex/d3dx12.h"
-
 
 // MyCrassies
 #include "ComPtr.h"

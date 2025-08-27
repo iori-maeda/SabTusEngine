@@ -123,9 +123,6 @@
     <ClCompile Include="Engine\3D\Object3d.cpp">
       <Filter>ソース ファイル\Engine\3D</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DirectXCommon.cpp">
-      <Filter>ソース ファイル\Engine\Window</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\3D\Model.cpp">
       <Filter>ソース ファイル\Engine\3D</Filter>
     </ClCompile>
@@ -151,6 +148,9 @@
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ImGuiManager\ImGuiManager.cpp">
+      <Filter>ソース ファイル\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\DirectXCommon.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
   </ItemGroup>

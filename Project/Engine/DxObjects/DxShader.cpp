@@ -1,5 +1,9 @@
 #include "DxShader.h"
 
+// ShaderComplier
+#include <dxcapi.h>
+#pragma comment(lib, "dxcompiler.lib")
+
 #include <cassert>
 #include <format>
 
