@@ -14,9 +14,6 @@
 #include <dxcapi.h>
 #pragma comment(lib, "dxcompiler.lib")
 // ImGui
-#include "externals/imgui/imgui.h"
-#include "externals/imgui/imgui_impl_dx12.h"
-#include "externals/imgui/imgui_impl_win32.h"
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
@@ -39,6 +36,7 @@
 #include "ModelManager.h"
 
 #include "DirectX12ObjectsFunction.h"
+#include "ImGuiManager.h"
 
 // Math
 #include "Math/Vector2.h"
@@ -80,6 +78,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	unique_ptr<DirectXCommon> dxCommon = make_unique<DirectXCommon>();
 	dxCommon->Initialize(*winApp.get());
+
+	ImGuiManager::Initialize(winApp.get(), dxCommon.get());
 
 	TextureManager::GetInstace().Initialize(dxCommon.get());
 	DxShaderCompiler::GetInstancxe().Initialize();
@@ -148,20 +148,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	//vertexBufferViewTriangle.StrideInBytes = sizeof(VertexData);
 #pragma endregion
 
-#pragma region ImGui Initialize
-	// こういうもん
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(winApp->GetHWND());
-	ImGui_ImplDX12_Init(
-		dxCommon->GetDxDevice()->GetDevice(),
-		dxCommon->GetSwapChain()->kBufferCount,
-		dxCommon->GetRTVDesc().Format, dxCommon->GetSRVDescriptorHeap(),
-		dxCommon->GetSRVDescriptorCPUHandle(0),
-		dxCommon->GetSRVDescriptorGPUHandle(0)
-	);
-#pragma endregion
 
 #pragma region 変数宣言
 	Transform mainCameraTransform = {};
@@ -190,13 +176,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	while (!winApp->PoccesMessage())
 	{
-
-#pragma region Begin Frame
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-#pragma endregion
+		ImGuiManager::BeginFrame();
 
 #pragma region Imgui Update
 		ImGui::Begin("Debug");
@@ -249,15 +229,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region PostDraw
 #pragma region ImGui Set
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommand()->GetCommandList());
+		ImGuiManager::EndFrame(dxCommon.get());
 #pragma endregion
 
 		dxCommon->EndRendering();
 	}
 #pragma region Finalize
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+
 
 	/*materialResourceModel->Unmap(0, nullptr);
 	wvpResourceModel->Unmap(0, nullptr);
@@ -269,7 +247,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	materialResourceTriangle->Unmap(0, nullptr);
 	wvpResourceTriangle->Unmap(0, nullptr);
 	vertexResourceTriangle->Unmap(0, nullptr);*/
-
+	ImGuiManager::Finalize();
 	ModelManager::GetInstace().Finalize();
 	TextureManager::GetInstace().Finalize();
 

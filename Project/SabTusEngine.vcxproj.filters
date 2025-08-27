@@ -150,6 +150,9 @@
     <ClCompile Include="Engine\DxObjects\DxSwapChain.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\ImGuiManager\ImGuiManager.cpp">
+      <Filter>ソース ファイル\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -244,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="Engine\DxObjects\DxSwapChain.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ImGuiManager\ImGuiManager.h">
+      <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
