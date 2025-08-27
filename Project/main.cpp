@@ -176,18 +176,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	while (!winApp->PoccesMessage())
 	{
-		ImGuiManager::BeginFrame();
 
-#pragma region Imgui Update
+#ifdef USE_IMGUI
+
+		ImGuiManager::Begin();
 		ImGui::Begin("Debug");
 		ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
 		ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
 		ImGui::DragFloat3("Light Dir", &directionalLightData->direction.x, 0.01f);
 		ImGui::End();
-
-		ImGui::Render();
-#pragma endregion
+		ImGuiManager::End();
+#endif
 
 		winApp->Update();
 
@@ -229,7 +229,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma region PostDraw
 #pragma region ImGui Set
-		ImGuiManager::EndFrame(dxCommon.get());
+		ImGuiManager::Draw(dxCommon.get());
 #pragma endregion
 
 		dxCommon->EndRendering();

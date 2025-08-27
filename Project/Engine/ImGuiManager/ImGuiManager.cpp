@@ -6,8 +6,9 @@
 #include "DxSwapChain.h"
 #include "DxCommand.h"
 
-void ImGuiManager::Initialize(WinApp *winApp, DirectXCommon *dxCommon)
+void ImGuiManager::Initialize([[maybe_unused]]WinApp *winApp, [[maybe_unused]]DirectXCommon *dxCommon)
 {
+#ifdef USE_IMGUI
 	// こういうもん
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -20,24 +21,40 @@ void ImGuiManager::Initialize(WinApp *winApp, DirectXCommon *dxCommon)
 		dxCommon->GetSRVDescriptorCPUHandle(0),
 		dxCommon->GetSRVDescriptorGPUHandle(0)
 	);
+#endif // USE_IMGUI
 }
 
 void ImGuiManager::Finalize()
 {
+#ifdef USE_IMGUI
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+#endif
 }
 
-void ImGuiManager::BeginFrame()
+void ImGuiManager::Begin()
 {
+#ifdef USE_IMGUI
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+#endif
 }
 
-void ImGuiManager::EndFrame(DirectXCommon *dxCommon)
+void ImGuiManager::End()
 {
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommand()->GetCommandList());
+	
+#ifdef USE_IMGUI
+	ImGui::Render();
+#endif
 }
- 
+
+void ImGuiManager::Draw([[maybe_unused]]DirectXCommon *dxCommon)
+{
+#ifdef USE_IMGUI
+	ID3D12DescriptorHeap *descriptorHeaps[] = { dxCommon->GetSRVDescriptorHeap() };
+	dxCommon->GetCommand()->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommand()->GetCommandList());
+#endif
+}

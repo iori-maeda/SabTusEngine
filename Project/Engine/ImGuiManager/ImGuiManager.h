@@ -1,7 +1,9 @@
 #pragma once
+#ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
+#endif
 
 class WinApp;
 class DirectXCommon;
@@ -11,6 +13,7 @@ class ImGuiManager
 public:
 	static void Initialize(WinApp* winApp, DirectXCommon* dxCommon);
 	static void Finalize();
-	static void BeginFrame();
-	static void EndFrame(DirectXCommon* dxCommon);
+	static void Begin();
+	static void End();
+	static void Draw(DirectXCommon* dxCommon);
 };
