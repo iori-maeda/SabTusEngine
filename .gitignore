@@ -19,7 +19,7 @@
 
 # 自作のフォルダを除外
 Generated/
-DirectXTex/Bin/
+Project/externals/DirectXTex/Bin/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
