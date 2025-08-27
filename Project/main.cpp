@@ -4,33 +4,16 @@
 #include <cassert>
 
 // MyCrassies
-//#include "ComPtr.h"
-//#include "Window/WinApp.h"
-//#include "DxDevice.h"
-//#include "DxCommand.h"
-//#include "DxSwapChain.h"
-//#include "DxFence.h"
-//#include "DxShader.h"
-//#include "DirectXCommon.h"
-//#include "TextureManager.h"
-//#include "2D/SpriteCommon.h"
-//#include "2D/Sprite.h"
-//#include "3D/Object3dCommon.h"
-//#include "3D/Object3d.h"
-//#include "ModelManager.h"
-//
-//#include "DirectX12ObjectsFunction.h"
-//#include "ImGuiManager.h"
+#include "BaseGame.h"
 
 // Math
 #include "Math/Vector2.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
 
+// Utility
 #include "Logger.h"
 #include "StringUtility.h"
-
-#include "BaseGame.h"
 
 using namespace std;
 
@@ -59,35 +42,6 @@ struct DirectionalLight
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
-	/*unique_ptr<WinApp> winApp = make_unique<WinApp>();
-	winApp->Initialize();
-
-	unique_ptr<DirectXCommon> dxCommon = make_unique<DirectXCommon>();
-	dxCommon->Initialize(*winApp.get());
-
-	ImGuiManager::Initialize(winApp.get(), dxCommon.get());
-
-	TextureManager::GetInstace().Initialize(dxCommon.get());
-	DxShaderCompiler::GetInstancxe().Initialize();
-
-	ModelManager::GetInstace().Initialize(dxCommon.get());
-
-	unique_ptr<SpriteCommon> spriteCommon = make_unique<SpriteCommon>();
-	spriteCommon->Initialize(dxCommon.get());
-
-	unique_ptr<Object3dCommon> object3dCommon = make_unique<Object3dCommon>();
-	object3dCommon->Initialize(dxCommon.get());
-
-	unique_ptr<Sprite> sprite = make_unique<Sprite>();
-	sprite->Initiazlize(spriteCommon.get(), "uvChecker.png");
-
-	ModelManager::GetInstace().Load("sphere.obj");
-
-	unique_ptr<Object3d> object3d = make_unique<Object3d>();
-	object3d->Initiazlize(object3dCommon.get(), "axis.obj");
-
-
-	TextureDataCPU textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");*/
 
 	unique_ptr<BaseGame> baseGame = make_unique<BaseGame>();
 	baseGame->Initialize();
