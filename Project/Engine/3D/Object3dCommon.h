@@ -13,6 +13,7 @@ class Object3dCommon
 public:
 
 	Object3dCommon() = default;
+	~Object3dCommon();
 	
 	void Initialize(DirectXCommon* dxCommon);
 	void PreDraw();

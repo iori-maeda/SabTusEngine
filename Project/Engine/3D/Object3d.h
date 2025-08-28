@@ -33,6 +33,7 @@ public:
 public:
 
 	Object3d() = default;
+	~Object3d();
 
 	void Initiazlize(Object3dCommon* renderer, const std::string& fileName);
 	void Upadate();

@@ -67,6 +67,9 @@ public:
 
 public:
 
+	Model() = default;
+	~Model();
+
 	void Initialize(DirectXCommon* dxCommon);
 	void Initialize(DirectXCommon* dxCommon, const std::string& fileName);
 	void Draw();

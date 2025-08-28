@@ -56,9 +56,14 @@ private:
 
 
 	std::unique_ptr<Sprite> sprite = nullptr;
+	Transform spriteTransform{};
+	Matrix4x4 spriteWorldMatrix{};
+
 	std::unique_ptr<Object3d> object3d = nullptr;
+	Object3d::Transform modelTransform{};
+	Matrix4x4 modelWorldMatrix{};
 
 	TextureDataCPU textureDataCPU2;
-
+	Vector4 texColor{};
 
 };

@@ -35,6 +35,7 @@ public:
 public:
 
 	Sprite() = default;
+	~Sprite();
 
 	void Initiazlize(SpriteCommon* renderer, const std::string& fileName);
 	void Upadate();

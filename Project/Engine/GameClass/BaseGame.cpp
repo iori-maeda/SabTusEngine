@@ -28,14 +28,20 @@ void BaseGame::Initialize()
 
 	sprite = std::make_unique<Sprite>();
 	sprite->Initiazlize(spriteCommon.get(), "uvChecker.png");
+	spriteTransform.scale = Vector3(0.5f, 0.5f, 0.5f);
+	spriteWorldMatrix = MakeIdentityMatrix();
 
 	ModelManager::GetInstace().Load("sphere.obj");
 
 	object3d = std::make_unique<Object3d>();
 	object3d->Initiazlize(object3dCommon.get(), "axis.obj");
+	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
+	modelTransform.rotate.y = -1.7f;
+	modelWorldMatrix = MakeIdentityMatrix();
 
 
 	textureDataCPU2 = TextureManager::GetInstace().Load("uvChecker.png");
+	texColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void BaseGame::Finalize()
@@ -53,25 +59,16 @@ void BaseGame::Upate()
 
 #ifdef USE_IMGUI
 
-	/*ImGuiManager::Begin();
+	ImGuiManager::Begin();
 	ImGui::Begin("Debug");
-	ImGui::DragFloat3("Main Camera Position", &mainCameraTransform.translate.x, 0.1f);
 	ImGui::DragFloat4("Tex Color", &texColor.x, 0.001f, 0.0f, 1.0f);
 	ImGui::DragFloat3("Model Rot", &modelTransform.rotate.x, 0.01f);
-	ImGui::DragFloat3("Light Dir", &directionalLightData->direction.x, 0.01f);
 	ImGui::End();
-	ImGuiManager::End();*/
+	ImGuiManager::End();
 #endif
 
-	Transform spriteTransform = {};
-	spriteTransform.scale = Vector3(0.5f, 0.5f, 0.5f);
-	Matrix4x4 spriteWorldMatrix = MakeIdentityMatrix();
-
-	Object3d::Transform modelTransform = {};
-	modelTransform.scale = Vector3(1.0f, 1.0f, 1.0f);
-	modelTransform.rotate.y = -1.7f;
-	Matrix4x4 modelWorldMatrix = MakeIdentityMatrix();
-	Vector4 texColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	
+	
 	object3d->SetColor(texColor);
 	object3d->SetTransform(modelTransform);
 	object3d->Upadate();
@@ -88,7 +85,9 @@ void BaseGame::Draw()
 
 	spriteCommon->PreDraw();
 
-	//ImGuiManager::Draw(dxCommon.get());
+	sprite->Draw();
+
+	ImGuiManager::Draw(dxCommon.get());
 
 	dxCommon->EndRendering();
 }

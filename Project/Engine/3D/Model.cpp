@@ -11,15 +11,24 @@
 
 std::string Model::defaultDirectoryPath = "Resources/Models/";
 
-void Model::Initialize(DirectXCommon* dxCommon)
+Model::~Model()
+{
+	for (auto &modelData : modelData_.objects)
+	{
+		modelData.second.materialResource->Unmap(0, nullptr);
+		modelData.second.vertexResource->Unmap(0, nullptr);
+	}
+}
+
+void Model::Initialize(DirectXCommon *dxCommon)
 {
 	dxCommon_ = dxCommon;
 
 	modelData_ = LoadObjFile(defaultDirectoryPath, "axis.obj");
-	for (auto& object : modelData_.objects)
+	for (auto &object : modelData_.objects)
 	{
-		ObjectDataCPU& objCPU = object.first;
-		ObjectDataGPU& objGPU = object.second;
+		ObjectDataCPU &objCPU = object.first;
+		ObjectDataGPU &objGPU = object.second;
 		if (objCPU.textureFilePath.empty())
 		{
 			objCPU.textureFilePath = "uvChecker.png";
@@ -32,7 +41,7 @@ void Model::Initialize(DirectXCommon* dxCommon)
 
 		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
 
-		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&objCPU.vertexData));
+		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.vertexData));
 		memcpy(objCPU.vertexData, objCPU.vertices.data(), sizeof(VertexData) * objCPU.vertices.size());
 
 		objGPU.vertexBufferViews_.BufferLocation = objGPU.vertexResource->GetGPUVirtualAddress();
@@ -42,22 +51,22 @@ void Model::Initialize(DirectXCommon* dxCommon)
 
 		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
 
-		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void**>(&objCPU.materialData));
+		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
 		*objCPU.materialData = modelData_.objects[0].first.material;
 		objCPU.materialData->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		objCPU.materialData->enableLighting = true;
 	}
 }
 
-void Model::Initialize(DirectXCommon* dxCommon, const std::string& fileName)
+void Model::Initialize(DirectXCommon *dxCommon, const std::string &fileName)
 {
 	dxCommon_ = dxCommon;
 
 	modelData_ = LoadObjFile(defaultDirectoryPath, fileName);
-	for (auto& object : modelData_.objects)
+	for (auto &object : modelData_.objects)
 	{
-		ObjectDataCPU& objCPU = object.first;
-		ObjectDataGPU& objGPU = object.second;
+		ObjectDataCPU &objCPU = object.first;
+		ObjectDataGPU &objGPU = object.second;
 		if (objCPU.textureFilePath.empty())
 		{
 			objCPU.textureFilePath = "uvChecker.png";
@@ -70,7 +79,7 @@ void Model::Initialize(DirectXCommon* dxCommon, const std::string& fileName)
 
 		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
 
-		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&objCPU.vertexData));
+		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.vertexData));
 		memcpy(objCPU.vertexData, objCPU.vertices.data(), sizeof(VertexData) * objCPU.vertices.size());
 
 		objGPU.vertexBufferViews_.BufferLocation = objGPU.vertexResource->GetGPUVirtualAddress();
@@ -80,7 +89,7 @@ void Model::Initialize(DirectXCommon* dxCommon, const std::string& fileName)
 
 		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
 
-		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void**>(&objCPU.materialData));
+		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
 		*objCPU.materialData = modelData_.objects[0].first.material;
 		objCPU.materialData->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		objCPU.materialData->enableLighting = true;
@@ -91,11 +100,11 @@ void Model::Draw()
 {
 	assert(dxCommon_ != nullptr);
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
-	for (const auto& object : modelData_.objects)
+	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
+	for (const auto &object : modelData_.objects)
 	{
-		const ObjectDataCPU& objCPU = object.first;
-		const ObjectDataGPU& objGPU = object.second;
+		const ObjectDataCPU &objCPU = object.first;
+		const ObjectDataGPU &objGPU = object.second;
 		commandList->IASetVertexBuffers(0, 1, &objGPU.vertexBufferViews_);
 		commandList->SetGraphicsRootConstantBufferView(0, objGPU.materialResource->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, objGPU.texHandle_);
@@ -103,7 +112,7 @@ void Model::Draw()
 	}
 }
 
-Model::ModelData Model::LoadObjFile(const std::string& directoryPath, const std::string& filePath)
+Model::ModelData Model::LoadObjFile(const std::string &directoryPath, const std::string &filePath)
 {
 	ModelData result;
 	std::unique_ptr<ObjectDataCPU> obj = std::make_unique<ObjectDataCPU>();
@@ -127,10 +136,12 @@ Model::ModelData Model::LoadObjFile(const std::string& directoryPath, const std:
 			s >> useMtlFileName;
 		}
 		// オブジェクト名
-		else if (identifier == "o") {
+		else if (identifier == "o")
+		{
 			// 名前が空じゃない = 内容がある
 			// 返却用構造体にpuahして内容破棄
-			if (!obj->name.empty()) {
+			if (!obj->name.empty())
+			{
 				result.objects.push_back(std::make_pair(*obj, ObjectDataGPU()));
 				obj.release();
 				obj = std::make_unique<ObjectDataCPU>();
@@ -163,7 +174,8 @@ Model::ModelData Model::LoadObjFile(const std::string& directoryPath, const std:
 			normals.push_back(normal);
 		}
 		// 使用マテリアル名
-		else if (identifier == "usemtl") {
+		else if (identifier == "usemtl")
+		{
 			std::string useMatreialName;
 			s >> useMatreialName;
 			MtlData useMtlData = LoadMtlFile(directoryPath + '/' + useMtlFileName, useMatreialName);
@@ -209,7 +221,7 @@ Model::ModelData Model::LoadObjFile(const std::string& directoryPath, const std:
 	return result;
 }
 
-Model::MtlData Model::LoadMtlFile(const std::string& fileName, const std::string& useMaterialName)
+Model::MtlData Model::LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)
 {
 	MtlData result{};
 

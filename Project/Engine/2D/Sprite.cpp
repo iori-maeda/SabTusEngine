@@ -4,6 +4,14 @@
 #include "WIndow/WinApp.h"
 #include "DxCommand.h"
 
+Sprite::~Sprite()
+{
+	vertexResource_->Unmap(0, nullptr);
+	indexResource_->Unmap(0, nullptr);
+	transformationMatrixResource_->Unmap(0, nullptr);
+	materialResource_->Unmap(0, nullptr);
+}
+
 void Sprite::Initiazlize(SpriteCommon* spriteCommon, const std::string& fileName)
 {
 	spriteCommon_ = spriteCommon;

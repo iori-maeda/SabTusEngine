@@ -4,14 +4,19 @@
 #include "DxShader.h"
 #include "Logger.h" 
 
-void Object3dCommon::Initialize(DirectXCommon* dxCommon)
+Object3dCommon::~Object3dCommon()
+{
+	directionalLightResource->Unmap(0, nullptr);
+}
+
+void Object3dCommon::Initialize(DirectXCommon *dxCommon)
 {
 	dxCommon_ = dxCommon;
 	CreateRootSignature();
 	CreatePipelineStateObject();
 
 	directionalLightResource = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
-	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
+	directionalLightResource->Map(0, nullptr, reinterpret_cast<void **>(&directionalLightData));
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
 	directionalLightData->intensity = 1.0f;
@@ -20,7 +25,7 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 void Object3dCommon::PreDraw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
@@ -80,7 +85,7 @@ void Object3dCommon::CreateRootSignature()
 	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	if (FAILED(hr))
 	{
-		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
 		assert(false);
 	}
 	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
