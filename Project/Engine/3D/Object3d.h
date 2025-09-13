@@ -12,6 +12,7 @@
 #include "Model.h"
 
 class Object3dCommon;
+class Camera;
 
 class Object3d
 {
@@ -50,10 +51,13 @@ public:
 			model_->SetColor(color);
 		}
 	}
+	void SetCamera(Camera* camera) { camera_ = camera; }
+	
 
 private:
 
 	Object3dCommon* obj3dCommon_ = nullptr;
+	Camera* camera_ = nullptr;
 
 	Transform transform_{};
 

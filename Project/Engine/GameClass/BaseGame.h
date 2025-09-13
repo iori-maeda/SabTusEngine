@@ -19,6 +19,7 @@
 #include "3D/Object3dCommon.h"
 #include "3D/Object3d.h"
 #include "ModelManager.h"
+#include "Camera/Camera.h"
 
 class BaseGame
 {
@@ -45,25 +46,27 @@ public:
 
 private:
 #pragma region SystemVaiable
-	std::unique_ptr<WinApp> winApp = nullptr;
+	std::unique_ptr<WinApp> winApp_ = nullptr;
 
-	std::unique_ptr<DirectXCommon> dxCommon = nullptr;
+	std::unique_ptr<DirectXCommon> dxCommon_ = nullptr;
 
-	std::unique_ptr<SpriteCommon> spriteCommon = nullptr;
+	std::unique_ptr<SpriteCommon> spriteCommon_ = nullptr;
 
-	std::unique_ptr<Object3dCommon> object3dCommon = nullptr;
+	std::unique_ptr<Object3dCommon> object3dCommon_ = nullptr;
+
+	std::unique_ptr<Camera> mainCamera_ = std::make_unique<Camera>();
 #pragma endregion
 
 
-	std::unique_ptr<Sprite> sprite = nullptr;
-	Transform spriteTransform{};
-	Matrix4x4 spriteWorldMatrix{};
+	std::unique_ptr<Sprite> sprite_ = nullptr;
+	Transform spriteTransform_{};
+	Matrix4x4 spriteWorldMatrix_{};
 
-	std::unique_ptr<Object3d> object3d = nullptr;
-	Object3d::Transform modelTransform{};
-	Matrix4x4 modelWorldMatrix{};
+	std::unique_ptr<Object3d> object3d_ = nullptr;
+	Object3d::Transform modelTransform_{};
+	Matrix4x4 modelWorldMatrix_{};
 
-	TextureDataCPU textureDataCPU2;
-	Vector4 texColor{};
+	TextureDataCPU textureDataCPU2_;
+	Vector4 texColor_{};
 
 };
