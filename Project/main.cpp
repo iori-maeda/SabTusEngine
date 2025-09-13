@@ -2,7 +2,7 @@
 #include <memory>
 
 // MyCrassies
-#include "BaseGame.h"
+#include "GameClass/BaseGame.h"
 
 // Utility
 #include "Logger.h"
