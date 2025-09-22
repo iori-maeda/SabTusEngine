@@ -37,8 +37,13 @@ Output main(VertexOutput input)
 
 	float4 texColor = gTexture.Sample(gSampler, input.uv);
 
-	float4 ambient = gMaterial.enableLighting ? gMaterial.Ka * texColor : float4(0.0, 0.0, 0.0, 0.0);
-	float4 diffuse = gMaterial.Kd * texColor;
+	float4 ambient = float4(0.0, 0.0, 0.0, 0.0);
+    ambient.rgb = gMaterial.enableLighting ? gMaterial.Ka.rgb * texColor.rgb : float3(0.0, 0.0, 0.0);
+    ambient.a = gMaterial.enableLighting ? gMaterial.Ka.a * texColor.a : 0.0;
+	
+	float4 diffuse = texColor;
+	diffuse.rgb = gMaterial.Kd.rgb * texColor.rgb;
+	diffuse.a = gMaterial.Kd.a * texColor.a;
 
 	output.color = ambient;
 	output.color += gMaterial.enableLighting ? diffuse * lightColor : diffuse;

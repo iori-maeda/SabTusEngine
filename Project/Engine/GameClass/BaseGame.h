@@ -4,6 +4,8 @@
 #include <memory>
 #include <format>
 #include <cassert>
+#include <functional>
+#include <vector>
 
 #include "ComPtr.h"
 #include "Window/WinApp.h"
@@ -26,11 +28,11 @@ class BaseGame
 public:
 
 	struct  Transform
-{
-	Vector3 scale{};
-	Vector3 rotate{};
-	Vector3 translate{};
-};
+	{
+		Vector3 scale{};
+		Vector3 rotate{};
+		Vector3 translate{};
+	};
 
 	// 初期化
 	void Initialize();
@@ -57,14 +59,20 @@ private:
 	std::unique_ptr<Camera> mainCamera_ = std::make_unique<Camera>();
 #pragma endregion
 
+	std::vector<std::pair<std::string, Object3d*>> drawObjects_;
+
 
 	std::unique_ptr<Sprite> sprite_ = nullptr;
 	Transform spriteTransform_{};
 	Matrix4x4 spriteWorldMatrix_{};
 
-	std::unique_ptr<Object3d> object3d_ = nullptr;
+	std::unique_ptr<Object3d> object3d_;
 	Object3d::Transform modelTransform_{};
 	Matrix4x4 modelWorldMatrix_{};
+
+	std::unique_ptr<Object3d> object3d2_ = nullptr;
+	Object3d::Transform modelTransform2_{};
+	Matrix4x4 modelWorldMatrix2_{};
 
 	TextureDataCPU textureDataCPU2_;
 	Vector4 texColor_{};

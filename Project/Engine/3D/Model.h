@@ -44,10 +44,10 @@ public:
 	{
 		std::string name;
 		std::vector<VertexData> vertices;
-		MaterialData material{};
+		MaterialData mtlData{};
 		std::string textureFilePath;
-		VertexData* vertexData = nullptr;
-		MaterialData* materialData = nullptr;
+		VertexData *vertexData = nullptr;
+		MaterialData *materialData = nullptr;
 	};
 
 	struct ObjectDataGPU
@@ -62,6 +62,7 @@ public:
 
 	struct ModelData
 	{
+		std::string modelName;
 		std::vector<std::pair<ObjectDataCPU, ObjectDataGPU>> objects;
 	};
 
@@ -70,31 +71,30 @@ public:
 	Model() = default;
 	~Model();
 
-	void Initialize(DirectXCommon* dxCommon);
-	void Initialize(DirectXCommon* dxCommon, const std::string& fileName);
+	void Initialize(DirectXCommon *dxCommon);
+	void Initialize(DirectXCommon *dxCommon, const std::string &fileName);
 	void Draw();
 
 
-	static ModelData LoadObjFile(const std::string& directoryPath, const std::string& filePath);
-	static MtlData LoadMtlFile(const std::string& fileName, const std::string& useMaterialName);
+	static ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath);
+	static MtlData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName);
 
 public:
 
-	void SetColor(const Vector4& color)
+	std::string GetName() { return modelData_.modelName; }
+	Vector4 GetColor() { return modelData_.objects[0].first.materialData->Kd; }
+
+	void SetColor(const Vector4 &color)
 	{
-		for (auto& object : modelData_.objects)
+		for (auto &object : modelData_.objects)
 		{
-			ObjectDataCPU& objCPU = object.first;
-			objCPU.material.Kd = color;
-			if (objCPU.materialData)
-			{
-				*objCPU.materialData = objCPU.material;
-			}
+			ObjectDataCPU &objCPU = object.first;
+			objCPU.materialData->Kd = color;
 		}
 	}
 
 private:
-	DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon *dxCommon_ = nullptr;
 
 	ModelData modelData_{};
 };

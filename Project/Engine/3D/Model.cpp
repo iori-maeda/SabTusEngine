@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <cassert>
 
 #include "DirectXCommon.h"
@@ -52,8 +53,8 @@ void Model::Initialize(DirectXCommon *dxCommon)
 		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
 
 		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
-		*objCPU.materialData = modelData_.objects[0].first.material;
-		objCPU.materialData->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+		*objCPU.materialData = modelData_.objects[0].first.mtlData;
+		*objCPU.materialData = objCPU.mtlData;
 		objCPU.materialData->enableLighting = true;
 	}
 }
@@ -90,9 +91,8 @@ void Model::Initialize(DirectXCommon *dxCommon, const std::string &fileName)
 		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
 
 		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
-		*objCPU.materialData = modelData_.objects[0].first.material;
-		objCPU.materialData->Kd = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-		objCPU.materialData->enableLighting = true;
+		*objCPU.materialData = objCPU.mtlData;
+		objCPU.materialData->enableLighting = false;
 	}
 }
 
@@ -105,6 +105,7 @@ void Model::Draw()
 	{
 		const ObjectDataCPU &objCPU = object.first;
 		const ObjectDataGPU &objGPU = object.second;
+		
 		commandList->IASetVertexBuffers(0, 1, &objGPU.vertexBufferViews_);
 		commandList->SetGraphicsRootConstantBufferView(0, objGPU.materialResource->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, objGPU.texHandle_);
@@ -179,7 +180,7 @@ Model::ModelData Model::LoadObjFile(const std::string &directoryPath, const std:
 			std::string useMatreialName;
 			s >> useMatreialName;
 			MtlData useMtlData = LoadMtlFile(directoryPath + '/' + useMtlFileName, useMatreialName);
-			obj->material = useMtlData.material;
+			obj->mtlData = useMtlData.material;
 			obj->textureFilePath = useMtlData.textureFilePath;
 		}
 		// index
@@ -218,6 +219,10 @@ Model::ModelData Model::LoadObjFile(const std::string &directoryPath, const std:
 	}
 
 	result.objects.push_back(std::make_pair(*obj, ObjectDataGPU()));
+	// 最後にモデル名をfilePathから取得して終了
+	std::filesystem::path path(filePath);
+	result.modelName = path.stem().string();
+
 	return result;
 }
 

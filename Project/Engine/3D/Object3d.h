@@ -20,7 +20,7 @@ public:
 
 	struct  Transform
 	{
-		Vector3 scale{1.0f, 1.0f, 1.0f};
+		Vector3 scale{ 1.0f, 1.0f, 1.0f };
 		Vector3 rotate{};
 		Vector3 translate{};
 	};
@@ -36,34 +36,41 @@ public:
 	Object3d() = default;
 	~Object3d();
 
-	void Initiazlize(Object3dCommon* renderer, const std::string& fileName);
+	void Initiazlize(Object3dCommon *renderer, const std::string &fileName);
 	void Upadate();
 	void Draw();
 
+	void DebugWindow();
+
 public:
 
-	void SetTransform(const Transform& transform) { transform_ = transform; }
-	void SetPosition(const Vector3& position) { transform_.translate = position; }
-	void SetRotation(const Vector3& rotation) { transform_.rotate = rotation; }
-	void SetScale(const Vector3& scale) { transform_.scale = scale; }
-	void SetColor(const Vector4& color) {
-		if (model_) {
+	std::string GetModelName() const { return model_->GetName(); }
+	Vector3 GetPosition() const { return transform_.translate; }
+
+	void SetTransform(const Transform &transform) { transform_ = transform; }
+	void SetPosition(const Vector3 &position) { transform_.translate = position; }
+	void SetRotation(const Vector3 &rotation) { transform_.rotate = rotation; }
+	void SetScale(const Vector3 &scale) { transform_.scale = scale; }
+	void SetColor(const Vector4 &color)
+	{
+		if (model_)
+		{
 			model_->SetColor(color);
 		}
 	}
-	void SetCamera(Camera* camera) { camera_ = camera; }
-	
+	void SetCamera(Camera *camera) { camera_ = camera; }
+
 
 private:
 
-	Object3dCommon* obj3dCommon_ = nullptr;
-	Camera* camera_ = nullptr;
+	Object3dCommon *obj3dCommon_ = nullptr;
+	Camera *camera_ = nullptr;
 
 	Transform transform_{};
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
-	TransformationMatrix* transformationMatrixData_ = nullptr;
+	TransformationMatrix *transformationMatrixData_ = nullptr;
 
-	Model* model_ = nullptr;
+	Model *model_ = nullptr;
 };
 

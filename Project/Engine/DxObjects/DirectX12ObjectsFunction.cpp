@@ -1,6 +1,7 @@
 #include "DirectX12ObjectsFunction.h"
 
 #include <cassert>
+#include <format>
 
 #include "Logger.h"
 
@@ -12,7 +13,7 @@ namespace DirectX12ObjectsFunction
 	/// <param name="device->GetDevice()">作成してくれるデバイス</param>
 	/// <param name="sizeInBytes">使用サイズ</param>
 	/// <returns></returns>
-	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>& device, size_t sizeInBytes)
+	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device> &device, size_t sizeInBytes)
 	{
 		D3D12_HEAP_PROPERTIES uploadHeapPoperties{};
 		uploadHeapPoperties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -33,25 +34,51 @@ namespace DirectX12ObjectsFunction
 		return resource;
 	}
 
-	/// <summary>
-	/// デスクリプタヒープ作成関数
-	/// </summary>
-	/// <param name="device">作成してくれるデバイス</param>
-	/// <param name="heapType">作成するタイプ</param>
-	/// <param name="numDescriptors">デスクリプタ個数</param>
-	/// <param name="shaderVisible"></param>
-	/// <returns></returns>
-	//ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(const ComPtr<ID3D12Device>& device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
-	//{
-	//	ComPtr<ID3D12DescriptorHeap> descriptorHeap = nullptr;
-	//	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
-	//	descriptorHeapDesc.Type = heapType;
-	//	descriptorHeapDesc.NumDescriptors = numDescriptors;
-	//	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	//	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
-	//	// ディスクリプタヒープ生成確認
-	//	assert(SUCCEEDED(hr));
-	//	Logger::Log("CreateDecritorHeap\n");
-	//	return descriptorHeap;
-	//}
+	D3D12_BLEND_DESC InitializeBlendMode(BlendMode blendMode)
+	{
+		D3D12_BLEND_DESC blendDesc{};
+		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+		switch (blendMode)
+		{
+		case BlendMode::NONE:
+			blendDesc.RenderTarget[0].BlendEnable = false;
+			break;
+
+		case BlendMode::ALPHA:
+			blendDesc.RenderTarget[0].BlendEnable = true;
+			blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+			blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+			blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+			blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+			blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+			blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+			break;
+
+		case BlendMode::ADD:
+			blendDesc.RenderTarget[0].BlendEnable = true;
+			blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+			blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+			blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+			blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+			blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+			blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+			break;
+
+		case BlendMode::SUBTRACT:
+			break;
+
+		case BlendMode::MULTIPLY:
+			break;
+
+		case BlendMode::SCREEN:
+			break;
+
+		default:
+			Logger::Log(std::format("Not Find to BlendMode : {}", static_cast<int>(blendMode)));
+			break;
+		}
+
+		return blendDesc;
+	}
 }

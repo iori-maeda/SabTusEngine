@@ -13,5 +13,13 @@ public:
 	Vector4(float x, float y, float z, float w)
 		:x(x), y(y), z(z), w(w)
 	{};
+
+	void operator*=(const Vector4& v)
+	{
+		x*=v.x;
+		y*=v.y;
+		z*=v.z;
+		w*=v.w;
+	}
 };
 

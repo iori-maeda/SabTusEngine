@@ -3,6 +3,7 @@
 #include "DxCommand.h"
 #include "DxShader.h"
 #include "Logger.h" 
+#include "DirectX12ObjectsFunction.h"
 
 Object3dCommon::~Object3dCommon()
 {
@@ -125,10 +126,8 @@ void Object3dCommon::CreatePipelineStateObject()
 	inputLayoutDesc.NumElements = _countof(inputElementDescs);
 #pragma endregion
 
-#pragma region BlendState Settings
-	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-#pragma endregion
+	// BlendState Settings
+	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::ALPHA);
 
 #pragma region RasterizerState Settings
 	D3D12_RASTERIZER_DESC rasterizerDesc{};

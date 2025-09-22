@@ -3,9 +3,10 @@
 #include "DxCommand.h"
 #include "DxShader.h"
 #include "Logger.h" 
+#include "DirectX12ObjectsFunction.h"
 
 
-void SpriteCommon::Initialize(DirectXCommon* dxCommon)
+void SpriteCommon::Initialize(DirectXCommon *dxCommon)
 {
 	dxCommon_ = dxCommon;
 	CreateRootSignature();
@@ -66,7 +67,7 @@ void SpriteCommon::CreateRootSignature()
 	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	if (FAILED(hr))
 	{
-		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
 		assert(false);
 	}
 	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
@@ -102,10 +103,8 @@ void SpriteCommon::CreatePipelineStateObject()
 	inputLayoutDesc.NumElements = _countof(inputElementDescs);
 #pragma endregion
 
-#pragma region BlendState Settings
-	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-#pragma endregion
+	// BlendState Settings
+	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::ALPHA);
 
 #pragma region RasterizerState Settings
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
