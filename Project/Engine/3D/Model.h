@@ -31,6 +31,7 @@ public:
 		Vector4 Ka{};
 		Vector4 Kd{};
 		Vector4 Ks{};
+		float shininess = 1.0f;
 		int32_t enableLighting = true;
 	};
 
@@ -83,6 +84,7 @@ public:
 
 	std::string GetName() { return modelData_.modelName; }
 	Vector4 GetColor() { return modelData_.objects[0].first.materialData->Kd; }
+	float GetShininess() { return modelData_.objects[0].first.materialData->shininess; }
 
 	void SetColor(const Vector4 &color)
 	{
@@ -90,6 +92,24 @@ public:
 		{
 			ObjectDataCPU &objCPU = object.first;
 			objCPU.materialData->Kd = color;
+		}
+	}
+	
+	void SetEnableLighting(bool enableLighting)
+	{
+		for (auto &object : modelData_.objects)
+		{
+			ObjectDataCPU &objCPU = object.first;
+			objCPU.materialData->enableLighting = enableLighting;
+		}
+	}
+
+	void SetShininess(float shininess)
+	{
+		for (auto &object : modelData_.objects)
+		{
+			ObjectDataCPU &objCPU = object.first;
+			objCPU.materialData->shininess = shininess;
 		}
 	}
 

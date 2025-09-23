@@ -4,6 +4,7 @@
 #include "DxShader.h"
 #include "Logger.h" 
 #include "DirectX12ObjectsFunction.h"
+#include "ImGuiManager.h"
 
 Object3dCommon::~Object3dCommon()
 {
@@ -23,10 +24,22 @@ void Object3dCommon::Initialize(DirectXCommon *dxCommon)
 	directionalLightData->intensity = 1.0f;
 }
 
+void Object3dCommon::DebugWindow()
+{
+#ifdef USE_IMGUI
+	ImGui::Begin("Object3dCommon");
+	ImGui::DragFloat3("DirectionalLight Direction", &directionalLightData->direction.x, 0.01f);
+	ImGui::DragFloat("DirectionalLight Intensity", &directionalLightData->intensity, 0.01f);
+	ImGui::End();
+
+	directionalLightData->direction = Normalize(directionalLightData->direction);
+#endif 
+}
+
 void Object3dCommon::PreDraw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
@@ -37,7 +50,7 @@ void Object3dCommon::PreDraw()
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[4] = {};
+	D3D12_ROOT_PARAMETER rootParameters[5] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -61,6 +74,10 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[3].Descriptor.ShaderRegister = 1;
+
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[4].Descriptor.ShaderRegister = 2;
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
@@ -127,7 +144,7 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma endregion
 
 	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::ALPHA);
+	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::NONE);
 
 #pragma region RasterizerState Settings
 	D3D12_RASTERIZER_DESC rasterizerDesc{};

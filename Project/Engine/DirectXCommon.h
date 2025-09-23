@@ -57,6 +57,14 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
 
+	void SetClearColor(float r, float g, float b, float a)
+	{
+		clearColor[0] = r;
+		clearColor[1] = g;
+		clearColor[2] = b;
+		clearColor[3] = a;
+	};
+
 
 private:
 	void CreateDescriptorHeaps();
@@ -92,5 +100,7 @@ private:
 	D3D12_VIEWPORT viewport{};
 	// scissor
 	D3D12_RECT scissorRect{};
+
+	float clearColor[4] = { 0.1f, 0.25f, 0.5f, 1.0f };
 };
 

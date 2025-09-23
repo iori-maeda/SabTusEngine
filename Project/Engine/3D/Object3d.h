@@ -29,7 +29,15 @@ public:
 	{
 		Matrix4x4 wvp{};
 		Matrix4x4 world{};
+		Matrix4x4 worldInverseTranspose{};
 	};
+
+
+	struct CameraForGPU
+	{
+		Vector3 worldPosition;
+	};
+
 
 public:
 
@@ -70,6 +78,9 @@ private:
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	TransformationMatrix *transformationMatrixData_ = nullptr;
+
+	ComPtr<ID3D12Resource> cameraForGPUResource_ = nullptr;
+	CameraForGPU* cameraForGPUData_ = nullptr;
 
 	Model *model_ = nullptr;
 };

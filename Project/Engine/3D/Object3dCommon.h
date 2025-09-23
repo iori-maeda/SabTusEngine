@@ -18,6 +18,8 @@ public:
 	void Initialize(DirectXCommon* dxCommon);
 	void PreDraw();
 
+	void DebugWindow();
+
 	DirectXCommon* GetDirectXCommon() const { return dxCommon_; }
 
 private:

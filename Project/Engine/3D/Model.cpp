@@ -92,7 +92,7 @@ void Model::Initialize(DirectXCommon *dxCommon, const std::string &fileName)
 
 		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
 		*objCPU.materialData = objCPU.mtlData;
-		objCPU.materialData->enableLighting = false;
+		objCPU.materialData->enableLighting = true;
 	}
 }
 

@@ -57,7 +57,7 @@ void DirectXCommon::BeginRendering()
 	// 描画先のRTｖをバックバッファのインデックスをもとに設定
 	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 	// 画面全体をクリア
-	float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
+	
 	command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 
 	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);

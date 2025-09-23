@@ -42,7 +42,7 @@ Vector3 operator*(const Vector3& v, float num)
 	return Vector3(v.x * num, v.y * num, v.z * num);
 }
 
-Vector3 Normalized(const Vector3& v)
+Vector3 Normalize(const Vector3& v)
 {
 	float length = std::sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 	return Vector3( v.x / length, v.y / length, v.z / length);

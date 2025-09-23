@@ -46,7 +46,7 @@ void BaseGame::Initialize()
 	modelWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d2_ = std::make_unique<Object3d>();
-	object3d2_->Initiazlize(object3dCommon_.get(), "axis.obj");
+	object3d2_->Initiazlize(object3dCommon_.get(), "smoothsphere.obj");
 	object3d2_->SetCamera(mainCamera_.get());
 	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
 	modelTransform2_.rotate.y = -1.7f;
@@ -77,8 +77,8 @@ void BaseGame::Upate()
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
 	mainCamera_->DebugWindow();
+	object3dCommon_->DebugWindow();
 	object3d_->DebugWindow();
-
 	object3d2_->DebugWindow();
 	ImGuiManager::End();
 #endif
@@ -105,14 +105,14 @@ void BaseGame::Draw()
 	object3dCommon_->PreDraw();
 	/*object3d_->Draw();
 	object3d2_->Draw();*/
-	for(auto& obj : drawObjects_)
+	for (auto& obj : drawObjects_)
 	{
 		obj.second->Draw();
 	}
 
 	spriteCommon_->PreDraw();
 
-	sprite_->Draw();
+	//sprite_->Draw();
 
 	ImGuiManager::Draw(dxCommon_.get());
 
