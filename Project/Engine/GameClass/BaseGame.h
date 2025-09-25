@@ -22,6 +22,7 @@
 #include "3D/Object3d.h"
 #include "ModelManager.h"
 #include "Camera/Camera.h"
+#include "BasicShapes/Triangle.h"
 
 class BaseGame
 {
@@ -76,5 +77,7 @@ private:
 
 	TextureDataCPU textureDataCPU2_;
 	Vector4 texColor_{};
+
+	std::unique_ptr<Triangle> triangle_ = nullptr;
 
 };

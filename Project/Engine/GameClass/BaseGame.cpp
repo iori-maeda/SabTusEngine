@@ -46,7 +46,7 @@ void BaseGame::Initialize()
 	modelWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d2_ = std::make_unique<Object3d>();
-	object3d2_->Initiazlize(object3dCommon_.get(), "smoothsphere.obj");
+	object3d2_->Initiazlize(object3dCommon_.get(), "sphere.obj");
 	object3d2_->SetCamera(mainCamera_.get());
 	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
 	modelTransform2_.rotate.y = -1.7f;
@@ -55,6 +55,10 @@ void BaseGame::Initialize()
 
 	textureDataCPU2_ = TextureManager::GetInstace().Load("uvChecker.png");
 	texColor_ = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	triangle_ = std::make_unique<Triangle>();
+	triangle_->Initialize(dxCommon_.get());
+	triangle_->SetCamera(mainCamera_.get());
 
 	drawObjects_.resize(2);
 	drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
@@ -87,6 +91,8 @@ void BaseGame::Upate()
 	object3d_->Upadate();
 	object3d2_->Upadate();
 
+	triangle_->Update();
+
 	std::sort(
 		drawObjects_.begin(), drawObjects_.end(),
 		[&](auto& a, auto& b)
@@ -109,6 +115,8 @@ void BaseGame::Draw()
 	{
 		obj.second->Draw();
 	}
+
+	triangle_->Draw();
 
 	spriteCommon_->PreDraw();
 

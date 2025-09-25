@@ -165,6 +165,9 @@
     <ClCompile Include="Engine\Camera\Camera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\BasicShapes\Triangle.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -269,6 +272,9 @@
     <ClInclude Include="Engine\Camera\Camera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\BasicShapes\Triangle.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\Shaders\Basic2DPS.hlsl">
@@ -283,6 +289,8 @@
     <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="Resources\Shaders\BasicParticle.VS.hlsl" />
+    <FxCompile Include="Resources\Shaders\BasicParticle.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -296,5 +304,6 @@
     <None Include="Resources\Shaders\Basic2D.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="Resources\Shaders\BasicParticle.hlsli" />
   </ItemGroup>
 </Project>
