@@ -1,13 +1,5 @@
 #include "BasicParticle.hlsli"
 
-struct Material
-{
-    float4 color;
-};
-
-
-ConstantBuffer<Material> gMaterial : register(b0);
-
 Texture2D<float4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 
@@ -23,7 +15,7 @@ Output main(VertexOutput input)
 
     float4 texColor = gTexture.Sample(gSampler, input.uv);
 	
-    output.color = texColor * gMaterial.color;
+    output.color = texColor * input.color;
 	
     // 半透明オブジェクトが消えるので注意
     if (output.color.a == 0.0f)

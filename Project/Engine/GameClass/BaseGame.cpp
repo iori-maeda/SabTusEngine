@@ -4,6 +4,7 @@
 
 #include "DirectX12ObjectsFunction.h"
 #include "ImGuiManager.h"
+#include "ParticleSystem/ParticleSystem.h"
 
 void BaseGame::Initialize()
 {
@@ -29,6 +30,9 @@ void BaseGame::Initialize()
 
 	mainCamera_ = std::make_unique<Camera>();
 	mainCamera_->Initialize();
+
+	ParticleSystem::GetInstance()->Initialize(dxCommon_.get());
+	ParticleSystem::GetInstance()->SetCamera(mainCamera_.get());
 #pragma endregion
 
 	sprite_ = std::make_unique<Sprite>();
@@ -56,10 +60,6 @@ void BaseGame::Initialize()
 	textureDataCPU2_ = TextureManager::GetInstace().Load("uvChecker.png");
 	texColor_ = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	triangle_ = std::make_unique<Triangle>();
-	triangle_->Initialize(dxCommon_.get());
-	triangle_->SetCamera(mainCamera_.get());
-
 	drawObjects_.resize(2);
 	drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
 	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
@@ -70,6 +70,8 @@ void BaseGame::Finalize()
 	ImGuiManager::Finalize();
 	ModelManager::GetInstace().Finalize();
 	TextureManager::GetInstace().Finalize();
+
+	ParticleSystem::GetInstance()->Finalize();
 
 	winApp_->Finalize();
 }
@@ -84,6 +86,16 @@ void BaseGame::Upate()
 	object3dCommon_->DebugWindow();
 	object3d_->DebugWindow();
 	object3d2_->DebugWindow();
+	ImGui::Begin("GameDebugWinDow");
+	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
+	int eCount = static_cast<int>(emitCount_);
+	ImGui::InputInt("Emit Count", &eCount, 0,1000);
+	emitCount_ = static_cast<uint32_t>(eCount);
+	if(ImGui::Button("Add Particle"))
+	{
+		ParticleSystem::GetInstance()->Emit(emitPosition_,emitCount_);
+	}
+	ImGui::End();
 	ImGuiManager::End();
 #endif
 	mainCamera_->Update();
@@ -91,7 +103,8 @@ void BaseGame::Upate()
 	object3d_->Upadate();
 	object3d2_->Upadate();
 
-	triangle_->Update();
+	//triangle_->Update();
+	ParticleSystem::GetInstance()->Update();
 
 	std::sort(
 		drawObjects_.begin(), drawObjects_.end(),
@@ -111,12 +124,12 @@ void BaseGame::Draw()
 	object3dCommon_->PreDraw();
 	/*object3d_->Draw();
 	object3d2_->Draw();*/
-	for (auto& obj : drawObjects_)
-	{
-		obj.second->Draw();
-	}
+	//for (auto& obj : drawObjects_)
+	//{
+	//	obj.second->Draw();
+	//}
 
-	triangle_->Draw();
+	ParticleSystem::GetInstance()->Draw();
 
 	spriteCommon_->PreDraw();
 

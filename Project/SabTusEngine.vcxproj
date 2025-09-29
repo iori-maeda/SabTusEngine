@@ -116,6 +116,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\DxObjects\DxSwapChain.cpp" />
     <ClCompile Include="Engine\GameClass\BaseGame.cpp" />
     <ClCompile Include="Engine\ImGuiManager\ImGuiManager.cpp" />
+    <ClCompile Include="Engine\ParticleSystem\ParticleSystem.cpp" />
     <ClCompile Include="Engine\Utility\Logger.cpp" />
     <ClCompile Include="Engine\Math\Matrix3x3.cpp" />
     <ClCompile Include="Engine\Math\Matrix4x4.cpp" />
@@ -123,6 +124,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\Math\Vector3.cpp" />
     <ClCompile Include="Engine\Math\Vector4.cpp" />
     <ClCompile Include="Engine\ModelManager.cpp" />
+    <ClCompile Include="Engine\Utility\Random.cpp" />
     <ClCompile Include="Engine\Utility\StringUtility.cpp" />
     <ClCompile Include="Engine\TextureManager.cpp" />
     <ClCompile Include="Engine\WIndow\WinApp.cpp" />
@@ -134,6 +136,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Engine\ParticleSystem\ParticleEmitter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\2D\Sprite.h" />
@@ -153,6 +156,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\DxObjects\DxSwapChain.h" />
     <ClInclude Include="Engine\GameClass\BaseGame.h" />
     <ClInclude Include="Engine\ImGuiManager\ImGuiManager.h" />
+    <ClInclude Include="Engine\ParticleSystem\ParticleEmitter.h" />
+    <ClInclude Include="Engine\ParticleSystem\ParticleSystem.h" />
     <ClInclude Include="Engine\Utility\Logger.h" />
     <ClInclude Include="Engine\Math\Matrix3x3.h" />
     <ClInclude Include="Engine\Math\Matrix4x4.h" />
@@ -160,6 +165,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\Math\Vector3.h" />
     <ClInclude Include="Engine\Math\Vector4.h" />
     <ClInclude Include="Engine\ModelManager.h" />
+    <ClInclude Include="Engine\Utility\Random.h" />
     <ClInclude Include="Engine\Utility\StringUtility.h" />
     <ClInclude Include="Engine\TextureManager.h" />
     <ClInclude Include="Engine\WIndow\WinApp.h" />

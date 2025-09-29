@@ -13,6 +13,7 @@ class DirectXCommon;
 class Triangle
 {
 public:
+
 	struct  Transform
 	{
 		Vector3 scale{ 1.0f, 1.0f, 1.0f };
@@ -26,17 +27,6 @@ public:
 		Vector2 uv{};
 	};
 
-	struct TransformationMatrix
-	{
-		Matrix4x4 wvp{};
-		Matrix4x4 world{};
-	};
-
-	struct MaterialData
-	{
-		Vector4 color{};
-	};
-
 public:
 	Triangle() = default;
 	~Triangle();
@@ -46,34 +36,25 @@ public:
 	void Draw();
 
 public:
+	uint32_t GetVerticiesNum() { return 3; }
+	D3D12_VERTEX_BUFFER_VIEW GetVertexbufferView() { return vertexBufferView_; }
+	Transform GetTransform() { return transform_; }
 
 	void SetCamera(Camera *camera) { camera_ = camera; }
-
-private:
-
-	void CreateRootSignature();
-	void CreatePipelineStateObject();
+	void SetPosition(const Vector3 &position) { transform_.translate = position; }
+	void SetRotate(const Vector3 &rotation) { transform_.rotate = rotation; }
+	void SetScale(const Vector3 &scale) { transform_.scale = scale; }
+	void SetTransform(const Transform &transform) { transform_ = transform; }
 
 private:
 
 	DirectXCommon *dxCommon_ = nullptr;
 	Camera *camera_ = nullptr;
 
-	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
-	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
-
 	Transform transform_{};
 
 	ComPtr<ID3D12Resource> vertexResource_ = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView_{};
 	VertexData *vertexData_ = nullptr;
-
-	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
-	TransformationMatrix *transformationMatrixData_ = nullptr;
-
-	ComPtr<ID3D12Resource> materialResource_ = nullptr;
-	MaterialData *materialData_ = nullptr;
-
-	D3D12_GPU_DESCRIPTOR_HANDLE texHandleGPU_{};
 };
 

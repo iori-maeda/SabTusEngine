@@ -78,6 +78,6 @@ private:
 	TextureDataCPU textureDataCPU2_;
 	Vector4 texColor_{};
 
-	std::unique_ptr<Triangle> triangle_ = nullptr;
-
+	Vector3 emitPosition_{};
+	uint32_t emitCount_ = 1;
 };

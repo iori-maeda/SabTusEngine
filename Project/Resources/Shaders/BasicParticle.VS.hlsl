@@ -1,12 +1,13 @@
 #include "BasicParticle.hlsli"
 
-struct TransformationMatrix
+struct ParticleForGPU
 {
     float4x4 wvp;
     float4x4 world;
+    float4 color;
 };
 
-ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+StructuredBuffer<ParticleForGPU> gParticle : register(t0);
 
 struct Input
 {
@@ -15,10 +16,11 @@ struct Input
 };
 
 
-VertexOutput main(Input input)
+VertexOutput main(Input input, uint insatanceId : SV_InstanceID)
 {
     VertexOutput output;
-    output.position = mul(input.position, gTransformationMatrix.wvp);
+    output.position = mul(input.position, gParticle[insatanceId].wvp);
     output.uv = input.uv;
+    output.color = gParticle[insatanceId].color;
     return output;
 }
