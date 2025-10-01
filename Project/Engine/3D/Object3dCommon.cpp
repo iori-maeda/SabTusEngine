@@ -38,13 +38,13 @@ void Object3dCommon::DebugWindow()
 	ImGui::Begin("Object3dCommon");
 	ImGui::DragFloat3("DirectionalLight Direction", &directionalLightData->direction.x, 0.01f);
 	ImGui::ColorEdit4("DirectionalLight Color", &directionalLightData->color.x);
-	ImGui::DragFloat("DirectionalLight Intensity", &directionalLightData->intensity, 0.01f);
+	ImGui::SliderFloat("DirectionalLight Intensity", &directionalLightData->intensity, 0.0f, 100.0f);
 
 	ImGui::DragFloat3("PointLight position", &pointLightData->position.x, 0.01f);
 	ImGui::ColorEdit4("PointLight Color", &pointLightData->color.x);
 	ImGui::DragFloat("PointLight Intensity", &pointLightData->intensity, 0.01f);
-	ImGui::DragFloat("PointLight Radius", &pointLightData->radius, 0.01f);
-	ImGui::DragFloat("PointLight Decay", &pointLightData->decay, 0.01f);
+	ImGui::SliderFloat("PointLight Radius", &pointLightData->radius, 0.00f, 100.0f);
+	ImGui::SliderFloat("PointLight Decay", &pointLightData->decay, 0.0f, 100.0f);
 	ImGui::End();
 
 	directionalLightData->direction = Normalize(directionalLightData->direction);
@@ -54,7 +54,7 @@ void Object3dCommon::DebugWindow()
 void Object3dCommon::PreDraw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());

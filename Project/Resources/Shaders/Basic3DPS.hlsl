@@ -25,7 +25,6 @@ struct PointLight
     float decay;
 };
 
-
 struct Camera
 {
     float3 worldPosition;
@@ -56,8 +55,8 @@ Output main(VertexOutput input)
         discard;
     }
 	
-    // Light Color
-    float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity;
+    // Directional Light Color
+    float4 directionalLightColor = gDirectionalLight.color * gDirectionalLight.intensity;
     
     // NdotDirectional
     float NdotDirectional = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
@@ -70,20 +69,18 @@ Output main(VertexOutput input)
     float3 halfVector = normalize(-gDirectionalLight.direction + toEyeDir);
     float NdotH = saturate(dot(normalize(input.normal), halfVector));
     float specularIntensity = pow(NdotH, gMaterial.shininess);
+    float3 specularRefrectionColor = gMaterial.Ks.rgb * specularIntensity * directionalLightColor.rgb;
     
     // Point Light
+    float4 pointLightColor = gPointLight.color * gPointLight.intensity;
     float3 toPointLight = normalize(gPointLight.position - input.worldPosition);
-    float3 halfVectorToPoint= normalize(toPointLight + toEyeDir);
+    float3 halfVectorToPoint = normalize(toPointLight + toEyeDir);
     float NdotPointLight = saturate(dot(input.normal, halfVectorToPoint));
     float specularIntensityToPoint = pow(NdotPointLight, gMaterial.shininess);
     float distance = length(gPointLight.position - input.worldPosition);
-    float factor = pow(saturate(-distance / gPointLight.radius + 1.0f), gPointLight.decay);
+    float factor = gPointLight.decay <= 0.1 ? 0.1f : pow(saturate(-distance / gPointLight.radius + 1.0f), gPointLight.decay);
     float lambartIntensityToPoint = saturate(dot(normalize(input.normal), toPointLight));
-    
-    // Point Ligh Diffuse
-    float4 pointLightDiffuseColor = gMaterial.Kd * lambartIntensityToPoint * gPointLight.color * gPointLight.intensity * factor;
-    // Point Light Specilar
-    float4 pointLightSpecularColor = gMaterial.Ks * specularIntensityToPoint * gPointLight.color * gPointLight.intensity * factor;
+    float4 attenuationPointLightColor = pointLightColor * factor;
     
      // Ambient
     float4 ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -93,17 +90,21 @@ Output main(VertexOutput input)
     //Diffuse
     float4 diffuse = texColor;
     diffuse.rgb = gMaterial.Kd.rgb * texColor.rgb;
-    diffuse = gMaterial.enableLighting ? diffuse * lightColor * NdotDirectional : diffuse;
+    diffuse = gMaterial.enableLighting ? diffuse * directionalLightColor * NdotDirectional : diffuse;
     diffuse.a = gMaterial.Kd.a * texColor.a;
     
     // Specular
     float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    float3 specularRefrectionColor = gMaterial.Ks.rgb * specularIntensity * lightColor.rgb;
     specular.rgb = gMaterial.enableLighting ? specularRefrectionColor : float3(0.0f, 0.0f, 0.0f);
     specular.a = gMaterial.Ks.a;
     
+    // Point Ligh Diffuse
+    float4 pointLightDiffuseColor = gMaterial.Kd * lambartIntensityToPoint * attenuationPointLightColor;
+    // Point Light Specilar
+    float4 pointLightSpecularColor = gMaterial.Ks * specularIntensityToPoint * attenuationPointLightColor;
+    
     // ADS合成
-    output.color = ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor;
+    output.color = saturate(ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor);
     output.color.a = texColor.a;
     return output;
 }
