@@ -47,6 +47,9 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	TextureManager::GetInstace().Initialize(dxCommon);
 	TextureManager::GetInstace().Load("uvChecker.png");
 	texHandleGPU_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle("uvChecker.png");
+
+	accelerationField_.acceleration = Vector3(-100.0f, 0.0f, 0.0f);
+	accelerationField_.area = { .min = {-1.0f,-1.0f, -1.0f},  .max = {1.0f, 1.0f, 1.0f} };
 }
 
 void ParticleSystem::Finalize()
@@ -77,6 +80,15 @@ void ParticleSystem::Update()
 			particleIterator = particles_.erase(particleIterator);
 			continue;
 		}
+
+		if (particleIterator->transform.translate.x >= accelerationField_.area.min.x && particleIterator->transform.translate.x <= accelerationField_.area.max.x
+			&& particleIterator->transform.translate.y >= accelerationField_.area.min.y && particleIterator->transform.translate.y <= accelerationField_.area.max.y
+			&& particleIterator->transform.translate.z >= accelerationField_.area.min.z && particleIterator->transform.translate.z <= accelerationField_.area.max.z
+			)
+		{
+			particleIterator->velocity += accelerationField_.acceleration * deltaTIme;
+		}
+
 		particleIterator->currentTime += deltaTIme;
 		particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
 		particleIterator->color.w = 1.0f - (particleIterator->currentTime / particleIterator->lifeTIme);
@@ -114,13 +126,13 @@ void ParticleSystem::Draw()
 
 void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
 {
-	for(uint32_t i = 0 ; i < emitCount; i++)
+	for (uint32_t i = 0; i < emitCount; i++)
 	{
 		Particle newParticle = MakeParticle();
 		newParticle.transform.translate += position;
 		particles_.push_back(newParticle);
 
-		if(particles_.size() >= kMaxParticles)
+		if (particles_.size() >= kMaxParticles)
 		{
 			particles_.pop_front();
 		}

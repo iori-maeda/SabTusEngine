@@ -22,6 +22,14 @@ void Object3dCommon::Initialize(DirectXCommon *dxCommon)
 	directionalLightData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	directionalLightData->direction = Vector3(0.0f, -1.0f, 0.0f);
 	directionalLightData->intensity = 1.0f;
+
+	pointLightResource = dxCommon->CreateBufferResource(sizeof(PointLight));
+	pointLightResource->Map(0, nullptr, reinterpret_cast<void **>(&pointLightData));
+	pointLightData->position = Vector3(0.0f, 2.0f, 0.0f);
+	pointLightData->color = Vector4(0.0f, 1.0f, 1.0f, 1.0f);
+	pointLightData->intensity = 20.0f;
+	pointLightData->radius = 3.0f;
+	pointLightData->decay = 1.0f;
 }
 
 void Object3dCommon::DebugWindow()
@@ -29,7 +37,14 @@ void Object3dCommon::DebugWindow()
 #ifdef USE_IMGUI
 	ImGui::Begin("Object3dCommon");
 	ImGui::DragFloat3("DirectionalLight Direction", &directionalLightData->direction.x, 0.01f);
+	ImGui::ColorEdit4("DirectionalLight Color", &directionalLightData->color.x);
 	ImGui::DragFloat("DirectionalLight Intensity", &directionalLightData->intensity, 0.01f);
+
+	ImGui::DragFloat3("PointLight position", &pointLightData->position.x, 0.01f);
+	ImGui::ColorEdit4("PointLight Color", &pointLightData->color.x);
+	ImGui::DragFloat("PointLight Intensity", &pointLightData->intensity, 0.01f);
+	ImGui::DragFloat("PointLight Radius", &pointLightData->radius, 0.01f);
+	ImGui::DragFloat("PointLight Decay", &pointLightData->decay, 0.01f);
 	ImGui::End();
 
 	directionalLightData->direction = Normalize(directionalLightData->direction);
@@ -45,12 +60,13 @@ void Object3dCommon::PreDraw()
 	commandList->SetPipelineState(pipelineStateObject_.Get());
 
 	commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(5, pointLightResource->GetGPUVirtualAddress());
 }
 
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[5] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -78,6 +94,10 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[4].Descriptor.ShaderRegister = 2;
+
+	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[5].Descriptor.ShaderRegister = 3;
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};

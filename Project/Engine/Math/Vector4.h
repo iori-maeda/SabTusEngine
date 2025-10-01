@@ -14,12 +14,21 @@ public:
 		:x(x), y(y), z(z), w(w)
 	{};
 
-	void operator*=(const Vector4& v)
+	void operator*=(const Vector4 &v)
 	{
-		x*=v.x;
-		y*=v.y;
-		z*=v.z;
-		w*=v.w;
+		x *= v.x;
+		y *= v.y;
+		z *= v.z;
+		w *= v.w;
+	}
+
+	void operator*=(const float n)
+	{
+		x /= n;
+		y /= n;
+		z /= n;
+		w /= n;
 	}
 };
 
+Vector4 operator/(const Vector4& v, float n);

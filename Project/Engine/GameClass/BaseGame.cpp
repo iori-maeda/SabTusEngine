@@ -30,6 +30,8 @@ void BaseGame::Initialize()
 
 	mainCamera_ = std::make_unique<Camera>();
 	mainCamera_->Initialize();
+	mainCamera_->SetPosition(Vector3(0.0f, 5.0f, -15.0f));
+	mainCamera_->SetRotation(Vector3(0.26f, 0.0f, 0.0f));
 
 	ParticleSystem::GetInstance()->Initialize(dxCommon_.get());
 	ParticleSystem::GetInstance()->SetCamera(mainCamera_.get());
@@ -43,17 +45,18 @@ void BaseGame::Initialize()
 	ModelManager::GetInstace().Load("sphere.obj");
 
 	object3d_ = std::make_unique<Object3d>();
-	object3d_->Initiazlize(object3dCommon_.get(), "plane.obj");
+	object3d_->Initiazlize(object3dCommon_.get(), "SmoothSphere.obj");
 	object3d_->SetCamera(mainCamera_.get());
 	modelTransform_.scale = Vector3(1.0f, 1.0f, 1.0f);
 	modelTransform_.rotate.y = -1.7f;
 	modelWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d2_ = std::make_unique<Object3d>();
-	object3d2_->Initiazlize(object3dCommon_.get(), "sphere.obj");
+	object3d2_->Initiazlize(object3dCommon_.get(), "plane.obj");
 	object3d2_->SetCamera(mainCamera_.get());
-	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
-	modelTransform2_.rotate.y = -1.7f;
+	modelTransform2_.scale = Vector3(100.0f, 100.0f, 100.0f);
+	modelTransform2_.rotate.x = -1.5f;
+	object3d2_->SetTransform(modelTransform2_);
 	modelWorldMatrix2_ = MakeIdentityMatrix();
 
 
@@ -63,6 +66,9 @@ void BaseGame::Initialize()
 	drawObjects_.resize(2);
 	drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
 	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
+
+	particleEmitter_ = std::make_unique<ParticleEmitter>();
+	particleEmitter_->Initialize(emitPosition_, emitCount_);
 }
 
 void BaseGame::Finalize()
@@ -89,11 +95,11 @@ void BaseGame::Upate()
 	ImGui::Begin("GameDebugWinDow");
 	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
 	int eCount = static_cast<int>(emitCount_);
-	ImGui::InputInt("Emit Count", &eCount, 0,1000);
+	ImGui::InputInt("Emit Count", &eCount, 0, 1000);
 	emitCount_ = static_cast<uint32_t>(eCount);
-	if(ImGui::Button("Add Particle"))
+	if (ImGui::Button("Add Particle"))
 	{
-		ParticleSystem::GetInstance()->Emit(emitPosition_,emitCount_);
+		ParticleSystem::GetInstance()->Emit(emitPosition_, emitCount_);
 	}
 	ImGui::End();
 	ImGuiManager::End();
@@ -103,12 +109,16 @@ void BaseGame::Upate()
 	object3d_->Upadate();
 	object3d2_->Upadate();
 
+	particleEmitter_->SetEmitPosition(emitPosition_);
+	particleEmitter_->SetEmitCount(emitCount_);
+	particleEmitter_->Update();
+
 	//triangle_->Update();
 	ParticleSystem::GetInstance()->Update();
 
 	std::sort(
 		drawObjects_.begin(), drawObjects_.end(),
-		[&](auto& a, auto& b)
+		[&](auto &a, auto &b)
 		{
 			Vector3 toA = a.second->GetPosition() - mainCamera_->GetPosition();
 			Vector3 toB = b.second->GetPosition() - mainCamera_->GetPosition();
@@ -122,12 +132,11 @@ void BaseGame::Draw()
 	dxCommon_->BeginRendering();
 
 	object3dCommon_->PreDraw();
-	/*object3d_->Draw();
-	object3d2_->Draw();*/
-	//for (auto& obj : drawObjects_)
-	//{
-	//	obj.second->Draw();
-	//}
+	
+	for (auto& obj : drawObjects_)
+	{
+		obj.second->Draw();
+	}
 
 	ParticleSystem::GetInstance()->Draw();
 

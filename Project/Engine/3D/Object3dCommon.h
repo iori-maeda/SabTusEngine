@@ -14,13 +14,13 @@ public:
 
 	Object3dCommon() = default;
 	~Object3dCommon();
-	
-	void Initialize(DirectXCommon* dxCommon);
+
+	void Initialize(DirectXCommon *dxCommon);
 	void PreDraw();
 
 	void DebugWindow();
 
-	DirectXCommon* GetDirectXCommon() const { return dxCommon_; }
+	DirectXCommon *GetDirectXCommon() const { return dxCommon_; }
 
 private:
 
@@ -29,7 +29,7 @@ private:
 
 private:
 
-	DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon *dxCommon_ = nullptr;
 
 	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
 	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
@@ -41,7 +41,19 @@ private:
 		float intensity = 0.0f;
 	};
 
+	struct PointLight
+	{
+		Vector4 color{ 1.0f, 1.0f, 1.0f,1.0f };
+		Vector3 position{};
+		float intensity = 1.0f;
+		float radius = 1.0f;
+		float decay = 1.0f;
+	};
+
 	ComPtr<ID3D12Resource> directionalLightResource = nullptr;
-	DirectionalLight* directionalLightData = nullptr;
+	DirectionalLight *directionalLightData = nullptr;
+
+	ComPtr<ID3D12Resource> pointLightResource = nullptr;
+	PointLight *pointLightData = nullptr;
 };
 

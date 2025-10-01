@@ -2,18 +2,27 @@
 
 struct Material
 {
-	float4 Ka;
-	float4 Kd;
-	float4 Ks;
+    float4 Ka;
+    float4 Kd;
+    float4 Ks;
     float shininess;
-	int32_t enableLighting;
+    int32_t enableLighting;
 };
 
 struct DirectionalLight
 {
-	float4 color;
-	float3 direction;
-	float intensity;
+    float4 color;
+    float3 direction;
+    float intensity;
+};
+
+struct PointLight
+{
+    float4 color;
+    float3 position;
+    float intensity;
+    float radius;
+    float decay;
 };
 
 
@@ -24,6 +33,7 @@ struct Camera
 
 ConstantBuffer<Material> gMaterial : register(b0);
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
+ConstantBuffer<PointLight> gPointLight : register(b3);
 ConstantBuffer<Camera> gCamera : register(b2);
 
 Texture2D<float4> gTexture : register(t0);
@@ -31,54 +41,80 @@ SamplerState gSampler : register(s0);
 
 struct Output
 {
-	float4 color : SV_TARGET0;
+    float4 color : SV_TARGET0;
 };
 
 Output main(VertexOutput input)
 {
     Output output;
-    output.color = float4(0.0, 0.0, 0.0, 1.0); // Initialize output color
+    output.color = float4(0.0f, 0.0f, 0.0f, 1.0f); // Initialize output color
 
-	float reflectIntensity= dot(normalize(input.normal), -gDirectionalLight.direction);
-	float halfLambert = pow(reflectIntensity * 0.5 + 0.5, 2.0f);
-	float4 lightColor = gDirectionalLight.color * halfLambert * gDirectionalLight.intensity;
-
-	float4 texColor = gTexture.Sample(gSampler, input.uv);
+    float4 texColor = gTexture.Sample(gSampler, input.uv);
 	
-    if (texColor.a <= 0.0)
+    if (texColor.a <= 0.0f)
     {
         discard;
     }
 	
-
-    float4 ambient = float4(0.0, 0.0, 0.0, 0.0);
-    ambient.rgb = gMaterial.enableLighting ? gMaterial.Ka.rgb * texColor.rgb : float3(0.0, 0.0, 0.0);
-    ambient.a = gMaterial.enableLighting ? gMaterial.Ka.a * texColor.a : 0.0;
-	
-	float4 diffuse = texColor;
-	diffuse.rgb = gMaterial.Kd.rgb * texColor.rgb;
-	diffuse.a = gMaterial.Kd.a * texColor.a;
-	
-    float4 specular = float4(0.0, 0.0, 0.0, 0.0);
+    // Light Color
+    float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity;
+    
+    // NdotDirectional
+    float NdotDirectional = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
+    // HalfLambart
+    //float halfLambert = pow(NdotDirectional * 0.5 + 0.5, 2.0f);
+    
+    // Blinn-Phong Reflection Model
+    // Phongと違いLightの反射ベクトルではなくハーフベクトルを利用する
     float3 toEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
-    float3 reflectDir = reflect(gDirectionalLight.direction, normalize(input.normal));
-    float3 halkfVector = normalize(toEyeDir - gDirectionalLight.direction);
-	float NdotH = saturate(dot(normalize(input.normal), halkfVector));
-    //float RdotE = dot(reflectDir, toEyeDir);
-    float RdotE = NdotH;
-	float specularIntensity = pow(saturate(RdotE), gMaterial.shininess);
-	specular.rgb = gMaterial.enableLighting ?  specularIntensity * lightColor.rgb : float3(0.0, 0.0, 0.0);
-    specular.a = gMaterial.enableLighting ? specularIntensity * lightColor.a : 0.0;
-
-	output.color = ambient;
-	output.color += gMaterial.enableLighting ? diffuse * lightColor : diffuse;
-	output.color += specular;
-    output.color.a = texColor.a; // テクスチャのアルファを使用
+    float3 halfVector = normalize(-gDirectionalLight.direction + toEyeDir);
+    float NdotH = saturate(dot(normalize(input.normal), halfVector));
+    float specularIntensity = pow(NdotH, gMaterial.shininess);
+    
+    // Point Light
+    float3 toPointLight = normalize(gPointLight.position - input.worldPosition);
+    float3 halfVectorToPoint= normalize(toPointLight + toEyeDir);
+    float NdotPointLight = saturate(dot(input.normal, halfVectorToPoint));
+    float specularIntensityToPoint = pow(NdotPointLight, gMaterial.shininess);
+    float distance = length(gPointLight.position - input.worldPosition);
+    float factor = pow(saturate(-distance / gPointLight.radius + 1.0f), gPointLight.decay);
+    float lambartIntensityToPoint = saturate(dot(normalize(input.normal), toPointLight));
+    
+    // Point Ligh Diffuse
+    float4 pointLightDiffuseColor = gMaterial.Kd * lambartIntensityToPoint * gPointLight.color * gPointLight.intensity * factor;
+    // Point Light Specilar
+    float4 pointLightSpecularColor = gMaterial.Ks * specularIntensityToPoint * gPointLight.color * gPointLight.intensity * factor;
+    
+     // Ambient
+    float4 ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    ambient.rgb = gMaterial.Ka.rgb * texColor.rgb;
+    ambient.a = gMaterial.Ka.a * texColor.a;
 	
-	// 半透明オブジェクトが消えるので注意
+    //Diffuse
+    float4 diffuse = texColor;
+    diffuse.rgb = gMaterial.Kd.rgb * texColor.rgb;
+    diffuse = gMaterial.enableLighting ? diffuse * lightColor * NdotDirectional : diffuse;
+    diffuse.a = gMaterial.Kd.a * texColor.a;
+    
+    // Specular
+    float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float3 specularRefrectionColor = gMaterial.Ks.rgb * specularIntensity * lightColor.rgb;
+    specular.rgb = gMaterial.enableLighting ? specularRefrectionColor : float3(0.0f, 0.0f, 0.0f);
+    specular.a = gMaterial.Ks.a;
+    
+    // ADS合成
+    output.color = ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor;
+    output.color.a = texColor.a;
+    return output;
+}
+
+    // 半透明オブジェクトが消えるので注意
     //if (output.color.a <= 0.5f)
     //{
     //    discard;
     //}
-	return output;
-}
+
+    // Phong Reflection Model
+    //float3 reflectDir = reflect(gDirectionalLight.direction, normalize(input.normal));
+    //float RdotE = dot(reflectDir, toEyeDir);
+    //float specularIntensity = pow(saturate(RdotE), gMaterial.shininess);

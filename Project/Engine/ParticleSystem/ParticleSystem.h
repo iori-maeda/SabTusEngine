@@ -51,6 +51,18 @@ public:
 		Vector4 color{};
 	};
 
+	struct AABB
+	{
+		Vector3 min{};
+		Vector3 max{ 1.0f, 1.0f, 1.0f };
+	};
+
+	struct AccelerationField
+	{
+		Vector3 acceleration{};
+		AABB area{};
+	};
+
 public:
 	static ParticleSystem *GetInstance();
 	void Initialize(DirectXCommon *dxCommon);
@@ -70,7 +82,6 @@ private:
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
 	void CreateSRV();
-
 
 private:
 	static ParticleSystem *instance_;
@@ -94,5 +105,7 @@ private:
 	D3D12_GPU_DESCRIPTOR_HANDLE texHandleGPU_{};
 
 	uint32_t currentInstanceNum_ = 0;
+
+	AccelerationField accelerationField_{};
 };
 

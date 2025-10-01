@@ -92,6 +92,7 @@ public:
 		{
 			ObjectDataCPU &objCPU = object.first;
 			objCPU.materialData->Kd = color;
+			objCPU.materialData->Ka = color / 0.5f;
 		}
 	}
 	

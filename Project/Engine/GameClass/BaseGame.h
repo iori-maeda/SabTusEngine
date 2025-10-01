@@ -22,7 +22,8 @@
 #include "3D/Object3d.h"
 #include "ModelManager.h"
 #include "Camera/Camera.h"
-#include "BasicShapes/Triangle.h"
+//#include "BasicShapes/Triangle.h"
+#include "ParticleSystem/ParticleEmitter.h"
 
 class BaseGame
 {
@@ -80,4 +81,5 @@ private:
 
 	Vector3 emitPosition_{};
 	uint32_t emitCount_ = 1;
+	std::unique_ptr<ParticleEmitter> particleEmitter_ = nullptr;
 };
