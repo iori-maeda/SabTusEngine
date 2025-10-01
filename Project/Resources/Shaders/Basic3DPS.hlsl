@@ -60,8 +60,6 @@ Output main(VertexOutput input)
     
     // NdotDirectional
     float NdotDirectional = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
-    // HalfLambart
-    //float halfLambert = pow(NdotDirectional * 0.5 + 0.5, 2.0f);
     
     // Blinn-Phong Reflection Model
     // Phongと違いLightの反射ベクトルではなくハーフベクトルを利用する
@@ -69,7 +67,7 @@ Output main(VertexOutput input)
     float3 halfVector = normalize(-gDirectionalLight.direction + toEyeDir);
     float NdotH = saturate(dot(normalize(input.normal), halfVector));
     float specularIntensity = pow(NdotH, gMaterial.shininess);
-    float3 specularRefrectionColor = gMaterial.Ks.rgb * specularIntensity * directionalLightColor.rgb;
+    float4 specularRefrectionColor = gMaterial.Ks * specularIntensity * directionalLightColor;
     
     // Point Light
     float4 pointLightColor = gPointLight.color * gPointLight.intensity;
@@ -88,14 +86,13 @@ Output main(VertexOutput input)
     ambient.a = gMaterial.Ka.a * texColor.a;
 	
     //Diffuse
-    float4 diffuse = texColor;
-    diffuse.rgb = gMaterial.Kd.rgb * texColor.rgb;
+    float4 diffuse = gMaterial.Kd * texColor;
     diffuse = gMaterial.enableLighting ? diffuse * directionalLightColor * NdotDirectional : diffuse;
     diffuse.a = gMaterial.Kd.a * texColor.a;
     
     // Specular
     float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    specular.rgb = gMaterial.enableLighting ? specularRefrectionColor : float3(0.0f, 0.0f, 0.0f);
+    specular = gMaterial.enableLighting ? specularRefrectionColor : float4(0.0f, 0.0f, 0.0f, 0.0f);
     specular.a = gMaterial.Ks.a;
     
     // Point Ligh Diffuse
@@ -104,10 +101,13 @@ Output main(VertexOutput input)
     float4 pointLightSpecularColor = gMaterial.Ks * specularIntensityToPoint * attenuationPointLightColor;
     
     // ADS合成
-    output.color = saturate(ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor);
+    output.color = ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor;
     output.color.a = texColor.a;
     return output;
 }
+
+    // HalfLambart
+    //float halfLambert = pow(NdotDirectional * 0.5 + 0.5, 2.0f);
 
     // 半透明オブジェクトが消えるので注意
     //if (output.color.a <= 0.5f)
