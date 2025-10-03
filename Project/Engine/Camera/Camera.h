@@ -39,11 +39,12 @@ public:
 	Matrix4x4 GetWorldMatrix() const { return worldMatrix_; }
 	Matrix4x4 GetViewMatrix() const { return viewMatrix_; }
 	Matrix4x4 GetProjectionMatrix() const { return projectionMatrix_; }
+	Camera::Transform GetTransform()const { return transform_; }
 
-	void SetTransform(const Transform& transform) { transform_ = transform; }
-	void SetPosition(const Vector3& position) { transform_.translate = position; }
-	void SetRotation(const Vector3& rotation) { transform_.rotate = rotation; }
-	void SetScale(const Vector3& scale) { transform_.scale = scale; }
+	void SetTransform(const Transform &transform) { transform_ = transform; }
+	void SetPosition(const Vector3 &position) { transform_.translate = position; }
+	void SetRotation(const Vector3 &rotation) { transform_.rotate = rotation; }
+	void SetScale(const Vector3 &scale) { transform_.scale = scale; }
 	void SetFovAngleY(float fovAngleY) { fovAngleY_ = fovAngleY; }
 	void SetNearZ(float nearZ) { nearZ_ = nearZ; }
 	void SetFarZ(float farZ) { farZ_ = farZ; }
