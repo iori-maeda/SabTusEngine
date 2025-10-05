@@ -48,12 +48,29 @@ private:
 		float intensity = 1.0f;
 		float radius = 1.0f;
 		float decay = 1.0f;
+		float pad[2]{};
 	};
 
-	ComPtr<ID3D12Resource> directionalLightResource = nullptr;
-	DirectionalLight *directionalLightData = nullptr;
+	struct SpotLight
+	{
+		Vector4 color{};
+		Vector3 position{};
+		float intensity = 0.0f;
+		Vector3 direction{};
+		float distance = 0.0f;
+		float decay = 0.0f;
+		float cosFallOffStart = 0.0f;
+		float cosAngle = 0.0f;
+		float pad[2]{};
+	};
 
-	ComPtr<ID3D12Resource> pointLightResource = nullptr;
-	PointLight *pointLightData = nullptr;
+	ComPtr<ID3D12Resource> directionalLightResource_ = nullptr;
+	DirectionalLight *directionalLightData_ = nullptr;
+
+	ComPtr<ID3D12Resource> pointLightResource_ = nullptr;
+	PointLight *pointLightData_ = nullptr;
+
+	ComPtr<ID3D12Resource> spotLightResource_ = nullptr;
+	SpotLight* spotLightData_ = nullptr;
 };
 
