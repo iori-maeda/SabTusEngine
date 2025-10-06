@@ -78,6 +78,7 @@ public:
 
 
 	static ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath);
+	static ModelData LoadFile(const std::string& directoryPath, const std::string &fileName);
 	static MtlData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName);
 
 public:

@@ -5,6 +5,10 @@
 #include <filesystem>
 #include <cassert>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "DirectXCommon.h"
 #include "DxDevice.h"
 #include "DxCommand.h"
@@ -63,19 +67,15 @@ void Model::Initialize(DirectXCommon *dxCommon, const std::string &fileName)
 {
 	dxCommon_ = dxCommon;
 
-	modelData_ = LoadObjFile(defaultDirectoryPath, fileName);
+	modelData_ = LoadFile(defaultDirectoryPath, fileName);
 	for (auto &object : modelData_.objects)
 	{
 		ObjectDataCPU &objCPU = object.first;
 		ObjectDataGPU &objGPU = object.second;
-		if (objCPU.textureFilePath.empty())
-		{
-			objCPU.textureFilePath = "uvChecker.png";
-		}
+
 
 		objGPU.name = objCPU.name;
 
-		TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
 		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.textureFilePath);
 
 		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
@@ -105,7 +105,7 @@ void Model::Draw()
 	{
 		const ObjectDataCPU &objCPU = object.first;
 		const ObjectDataGPU &objGPU = object.second;
-		
+
 		commandList->IASetVertexBuffers(0, 1, &objGPU.vertexBufferViews_);
 		commandList->SetGraphicsRootConstantBufferView(0, objGPU.materialResource->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootDescriptorTable(2, objGPU.texHandle_);
@@ -224,6 +224,94 @@ Model::ModelData Model::LoadObjFile(const std::string &directoryPath, const std:
 	result.modelName = path.stem().string();
 
 	return result;
+}
+
+Model::ModelData Model::LoadFile(const std::string &directoryPath, const std::string &fileName)
+{
+	Assimp::Importer importer;
+	uint32_t readFlag =
+		aiProcess_FlipWindingOrder |
+		aiProcess_FlipUVs |
+		aiProcess_Triangulate |
+		aiProcess_MakeLeftHanded |
+		aiProcess_CalcTangentSpace;
+	const aiScene *scene = importer.ReadFile((directoryPath + fileName).c_str(), readFlag); // 三角形逆順、UVフリップオプションで読み込み
+	assert(scene->HasMeshes());
+
+	ModelData loadModel{};
+
+	for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
+	{
+		ObjectDataCPU objCPU{};
+		aiMesh *mesh = scene->mMeshes[meshIndex];
+
+		// 法線とUV座標がないものは非対応
+		assert(mesh->HasNormals());
+		assert(mesh->HasTextureCoords(0));
+
+		for (uint32_t faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++)
+		{
+			aiFace &face = mesh->mFaces[faceIndex];
+			assert(face.mNumIndices == 3); // 三角形以外は非対応
+
+			for (uint32_t element = 0; element < face.mNumIndices; element++)
+			{
+				uint32_t vertexIndex = face.mIndices[element];
+				aiVector3D &position = mesh->mVertices[vertexIndex];
+				aiVector3D &normal = mesh->mNormals[vertexIndex];
+				aiVector3D &texcoord = mesh->mTextureCoords[0][vertexIndex];
+
+				VertexData vertex{};
+				vertex.position = Vector4(position.x, position.y, position.z, 1.0f);
+				vertex.normal = Vector3(normal.x, normal.y, normal.z);
+				vertex.uv = Vector2(texcoord.x, texcoord.y);
+
+				objCPU.vertices.push_back(vertex);
+				/*vertex.position.x *= -1;
+				vertex.normal.x *= -1;*/
+
+				// meshの追加
+			}
+		}
+
+		/*for (uint32_t materialIndex = 0; materialIndex < scene->mNumMaterials; materialIndex++)
+		{*/
+		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+		if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0)
+		{
+			aiString texFilePath{};
+			material->GetTexture(aiTextureType_DIFFUSE, 0, &texFilePath);
+			objCPU.textureFilePath = texFilePath.C_Str();
+			TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
+		}
+		else
+		{
+			objCPU.textureFilePath = "whiteTest.png";
+			TextureManager::GetInstace().Load(objCPU.textureFilePath);
+		}
+
+		aiColor4D ambient{};
+		if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) == AI_SUCCESS)
+		{
+			objCPU.mtlData.Ka = Vector4(ambient.r, ambient.g, ambient.b, ambient.a);
+		}
+		aiColor4D diffuse{};
+		if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS)
+		{
+			objCPU.mtlData.Kd = Vector4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+		}
+		aiColor4D specular{};
+		if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) == AI_SUCCESS)
+		{
+			objCPU.mtlData.Ks = Vector4(specular.r, specular.g, specular.b, specular.a);
+		}
+		//}
+		loadModel.objects.push_back(std::make_pair(objCPU, ObjectDataGPU()));
+	}
+	std::filesystem::path path(fileName);
+	loadModel.modelName = path.stem().string();
+
+	return loadModel;
 }
 
 Model::MtlData Model::LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)

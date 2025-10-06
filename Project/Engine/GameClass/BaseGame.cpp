@@ -52,15 +52,15 @@ void BaseGame::Initialize()
 	modelWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d2_ = std::make_unique<Object3d>();
-	object3d2_->Initiazlize(object3dCommon_.get(), "plane.obj");
+	object3d2_->Initiazlize(object3dCommon_.get(), "suzanne.obj");
 	object3d2_->SetCamera(mainCamera_.get());
-	modelTransform2_.scale = Vector3(100.0f, 100.0f, 100.0f);
-	modelTransform2_.rotate.x = -1.5f;
+	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
+	//modelTransform2_.rotate.x = -1.5f;
 	object3d2_->SetTransform(modelTransform2_);
 	modelWorldMatrix2_ = MakeIdentityMatrix();
 
 
-	textureDataCPU2_ = TextureManager::GetInstace().Load("uvChecker.png");
+	textureDataCPU2_ = TextureManager::GetInstace().Load("whiteTest.png");
 	texColor_ = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	drawObjects_.resize(2);

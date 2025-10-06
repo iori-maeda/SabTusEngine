@@ -9,7 +9,7 @@
 
 std::string TextureManager::defaultDirectoryPath = "Resources/Textures/";
 
-uint32_t TextureManager::textureIndex = 1;	// 0は現状ImGuiが利用する
+uint32_t TextureManager::textureIndex = 2;	// 0は現状ImGuiが利用する
 
 TextureManager& TextureManager::GetInstace()
 {
@@ -149,6 +149,10 @@ DirectX::ScratchImage TextureManager::LoadTexture(const std::string& filePath)
 	assert(SUCCEEDED(hr));
 	Logger::Log("Texture Load\n");
 
+	if(image.GetMetadata().mipLevels <= 1)
+	{
+		return image;
+	}
 	DirectX::ScratchImage mipImage{};
 	hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImage);
 	Logger::Log("MipMap Create\n");
