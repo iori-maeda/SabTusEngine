@@ -52,7 +52,7 @@ void BaseGame::Initialize()
 	modelWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d2_ = std::make_unique<Object3d>();
-	object3d2_->Initiazlize(object3dCommon_.get(), "suzanne.obj");
+	object3d2_->Initiazlize(object3dCommon_.get(), "chess_set/chess_set_4k.fbx");
 	object3d2_->SetCamera(mainCamera_.get());
 	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
 	//modelTransform2_.rotate.x = -1.5f;

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <filesystem>
 #include <cassert>
+#include <format>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -13,6 +14,7 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "TextureManager.h"
+#include "Logger.h"
 
 std::string Model::defaultDirectoryPath = "Resources/Models/";
 
@@ -236,6 +238,11 @@ Model::ModelData Model::LoadFile(const std::string &directoryPath, const std::st
 		aiProcess_MakeLeftHanded |
 		aiProcess_CalcTangentSpace;
 	const aiScene *scene = importer.ReadFile((directoryPath + fileName).c_str(), readFlag); // 三角形逆順、UVフリップオプションで読み込み
+	if (!scene)
+	{
+		std::string error = importer.GetErrorString();
+		Logger::Log(std::format("Assimp Error: {}\n", error));
+	}
 	assert(scene->HasMeshes());
 
 	ModelData loadModel{};
