@@ -5,19 +5,28 @@
 #include <vector>
 #include <memory>
 
+#include <assimp/scene.h>
+
 #include "ComPtr.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 #include "Math/Vector2.h"
 #include "Math/Matrix4x4.h"
 
+#include "Mesh.h"
+
+
 class DirectXCommon;
 
 class Model
 {
 public:
-	static std::string defaultDirectoryPath;
-
+	struct Node
+	{
+		Matrix4x4 localMatrix{};
+		std::string name;;
+		std::vector<Node>children;
+	};
 
 	struct VertexData
 	{
@@ -45,8 +54,7 @@ public:
 	{
 		std::string name;
 		std::vector<VertexData> vertices;
-		MaterialData mtlData{};
-		std::string textureFilePath;
+		MtlData mtlData{};
 		VertexData *vertexData = nullptr;
 		MaterialData *materialData = nullptr;
 	};
@@ -61,10 +69,13 @@ public:
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews_{};
 	};
 
+
+
 	struct ModelData
 	{
 		std::string modelName;
 		std::vector<std::pair<ObjectDataCPU, ObjectDataGPU>> objects;
+		Node rootNode{};
 	};
 
 public:
@@ -72,14 +83,10 @@ public:
 	Model() = default;
 	~Model();
 
-	void Initialize(DirectXCommon *dxCommon);
-	void Initialize(DirectXCommon *dxCommon, const std::string &fileName);
+	void Initialize(DirectXCommon* dxCommon, const std::string& directoryPath, const std::string& fileName);
 	void Draw();
 
-
-	static ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath);
 	static ModelData LoadFile(const std::string& directoryPath, const std::string &fileName);
-	static MtlData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName);
 
 public:
 
@@ -116,8 +123,14 @@ public:
 	}
 
 private:
+
+	void InitializeDataForGPU();
+
+	static Model::MtlData ReadMaterial(aiMaterial* material);
+	static Model::Node ReadNode(aiNode* node);
+
+private:
 	DirectXCommon *dxCommon_ = nullptr;
 
 	ModelData modelData_{};
 };
-

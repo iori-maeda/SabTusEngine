@@ -44,7 +44,8 @@ public:
 	Object3d() = default;
 	~Object3d();
 
-	void Initiazlize(Object3dCommon *renderer, const std::string &fileName);
+	void Initialize(Object3dCommon *obj3dCommon, const std::string &fileName);
+	void Initialize(Object3dCommon *obj3dCommon, Model* model);
 	void Upadate();
 	void Draw();
 
@@ -84,4 +85,3 @@ private:
 
 	Model *model_ = nullptr;
 };
-
