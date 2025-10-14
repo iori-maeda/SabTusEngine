@@ -74,7 +74,7 @@ public:
 	struct ModelData
 	{
 		std::string modelName;
-		std::vector<std::pair<ObjectDataCPU, ObjectDataGPU>> objects;
+		std::vector <std::unique_ptr<Mesh>> meshies_;
 		Node rootNode{};
 	};
 
@@ -83,51 +83,50 @@ public:
 	Model() = default;
 	~Model();
 
-	void Initialize(DirectXCommon* dxCommon, const std::string& directoryPath, const std::string& fileName);
+	void Initialize(DirectXCommon *dxCommon, const std::string &directoryPath, const std::string &fileName);
 	void Draw();
 
-	static ModelData LoadFile(const std::string& directoryPath, const std::string &fileName);
+	static ModelData LoadFile(const std::string &directoryPath, const std::string &fileName);
 
 public:
 
 	std::string GetName() { return modelData_.modelName; }
-	Vector4 GetColor() { return modelData_.objects[0].first.materialData->Kd; }
-	float GetShininess() { return modelData_.objects[0].first.materialData->shininess; }
+	size_t GetNumMeshies() { return modelData_.meshies_.size(); }
+	Vector4 GetColor() { return modelData_.meshies_[0]->GetData().materialData->Kd; }
+	float GetShininess() { return modelData_.meshies_[0]->GetData().materialData->shininess; }
 
 	void SetColor(const Vector4 &color)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_.meshies_)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->Kd = color;
-			objCPU.materialData->Ka = color / 0.5f;
+			mesh->SetDiffuse(color);
+			mesh->SetAmbient(color / 2);
 		}
 	}
-	
+
 	void SetEnableLighting(bool enableLighting)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_.meshies_)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->enableLighting = enableLighting;
+			mesh->SetEnableLighting(enableLighting);
 		}
 	}
 
 	void SetShininess(float shininess)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_.meshies_)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->shininess = shininess;
+			mesh->SetShininess(shininess);
 		}
 	}
 
 private:
 
-	void InitializeDataForGPU();
+	//void InitializeDataForGPU();
 
-	static Model::MtlData ReadMaterial(aiMaterial* material);
-	static Model::Node ReadNode(aiNode* node);
+	static std::vector<Model::VertexData> ReadVerticies(aiMesh *mesh);
+	static Model::MtlData ReadMaterial(aiMaterial *material);
+	static Model::Node ReadNode(aiNode *node);
 
 private:
 	DirectXCommon *dxCommon_ = nullptr;

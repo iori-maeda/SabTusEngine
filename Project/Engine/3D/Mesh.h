@@ -71,22 +71,28 @@ public:
 	Mesh() = default;
 	~Mesh();
 
-	void Initialize(DirectXCommon* dxCommon, const std::string &name);
+	void Initialize(DirectXCommon *dxCommon);
 	void Draw();
 
-	bool ReadMesh(aiScene* scene);
+	bool ReadMesh(const aiScene *scene, uint32_t meshIndex);
 
 public:
 
 	std::string GetName()const { return name_; }
-	Mesh::MeshDataCPU GetData()const { return objCPU; }
+	Mesh::MeshDataCPU GetData()const { return meshCPU; }
 
 	void SetParent(Mesh *parentPtr) { parent_ = parentPtr; }
+	void SetEnableLighting(int flag) { meshCPU.materialData->enableLighting = flag; }
+	void SetAmbient(const Vector4 &ambient) { meshCPU.materialData->Ka = ambient; }
+	void SetDiffuse(const Vector4 &diffuse) { meshCPU.materialData->Kd = diffuse; }
+	void SetSpecular(const Vector4 &specular) { meshCPU.materialData->Ks = specular; }
+	void SetShininess(float shininess) { meshCPU.materialData->shininess = shininess; }
 
 private:
 
-	bool ReadVertecies(aiMesh *scene);
+	bool ReadVertecies(aiMesh *mesh);
 	bool ReadMtl(aiMaterial *material);
+	bool InitializeGpuData();
 
 
 private:
@@ -96,6 +102,6 @@ private:
 	Mesh *parent_ = nullptr;
 	std::string name_;
 	Node rootNode{};
-	MeshDataCPU objCPU{};
-	MeshDataGPU objGPU{};
+	MeshDataCPU meshCPU{};
+	MeshDataGPU meshGPU{};
 };

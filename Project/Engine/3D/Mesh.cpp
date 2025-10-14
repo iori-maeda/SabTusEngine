@@ -14,31 +14,57 @@
 #include "Logger.h"
 
 Mesh::~Mesh()
-{}
+{
+	if (meshGPU.materialResource != nullptr)
+	{
+		meshGPU.materialResource->Unmap(0, nullptr);
+	}
+	if (meshGPU.vertexResource != nullptr)
+	{
+		meshGPU.vertexResource->Unmap(0, nullptr);
+	}
+}
 
-void Mesh::Initialize(DirectXCommon *dxCommon, const std::string &name)
+void Mesh::Initialize(DirectXCommon *dxCommon)
 {
 	dxCommon_ = dxCommon;
-	name_ = name;
+	bool checkInitialize = InitializeGpuData();
+	if (!checkInitialize)
+	{
+		Logger::Log("Mesh::not loaded mesh");
+	}
 }
 
 void Mesh::Draw()
 {
+	ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
 
+	cmdList->IASetVertexBuffers(0, 1, &meshGPU.vertexBufferViews_);
+	cmdList->SetGraphicsRootConstantBufferView(0, meshGPU.materialResource->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootDescriptorTable(2, meshGPU.texHandle_);
+	cmdList->DrawInstanced(static_cast<int>(meshCPU.vertices.size()), 1, 0, 0);
 }
 
-bool Mesh::ReadMesh(aiScene* scene)
+bool Mesh::ReadMesh(const aiScene *scene, uint32_t meshIndex)
 {
 	if (scene == nullptr) { return false; }
+	aiMesh *mesh = scene->mMeshes[meshIndex];
+	if (mesh == nullptr) { return false; }
+	name_ = mesh->mName.C_Str();
+	ReadVertecies(mesh);
 
-	return false;
+	aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+	if (material == nullptr) { return false; }
+	ReadMtl(material);
+
+	return true;
 }
 
 bool Mesh::ReadVertecies(aiMesh *mesh)
 {
 	if (mesh == nullptr) { return false; }
 	// 法線とUV座標がないものは非対応
-	if (mesh->HasNormals() || mesh->HasTextureCoords(0)) { return false; }
+	//if (mesh->HasNormals() || mesh->HasTextureCoords(0)) { return false; }
 	assert(mesh->HasNormals());
 	assert(mesh->HasTextureCoords(0));
 
@@ -59,7 +85,7 @@ bool Mesh::ReadVertecies(aiMesh *mesh)
 			vertex.normal = Vector3(normal.x, normal.y, normal.z);
 			vertex.uv = Vector2(texcoord.x, texcoord.y);
 
-			objCPU.vertices.push_back(vertex);
+			meshCPU.vertices.push_back(vertex);
 		}
 	}
 
@@ -72,24 +98,63 @@ bool Mesh::ReadMtl(aiMaterial *material)
 	aiColor4D ambient{};
 	if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) == AI_SUCCESS)
 	{
-		objCPU.mtlData.material.Ka = Vector4(ambient.r, ambient.g, ambient.b, ambient.a);
+		meshCPU.mtlData.material.Ka = Vector4(ambient.r, ambient.g, ambient.b, ambient.a);
 	}
 	aiColor4D diffuse{};
 	if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS)
 	{
-		objCPU.mtlData.material.Kd = Vector4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+		meshCPU.mtlData.material.Kd = Vector4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
 	}
 	aiColor4D specular{};
 	if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) == AI_SUCCESS)
 	{
-		objCPU.mtlData.material.Ks = Vector4(specular.r, specular.g, specular.b, specular.a);
+		meshCPU.mtlData.material.Ks = Vector4(specular.r, specular.g, specular.b, specular.a);
 	}
 
 	if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0)
 	{
 		aiString texFilePath{};
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texFilePath);
-		objCPU.mtlData.textureFilePath = texFilePath.C_Str();
+		meshCPU.mtlData.textureFilePath = texFilePath.C_Str();
 	}
+	return true;
+}
+
+bool Mesh::InitializeGpuData()
+{
+	if (dxCommon_ == nullptr) { return false; }
+	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePath);
+
+	meshGPU.vertexResource = dxCommon_->CreateBufferResource(sizeof(VertexData) * meshCPU.vertices.size());
+	if (meshGPU.vertexResource == nullptr) { return false; }
+
+	meshGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&meshCPU.vertexData));
+	memcpy(meshCPU.vertexData, meshCPU.vertices.data(), sizeof(VertexData) * meshCPU.vertices.size());
+
+	meshGPU.vertexBufferViews_.BufferLocation = meshGPU.vertexResource->GetGPUVirtualAddress();
+	meshGPU.vertexBufferViews_.SizeInBytes = static_cast<UINT>(meshCPU.vertices.size() * sizeof(VertexData));
+	meshGPU.vertexBufferViews_.StrideInBytes = sizeof(VertexData);
+
+
+	meshGPU.materialResource = dxCommon_->CreateBufferResource(sizeof(MaterialData));
+	if (meshGPU.materialResource == nullptr) { return false; }
+
+	meshGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&meshCPU.materialData));
+	*meshCPU.materialData = meshCPU.mtlData.material;
+	meshCPU.materialData->enableLighting = true;
+
+	if(!meshCPU.mtlData.textureFilePath.empty())
+	{
+		//TextureManager::GetInstace().Load()
+		meshCPU.mtlData.textureFilePath = "whiteTest.png";
+		TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
+	}
+	else
+	{
+		meshCPU.mtlData.textureFilePath = "whiteTest.png";
+		TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
+	}
+
+	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePath);
 	return true;
 }
