@@ -20,19 +20,20 @@ class Mesh
 {
 public:
 
-	struct Node
-	{
-		Matrix4x4 localMatrix{};
-		std::string name;
-		std::vector<Node>children;
-	};
-
 	struct VertexData
 	{
 		Vector4 position{};
 		Vector2 uv{};
 		Vector3 normal{};
 	};
+
+	struct TransformationMatrix
+	{
+		Matrix4x4 wvp{};
+		Matrix4x4 world{};
+		Matrix4x4 worldInverseTranspose{};
+	};
+
 
 	struct MaterialData
 	{
@@ -87,6 +88,7 @@ public:
 	void SetDiffuse(const Vector4 &diffuse) { meshCPU.materialData->Kd = diffuse; }
 	void SetSpecular(const Vector4 &specular) { meshCPU.materialData->Ks = specular; }
 	void SetShininess(float shininess) { meshCPU.materialData->shininess = shininess; }
+	void SetTextureDirectoryPath(const std::string directoryPath) { textureDirectoryPath_ = directoryPath; }
 
 private:
 
@@ -98,10 +100,13 @@ private:
 private:
 
 	DirectXCommon *dxCommon_ = nullptr;
-
 	Mesh *parent_ = nullptr;
+
 	std::string name_;
-	Node rootNode{};
 	MeshDataCPU meshCPU{};
 	MeshDataGPU meshGPU{};
+
+	std::string textureDirectoryPath_;
+
+
 };

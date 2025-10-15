@@ -39,8 +39,7 @@ Model *ModelManager::Load(const std::string &fileName)
 	}
 
 	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
-	Model *loadModel = new Model();
-	loadModel->Initialize(dxCommon_, defaultDirectoryPath, fileName);
+	Model* loadModel = Load(defaultDirectoryPath, fileName);
 
 	models_.emplace(fileName, std::move(loadModel));
 	modelCount++;
@@ -60,13 +59,14 @@ Model *ModelManager::Load(const std::string &directoryPath, const std::string &f
 	}
 
 	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
-	Model *loadModel = new Model();
-	loadModel->Initialize(dxCommon_, directoryPath, fileName);
+	std::unique_ptr<Model> loadModel = std::make_unique<Model>();
+	loadModel->LoadModelFile(directoryPath , fileName);
+	loadModel->Initialize(dxCommon_);
 
 	models_.emplace(fileName, std::move(loadModel));
 	modelCount++;
 
-	return loadModel;
+	return GetModel(fileName);
 }
 
 Model *ModelManager::GetModel(const std::string &fileName)

@@ -13,43 +13,77 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "TextureManager.h"
+#include "WIndow/WinApp.h"
+#include "Camera/Camera.h"
 #include "Logger.h"
 
 
 
 Model::~Model()
-{
-	/*for (auto &modelData : modelData_.objects)
-	{
-		modelData.second.materialResource->Unmap(0, nullptr);
-		modelData.second.vertexResource->Unmap(0, nullptr);
-	}*/
-}
+{}
 
-void Model::Initialize(DirectXCommon *dxCommon, const std::string &directoryPath, const std::string &fileName)
+void Model::Initialize(DirectXCommon *dxCommon)
 {
+	if (dxCommon == nullptr) { return; }
+
 	dxCommon_ = dxCommon;
 
-	modelData_ = LoadFile(directoryPath, fileName);
-	//InitializeDataForGPU();
-	for(auto& mesh : modelData_.meshies_)
+	transform_.scale = Vector3(1.0f, 1.0f, 1.0f);
+	transform_.rotate = {};
+	transform_.translate = {};
+
+	localMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+
+	for (auto &mesh : modelData_->meshes)
 	{
-		mesh->Initialize(dxCommon);
+		//mesh->meshPtr = std::make_unique<Mesh>();
+		mesh->meshPtr->Initialize(dxCommon_);
+		mesh->transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
+		mesh->transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&mesh->transformationMatrixData_));
+
+		mesh->transformationMatrixData_->world = MakeIdentityMatrix();
+		mesh->transformationMatrixData_->wvp = MakeIdentityMatrix();
+		mesh->transformationMatrixData_->worldInverseTranspose = MakeIdentityMatrix();
 	}
+}
+
+void Model::Update()
+{
+	assert(dxCommon_ != nullptr);
+	localMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 }
 
 void Model::Draw()
 {
 	assert(dxCommon_ != nullptr);
-	// 描画コマンドリストの取得
-	//ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
-	for (const auto &mesh : modelData_.meshies_)
+
+
+	for (uint32_t meshIndex = 0; meshIndex < modelData_->meshes.size(); meshIndex++)
 	{
-		mesh->Draw();
+		if (meshIndex + 1 >= modelData_->rootNode.children.size()) { break; }
+		MeshData *mesh = modelData_->meshes[meshIndex].get();
+		Node &rootNode = modelData_->rootNode;
+		Matrix4x4 meshLocalMat = rootNode.children[meshIndex].worldMatrix;
+		mesh->transformationMatrixData_->world = localMatrix_ * meshLocalMat;
+		mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
+		if (camera_)
+		{
+			mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+		}
+		else
+		{
+			Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+			Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+			mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+		}
+		// 描画コマンドリストの取得
+		ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+		cmdList->SetGraphicsRootConstantBufferView(1, modelData_->meshes[meshIndex]->transformationMatrixResource_->GetGPUVirtualAddress());
+		mesh->meshPtr->Draw();
 	}
 }
 
-Model::ModelData Model::LoadFile(const std::string &directoryPath, const std::string &fileName)
+bool Model::LoadModelFile(const std::string &directoryPath, const std::string &fileName)
 {
 	Assimp::Importer importer;
 	uint32_t readFlag =
@@ -63,151 +97,59 @@ Model::ModelData Model::LoadFile(const std::string &directoryPath, const std::st
 	{
 		std::string error = importer.GetErrorString();
 		Logger::Log(std::format("Assimp Error: {}\n", error));
+		return false;
 	}
-	assert(scene->HasMeshes());
 
-	//Mesh loadModel{};
-	ModelData loadModel{};
+	modelData_ = std::make_unique<ModelData>();
 
 	for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
 	{
-		std::unique_ptr<Mesh> meshData = std::make_unique<Mesh>();
-		//aiMesh *mesh = scene->mMeshes[meshIndex];
-		meshData->ReadMesh(scene, meshIndex);
-		//meshData->Initialize(dxCommon_, )
+		std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
+		meshData->meshPtr = std::make_unique<Mesh>();
+		//meshData->meshPtr->Initialize(dxCommon_);
+		meshData->meshPtr->SetTextureDirectoryPath(directoryPath);
+		bool isMeshLoadCompleted = meshData->meshPtr->ReadMesh(scene, meshIndex);
+		if (!isMeshLoadCompleted) { return false; }
 
-		/*meshData.name = mesh->mName.C_Str();
-		meshData.vertices = ReadVerticies(mesh);*/
-
-		//aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-		/*meshData.mtlData = ReadMaterial(material);*/
-
-		/*if (!meshData.mtlData.textureFilePath.empty())
-		{
-			TextureManager::GetInstace().Load(directoryPath, meshData.mtlData.textureFilePath);
-		}
-		else
-		{
-			meshData.mtlData.textureFilePath = "whiteTest.png";
-			TextureManager::GetInstace().Load(meshData.mtlData.textureFilePath);
-		}
-		*/
-		loadModel.rootNode = ReadNode(scene->mRootNode);
-		loadModel.meshies_.push_back(std::move(meshData));
+		modelData_->meshes.push_back(std::move(meshData));
 	}
 	std::filesystem::path path(fileName);
-	loadModel.modelName = path.stem().string();
+	modelData_->modelName = path.stem().string();
+	modelData_->rootNode = ReadNode(scene->mRootNode, MakeIdentityMatrix());
 
-	return loadModel;
+	return true;
 }
 
-//void Model::InitializeDataForGPU()
-//{
-//	for (auto &object : modelData_.objects)
-//	{
-//		ObjectDataCPU &objCPU = object.first;
-//		ObjectDataGPU &objGPU = object.second;
-//
-//
-//		objGPU.name = objCPU.name;
-//
-//		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.mtlData.textureFilePath);
-//
-//		objGPU.vertexResource = dxCommon_->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
-//
-//		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.vertexData));
-//		memcpy(objCPU.vertexData, objCPU.vertices.data(), sizeof(VertexData) * objCPU.vertices.size());
-//
-//		objGPU.vertexBufferViews_.BufferLocation = objGPU.vertexResource->GetGPUVirtualAddress();
-//		objGPU.vertexBufferViews_.SizeInBytes = static_cast<UINT>(objCPU.vertices.size() * sizeof(VertexData));
-//		objGPU.vertexBufferViews_.StrideInBytes = sizeof(VertexData);
-//
-//
-//		objGPU.materialResource = dxCommon_->CreateBufferResource(sizeof(MaterialData));
-//
-//		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
-//		*objCPU.materialData = objCPU.mtlData.material;
-//		objCPU.materialData->enableLighting = true;
-//	}
-//}
-
-std::vector<Model::VertexData> Model::ReadVerticies(aiMesh *mesh)
-{
-	std::vector<VertexData>verticies;
-
-	for (uint32_t faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++)
-	{
-		aiFace &face = mesh->mFaces[faceIndex];
-		assert(face.mNumIndices == 3); // 三角形以外は非対応
-
-		for (uint32_t element = 0; element < face.mNumIndices; element++)
-		{
-			uint32_t vertexIndex = face.mIndices[element];
-			aiVector3D &position = mesh->mVertices[vertexIndex];
-			aiVector3D &normal = mesh->mNormals[vertexIndex];
-			aiVector3D &texcoord = mesh->mTextureCoords[0][vertexIndex];
-
-			VertexData vertex{};
-			vertex.position = Vector4(position.x, position.y, position.z, 1.0f);
-			vertex.normal = Vector3(normal.x, normal.y, normal.z);
-			vertex.uv = Vector2(texcoord.x, texcoord.y);
-
-			verticies.push_back(vertex);
-
-			// meshの追加
-		}
-	}
-	return verticies;
-}
-
-Model::MtlData Model::ReadMaterial(aiMaterial *material)
-{
-	MtlData result{};
-
-	aiColor4D ambient{};
-	if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) == AI_SUCCESS)
-	{
-		result.material.Ka = Vector4(ambient.r, ambient.g, ambient.b, ambient.a);
-	}
-	aiColor4D diffuse{};
-	if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS)
-	{
-		result.material.Kd = Vector4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
-	}
-	aiColor4D specular{};
-	if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) == AI_SUCCESS)
-	{
-		result.material.Ks = Vector4(specular.r, specular.g, specular.b, specular.a);
-	}
-
-	if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0)
-	{
-		aiString texFilePath{};
-		material->GetTexture(aiTextureType_DIFFUSE, 0, &texFilePath);
-		result.textureFilePath = texFilePath.C_Str();
-	}
-	return result;
-}
-
-Model::Node Model::ReadNode(aiNode *node)
+Model::Node Model::ReadNode(aiNode *node, const Matrix4x4 &parentMatrix)
 {
 	Node result{};
 
 	aiMatrix4x4 aiLocalMatrix = node->mTransformation;
+	aiLocalMatrix = node->mTransformation;
+
 	aiLocalMatrix.Transpose(); // 列ベクトルから行ベクトルに転置
 
+	Matrix4x4 localMatrix{};
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			result.localMatrix.m[i][j] = aiLocalMatrix[i][j];
+			localMatrix.m[i][j] = aiLocalMatrix[i][j];
 		}
 	}
+
+	result.worldMatrix = parentMatrix * localMatrix;
+
 	result.name = node->mName.C_Str();
 	result.children.resize(node->mNumChildren);
+
+	for(uint32_t i = 0; i < node->mNumMeshes; i++)
+	{
+		result.useMeshIndecies.push_back(node->mMeshes[i]);
+	}
 	for (uint32_t childIndex = 0; childIndex < node->mNumChildren; childIndex++)
 	{
-		result.children[childIndex] = ReadNode(node->mChildren[childIndex]);
+		result.children[childIndex] = ReadNode(node->mChildren[childIndex], result.worldMatrix);
 	}
 
 

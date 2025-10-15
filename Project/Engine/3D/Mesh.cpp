@@ -31,7 +31,7 @@ void Mesh::Initialize(DirectXCommon *dxCommon)
 	bool checkInitialize = InitializeGpuData();
 	if (!checkInitialize)
 	{
-		Logger::Log("Mesh::not loaded mesh");
+		Logger::Log("Mesh::loading failed");
 	}
 }
 
@@ -143,18 +143,20 @@ bool Mesh::InitializeGpuData()
 	*meshCPU.materialData = meshCPU.mtlData.material;
 	meshCPU.materialData->enableLighting = true;
 
-	if(!meshCPU.mtlData.textureFilePath.empty())
+	if (!textureDirectoryPath_.empty() && !meshCPU.mtlData.textureFilePath.empty())
 	{
-		//TextureManager::GetInstace().Load()
-		meshCPU.mtlData.textureFilePath = "whiteTest.png";
-		TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
+		TextureManager::GetInstace().Load(textureDirectoryPath_, meshCPU.mtlData.textureFilePath);
 	}
 	else
 	{
-		meshCPU.mtlData.textureFilePath = "whiteTest.png";
+		if (meshCPU.mtlData.textureFilePath.empty())
+		{
+			meshCPU.mtlData.textureFilePath = "whiteTest.png";
+		}
 		TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
 	}
-
+	TextureDataCPU dataCpu = TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
+	meshGPU.texSize_ = Vector2(static_cast<float>(dataCpu.metaData.width), static_cast<float>(dataCpu.metaData.height));
 	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePath);
 	return true;
 }

@@ -53,9 +53,8 @@ void BaseGame::Initialize()
 
 	object3d2_ = std::make_unique<Object3d>();
 	object3d2_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/chess_set_4k.gltf/", "chess_set_4k.gltf"));
-	//object3d2_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("plane.obj"));
 	object3d2_->SetCamera(mainCamera_.get());
-	modelTransform2_.scale = Vector3(1.0f, 1.0f, 1.0f);
+	modelTransform2_.scale = Vector3(10.0f, 10.0f, 10.0f);
 	//modelTransform2_.rotate.x = -1.5f;
 	object3d2_->SetTransform(modelTransform2_);
 	modelWorldMatrix2_ = MakeIdentityMatrix();

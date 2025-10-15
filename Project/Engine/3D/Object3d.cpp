@@ -9,9 +9,7 @@
 #include "ImGuiManager.h"
 
 Object3d::~Object3d()
-{
-	transformationMatrixResource_->Unmap(0, nullptr);
-}
+{}
 
 void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileName)
 {
@@ -76,7 +74,11 @@ void Object3d::Upadate()
 	{
 		transformationMatrixData_->wvp = transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
 		cameraForGPUData_->worldPosition = camera_->GetPosition();
+
+		model_->SetCamera(camera_);
 	}
+
+	model_->Update();
 }
 
 void Object3d::Draw()
@@ -84,9 +86,8 @@ void Object3d::Draw()
 	// 描画コマンドリストの取得
 	ID3D12GraphicsCommandList *commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
 
-	commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
+	//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
-
 	model_->Draw();
 }
 
@@ -98,6 +99,7 @@ void Object3d::DebugWindow()
 	ImGui::DragFloat3("position", &transform_.translate.x, 0.01f);
 	ImGui::DragFloat3("rotation", &transform_.rotate.x, 0.01f);
 	ImGui::DragFloat3("scale", &transform_.scale.x, 0.01f);
+	model_->SetTransform(transform_);
 
 	Vector4 color = model_->GetColor();
 	ImGui::ColorEdit4("color", &color.x);

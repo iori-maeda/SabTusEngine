@@ -15,66 +15,46 @@
 
 #include "Mesh.h"
 
-
 class DirectXCommon;
+class Camera;
 
 class Model
 {
 public:
+
 	struct Node
 	{
-		Matrix4x4 localMatrix{};
-		std::string name;;
+		Matrix4x4 worldMatrix{};
+		std::string name;
 		std::vector<Node>children;
+		std::vector<int32_t> useMeshIndecies;
 	};
 
-	struct VertexData
+	struct Transform
 	{
-		Vector4 position{};
-		Vector2 uv{};
-		Vector3 normal{};
+		Vector3 scale{ 1.0f, 1.0f, 1.0f };
+		Vector3 rotate{};
+		Vector3 translate{};
 	};
 
-	struct MaterialData
+	struct TransformationMatrix
 	{
-		Vector4 Ka{};
-		Vector4 Kd{};
-		Vector4 Ks{};
-		float shininess = 1.0f;
-		int32_t enableLighting = true;
+		Matrix4x4 wvp{};
+		Matrix4x4 world{};
+		Matrix4x4 worldInverseTranspose{};
 	};
 
-	struct MtlData
+	struct MeshData
 	{
-		MaterialData material{};
-		std::string textureFilePath;
+		std::unique_ptr<Mesh> meshPtr = nullptr;
+		ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
+		TransformationMatrix *transformationMatrixData_ = nullptr;
 	};
-
-	struct ObjectDataCPU
-	{
-		std::string name;
-		std::vector<VertexData> vertices;
-		MtlData mtlData{};
-		VertexData *vertexData = nullptr;
-		MaterialData *materialData = nullptr;
-	};
-
-	struct ObjectDataGPU
-	{
-		std::string name;
-		ComPtr<ID3D12Resource> vertexResource = nullptr;
-		ComPtr<ID3D12Resource> materialResource = nullptr;
-		D3D12_GPU_DESCRIPTOR_HANDLE texHandle_{};
-		Vector2 texSize_{};
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews_{};
-	};
-
-
 
 	struct ModelData
 	{
 		std::string modelName;
-		std::vector <std::unique_ptr<Mesh>> meshies_;
+		std::vector <std::unique_ptr<MeshData>> meshes;
 		Node rootNode{};
 	};
 
@@ -83,53 +63,55 @@ public:
 	Model() = default;
 	~Model();
 
-	void Initialize(DirectXCommon *dxCommon, const std::string &directoryPath, const std::string &fileName);
+	void Initialize(DirectXCommon *dxCommon);
+	void Update();
 	void Draw();
 
-	static ModelData LoadFile(const std::string &directoryPath, const std::string &fileName);
+	bool LoadModelFile(const std::string &directoryPath, const std::string &fileName);
 
 public:
 
-	std::string GetName() { return modelData_.modelName; }
-	size_t GetNumMeshies() { return modelData_.meshies_.size(); }
-	Vector4 GetColor() { return modelData_.meshies_[0]->GetData().materialData->Kd; }
-	float GetShininess() { return modelData_.meshies_[0]->GetData().materialData->shininess; }
+	std::string GetName() { return modelData_->modelName; }
+	size_t GetNumMeshies() { return modelData_->meshes.size(); }
+	Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
+	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetData().materialData->shininess; }
 
+	void SetCamera(Camera *camera) { camera_ = camera; }
+	void SetTransform(const Model::Transform &transform) { transform_ = transform; }
 	void SetColor(const Vector4 &color)
 	{
-		for (auto &mesh : modelData_.meshies_)
+		for (auto &mesh : modelData_->meshes)
 		{
-			mesh->SetDiffuse(color);
-			mesh->SetAmbient(color / 2);
+			mesh->meshPtr->SetDiffuse(color);
+			mesh->meshPtr->SetAmbient(color / 2);
 		}
 	}
 
 	void SetEnableLighting(bool enableLighting)
 	{
-		for (auto &mesh : modelData_.meshies_)
+		for (auto &mesh : modelData_->meshes)
 		{
-			mesh->SetEnableLighting(enableLighting);
+			mesh->meshPtr->SetEnableLighting(enableLighting);
 		}
 	}
 
 	void SetShininess(float shininess)
 	{
-		for (auto &mesh : modelData_.meshies_)
+		for (auto &mesh : modelData_->meshes)
 		{
-			mesh->SetShininess(shininess);
+			mesh->meshPtr->SetShininess(shininess);
 		}
 	}
 
 private:
-
-	//void InitializeDataForGPU();
-
-	static std::vector<Model::VertexData> ReadVerticies(aiMesh *mesh);
-	static Model::MtlData ReadMaterial(aiMaterial *material);
-	static Model::Node ReadNode(aiNode *node);
+	Model::Node ReadNode(aiNode *node, const Matrix4x4 &parentMatrix);
 
 private:
 	DirectXCommon *dxCommon_ = nullptr;
+	Camera *camera_ = nullptr;
 
-	ModelData modelData_{};
+	std::unique_ptr<ModelData> modelData_ = nullptr;
+
+	Transform transform_{};
+	Matrix4x4 localMatrix_{};
 };
