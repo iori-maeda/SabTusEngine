@@ -81,6 +81,7 @@ public:
 
 	std::string GetName()const { return name_; }
 	Mesh::MeshDataCPU GetData()const { return meshCPU; }
+	int32_t GetOriginIndex()const { return originIndex_; }
 
 	void SetParent(Mesh *parentPtr) { parent_ = parentPtr; }
 	void SetEnableLighting(int flag) { meshCPU.materialData->enableLighting = flag; }
@@ -108,5 +109,5 @@ private:
 
 	std::string textureDirectoryPath_;
 
-
+	int32_t originIndex_ = 0;
 };

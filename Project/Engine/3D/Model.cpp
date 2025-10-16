@@ -58,28 +58,38 @@ void Model::Draw()
 	assert(dxCommon_ != nullptr);
 
 
-	for (uint32_t meshIndex = 0; meshIndex < modelData_->meshes.size(); meshIndex++)
+	for (auto &nodeChild : modelData_->rootNode.children)
 	{
-		if (meshIndex + 1 >= modelData_->rootNode.children.size()) { break; }
-		MeshData *mesh = modelData_->meshes[meshIndex].get();
-		Node &rootNode = modelData_->rootNode;
-		Matrix4x4 meshLocalMat = rootNode.children[meshIndex].worldMatrix;
-		mesh->transformationMatrixData_->world = localMatrix_ * meshLocalMat;
-		mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
-		if (camera_)
+		for (auto &cNodeChild : nodeChild.children)
 		{
-			mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+			for (int32_t &index : cNodeChild.useMeshIndecies)
+			{
+				auto mesh = std::find_if(
+					modelData_->meshes.begin(),
+					modelData_->meshes.end(),
+					[&](auto &m) { return m->meshPtr->GetOriginIndex() == index; }
+				);
+				if (mesh != modelData_->meshes.end())
+				{
+					mesh->get()->transformationMatrixData_->world = cNodeChild.worldMatrix * localMatrix_;
+					mesh->get()->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->get()->transformationMatrixData_->world));
+					if (camera_)
+					{
+						mesh->get()->transformationMatrixData_->wvp = mesh->get()->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+					}
+					else
+					{
+						Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+						Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+						mesh->get()->transformationMatrixData_->wvp = mesh->get()->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+					}
+
+					ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+					cmdList->SetGraphicsRootConstantBufferView(1, mesh->get()->transformationMatrixResource_->GetGPUVirtualAddress());
+					mesh->get()->meshPtr->Draw();
+				}
+			}
 		}
-		else
-		{
-			Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-			Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
-			mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
-		}
-		// 描画コマンドリストの取得
-		ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
-		cmdList->SetGraphicsRootConstantBufferView(1, modelData_->meshes[meshIndex]->transformationMatrixResource_->GetGPUVirtualAddress());
-		mesh->meshPtr->Draw();
 	}
 }
 
@@ -143,7 +153,7 @@ Model::Node Model::ReadNode(aiNode *node, const Matrix4x4 &parentMatrix)
 	result.name = node->mName.C_Str();
 	result.children.resize(node->mNumChildren);
 
-	for(uint32_t i = 0; i < node->mNumMeshes; i++)
+	for (uint32_t i = 0; i < node->mNumMeshes; i++)
 	{
 		result.useMeshIndecies.push_back(node->mMeshes[i]);
 	}

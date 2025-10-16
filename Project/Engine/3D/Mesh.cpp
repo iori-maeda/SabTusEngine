@@ -57,6 +57,8 @@ bool Mesh::ReadMesh(const aiScene *scene, uint32_t meshIndex)
 	if (material == nullptr) { return false; }
 	ReadMtl(material);
 
+	originIndex_ = static_cast<int32_t>(meshIndex);
+
 	return true;
 }
 

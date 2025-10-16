@@ -39,12 +39,8 @@ Model *ModelManager::Load(const std::string &fileName)
 	}
 
 	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
-	Model* loadModel = Load(defaultDirectoryPath, fileName);
-
-	models_.emplace(fileName, std::move(loadModel));
-	modelCount++;
-
-	return loadModel;
+	
+	return Load(defaultDirectoryPath, fileName);
 }
 
 Model *ModelManager::Load(const std::string &directoryPath, const std::string &fileName)
@@ -80,6 +76,6 @@ Model *ModelManager::GetModel(const std::string &fileName)
 	}
 
 	Logger::Log(std::format("ModelManager::SearchFailed::{}\n", fileName));
-	assert(nullptr);
+	assert(false && "ModelManager::GetModel - Model not found");
 	return nullptr;
 }
