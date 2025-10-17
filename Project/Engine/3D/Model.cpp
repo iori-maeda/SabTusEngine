@@ -60,7 +60,40 @@ void Model::Draw()
 
 	for (auto &nodeChild : modelData_->rootNode.children)
 	{
-		for (auto &cNodeChild : nodeChild.children)
+		std::function<void(Node&)> DrawNode = [&](auto &node)
+			{
+				for (int32_t meshIndex : node.useMeshIndecies)
+				{
+					auto mesh = std::find_if(
+						modelData_->meshes.begin(),
+						modelData_->meshes.end(),
+						[&](auto &m) { return m->meshPtr->GetOriginIndex() == meshIndex; }
+					);
+
+					auto *meshPtr = mesh->get();
+					//Matrix4x4 worldMat = node.worldMatrix * mesh->meshPtr->
+					if (camera_)
+					{
+						meshPtr->transformationMatrixData_->wvp = meshPtr->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+					}
+					else
+					{
+						Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+						Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+						meshPtr->transformationMatrixData_->wvp = meshPtr->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+					}
+
+					ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+					cmdList->SetGraphicsRootConstantBufferView(1, meshPtr->transformationMatrixResource_->GetGPUVirtualAddress());
+					meshPtr->meshPtr->Draw();
+				}
+				for (auto &child : node.children)
+				{
+					DrawNode(child);
+				}
+			};
+		DrawNode(nodeChild);
+		/*for (auto &cNodeChild : nodeChild.children)
 		{
 			for (int32_t &index : cNodeChild.useMeshIndecies)
 			{
@@ -89,7 +122,7 @@ void Model::Draw()
 					mesh->get()->meshPtr->Draw();
 				}
 			}
-		}
+		}*/
 	}
 }
 
