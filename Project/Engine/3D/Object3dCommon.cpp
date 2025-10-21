@@ -8,6 +8,7 @@
 #include "Logger.h" 
 #include "DirectX12ObjectsFunction.h"
 #include "ImGuiManager.h"
+#include "ModelManager.h"
 
 Object3dCommon::~Object3dCommon()
 {
@@ -17,6 +18,9 @@ Object3dCommon::~Object3dCommon()
 void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 {
 	dxCommon_ = dxCommon;
+
+	ModelManager::GetInstace().Initialize(dxCommon_);
+
 	CreateRootSignature();
 	CreatePipelineStateObject();
 

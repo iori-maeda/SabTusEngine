@@ -44,7 +44,8 @@ public:
 	Object3d() = default;
 	~Object3d();
 
-	void Initiazlize(Object3dCommon *renderer, const std::string &fileName);
+	void Initialize(Object3dCommon *obj3dCommon, const std::string &fileName);
+	void Initialize(Object3dCommon *obj3dCommon, Model* model);
 	void Upadate();
 	void Draw();
 
@@ -55,7 +56,7 @@ public:
 	std::string GetModelName() const { return model_->GetName(); }
 	Vector3 GetPosition() const { return transform_.translate; }
 
-	void SetTransform(const Transform &transform) { transform_ = transform; }
+	void SetTransform(const Model::Transform &transform) { transform_ = transform; }
 	void SetPosition(const Vector3 &position) { transform_.translate = position; }
 	void SetRotation(const Vector3 &rotation) { transform_.rotate = rotation; }
 	void SetScale(const Vector3 &scale) { transform_.scale = scale; }
@@ -74,7 +75,7 @@ private:
 	Object3dCommon *obj3dCommon_ = nullptr;
 	Camera *camera_ = nullptr;
 
-	Transform transform_{};
+	Model::Transform transform_{};
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	TransformationMatrix *transformationMatrixData_ = nullptr;
@@ -84,4 +85,3 @@ private:
 
 	Model *model_ = nullptr;
 };
-

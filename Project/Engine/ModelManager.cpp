@@ -8,6 +8,7 @@
 #include "DirectXCommon.h"
 
 uint32_t ModelManager::modelCount = 0;
+std::string ModelManager::defaultDirectoryPath = "Resources/Models/";
 
 ModelManager &ModelManager::GetInstace()
 {
@@ -38,13 +39,30 @@ Model *ModelManager::Load(const std::string &fileName)
 	}
 
 	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
-	Model *loadModel = new Model();
-	loadModel->Initialize(dxCommon_, fileName);
+	
+	return Load(defaultDirectoryPath, fileName);
+}
+
+Model *ModelManager::Load(const std::string &directoryPath, const std::string &fileName)
+{
+
+	// 読み込み済みなら要素を返して早期リターン
+	auto modelData = models_.find(fileName);
+	if (modelData != models_.end())
+	{
+		Logger::Log(std::format("ModelManager::Search::{}\n", fileName));
+		return modelData->second.get();
+	}
+
+	Logger::Log(std::format("ModelManager::Loading::{}\n", fileName));
+	std::unique_ptr<Model> loadModel = std::make_unique<Model>();
+	loadModel->LoadModelFile(directoryPath , fileName);
+	loadModel->Initialize(dxCommon_);
 
 	models_.emplace(fileName, std::move(loadModel));
 	modelCount++;
 
-	return loadModel;
+	return GetModel(fileName);
 }
 
 Model *ModelManager::GetModel(const std::string &fileName)
@@ -56,8 +74,8 @@ Model *ModelManager::GetModel(const std::string &fileName)
 		Logger::Log(std::format("ModelManager::SearchSuccess::{}\n", fileName));
 		return modelData->second.get();
 	}
-	
+
 	Logger::Log(std::format("ModelManager::SearchFailed::{}\n", fileName));
-	assert(nullptr);
+	assert(false && "ModelManager::GetModel - Model not found");
 	return nullptr;
 }

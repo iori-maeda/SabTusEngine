@@ -10,10 +10,13 @@ class DirectXCommon;
 class ModelManager
 {
 public:
+	static std::string defaultDirectoryPath;
+
+public:
 	// シングルトンパターンで作成
 	static ModelManager& GetInstace();
 
-	void Initialize(DirectXCommon* renderContext);
+	void Initialize(DirectXCommon* dxCommon);
 	void Finalize();
 
 	/// <summary>
@@ -22,6 +25,7 @@ public:
 	/// <param name="fileName">画像名.拡張子</param>
 	/// <returns></returns>
 	Model* Load(const std::string& fileName);
+	Model* Load(const std::string& directoryPath, const std::string& fileName);
 
 	Model* GetModel(const std::string& fileName);
 

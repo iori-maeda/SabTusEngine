@@ -4,288 +4,176 @@
 #include <sstream>
 #include <filesystem>
 #include <cassert>
+#include <format>
+
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
 #include "DirectXCommon.h"
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "TextureManager.h"
+#include "WIndow/WinApp.h"
+#include "Camera/Camera.h"
+#include "Logger.h"
 
-std::string Model::defaultDirectoryPath = "Resources/Models/";
+
 
 Model::~Model()
-{
-	for (auto &modelData : modelData_.objects)
-	{
-		modelData.second.materialResource->Unmap(0, nullptr);
-		modelData.second.vertexResource->Unmap(0, nullptr);
-	}
-}
+{}
 
 void Model::Initialize(DirectXCommon *dxCommon)
 {
+	if (dxCommon == nullptr) { return; }
+
 	dxCommon_ = dxCommon;
 
-	modelData_ = LoadObjFile(defaultDirectoryPath, "axis.obj");
-	for (auto &object : modelData_.objects)
+	transform_.scale = Vector3(1.0f, 1.0f, 1.0f);
+	transform_.rotate = {};
+	transform_.translate = {};
+
+	modelMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+
+	for (auto &mesh : modelData_->meshes)
 	{
-		ObjectDataCPU &objCPU = object.first;
-		ObjectDataGPU &objGPU = object.second;
-		if (objCPU.textureFilePath.empty())
-		{
-			objCPU.textureFilePath = "uvChecker.png";
-		}
+		mesh->meshPtr->Initialize(dxCommon_);
+		mesh->transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
+		mesh->transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&mesh->transformationMatrixData_));
 
-		objGPU.name = objCPU.name;
-
-		TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
-		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.textureFilePath);
-
-		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
-
-		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.vertexData));
-		memcpy(objCPU.vertexData, objCPU.vertices.data(), sizeof(VertexData) * objCPU.vertices.size());
-
-		objGPU.vertexBufferViews_.BufferLocation = objGPU.vertexResource->GetGPUVirtualAddress();
-		objGPU.vertexBufferViews_.SizeInBytes = static_cast<UINT>(objCPU.vertices.size() * sizeof(VertexData));
-		objGPU.vertexBufferViews_.StrideInBytes = sizeof(VertexData);
-
-
-		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
-
-		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
-		*objCPU.materialData = modelData_.objects[0].first.mtlData;
-		*objCPU.materialData = objCPU.mtlData;
-		objCPU.materialData->enableLighting = true;
+		mesh->transformationMatrixData_->world = MakeIdentityMatrix();
+		mesh->transformationMatrixData_->wvp = MakeIdentityMatrix();
+		mesh->transformationMatrixData_->worldInverseTranspose = MakeIdentityMatrix();
 	}
 }
 
-void Model::Initialize(DirectXCommon *dxCommon, const std::string &fileName)
+void Model::Update()
 {
-	dxCommon_ = dxCommon;
-
-	modelData_ = LoadObjFile(defaultDirectoryPath, fileName);
-	for (auto &object : modelData_.objects)
-	{
-		ObjectDataCPU &objCPU = object.first;
-		ObjectDataGPU &objGPU = object.second;
-		if (objCPU.textureFilePath.empty())
-		{
-			objCPU.textureFilePath = "uvChecker.png";
-		}
-
-		objGPU.name = objCPU.name;
-
-		TextureManager::GetInstace().Load(defaultDirectoryPath, objCPU.textureFilePath);
-		objGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(objCPU.textureFilePath);
-
-		objGPU.vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * objCPU.vertices.size());
-
-		objGPU.vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.vertexData));
-		memcpy(objCPU.vertexData, objCPU.vertices.data(), sizeof(VertexData) * objCPU.vertices.size());
-
-		objGPU.vertexBufferViews_.BufferLocation = objGPU.vertexResource->GetGPUVirtualAddress();
-		objGPU.vertexBufferViews_.SizeInBytes = static_cast<UINT>(objCPU.vertices.size() * sizeof(VertexData));
-		objGPU.vertexBufferViews_.StrideInBytes = sizeof(VertexData);
-
-
-		objGPU.materialResource = dxCommon->CreateBufferResource(sizeof(MaterialData));
-
-		objGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&objCPU.materialData));
-		*objCPU.materialData = objCPU.mtlData;
-		objCPU.materialData->enableLighting = true;
-	}
+	assert(dxCommon_ != nullptr);
+	modelMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 }
 
 void Model::Draw()
 {
 	assert(dxCommon_ != nullptr);
-	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
-	for (const auto &object : modelData_.objects)
+
+	for (auto &nodeChild : modelData_->rootNode.children)
 	{
-		const ObjectDataCPU &objCPU = object.first;
-		const ObjectDataGPU &objGPU = object.second;
-		
-		commandList->IASetVertexBuffers(0, 1, &objGPU.vertexBufferViews_);
-		commandList->SetGraphicsRootConstantBufferView(0, objGPU.materialResource->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootDescriptorTable(2, objGPU.texHandle_);
-		commandList->DrawInstanced(static_cast<UINT>(objCPU.vertices.size()), 1, 0, 0);
+		DrawNode(nodeChild);
 	}
 }
 
-Model::ModelData Model::LoadObjFile(const std::string &directoryPath, const std::string &filePath)
+bool Model::LoadModelFile(const std::string &directoryPath, const std::string &fileName)
 {
-	ModelData result;
-	std::unique_ptr<ObjectDataCPU> obj = std::make_unique<ObjectDataCPU>();
-	std::vector<Vector4> positions;
-	std::vector<Vector3> normals;
-	std::vector<Vector2> uvs;
-	std::string useMtlFileName;
-
-	std::string line;
-	std::ifstream file(directoryPath + '/' + filePath);
-	assert(file.is_open());
-
-	while (std::getline(file, line))
+	Assimp::Importer importer;
+	uint32_t readFlag =
+		aiProcess_FlipWindingOrder |
+		aiProcess_FlipUVs |
+		aiProcess_Triangulate |
+		aiProcess_MakeLeftHanded |
+		aiProcess_CalcTangentSpace;
+	const aiScene *scene = importer.ReadFile((directoryPath + fileName).c_str(), readFlag); // 三角形逆順、UVフリップオプションで読み込み
+	if (!scene)
 	{
-		std::string identifier;
-		std::istringstream s(line);
-		s >> identifier; // 先頭識別子読み込み
+		std::string error = importer.GetErrorString();
+		Logger::Log(std::format("Assimp Error: {}\n", error));
+		return false;
+	}
 
-		if (identifier == "mtllib")
-		{
-			s >> useMtlFileName;
-		}
-		// オブジェクト名
-		else if (identifier == "o")
-		{
-			// 名前が空じゃない = 内容がある
-			// 返却用構造体にpuahして内容破棄
-			if (!obj->name.empty())
-			{
-				result.objects.push_back(std::make_pair(*obj, ObjectDataGPU()));
-				obj.release();
-				obj = std::make_unique<ObjectDataCPU>();
-			}
-			s >> obj->name;
-		}
-		// 頂点
-		else if (identifier == "v")
-		{
-			Vector4 position;
-			s >> position.x >> position.y >> position.z;
-			position.x *= -1.0f;
-			position.w = 1.0f;
-			positions.push_back(position);
-		}
-		// uv
-		else if (identifier == "vt")
-		{
-			Vector2 uv;
-			s >> uv.x >> uv.y;
-			uv.y = 1.0f - uv.y;
-			uvs.push_back(uv);
-		}
-		// 法線
-		else if (identifier == "vn")
-		{
-			Vector3 normal;
-			s >> normal.x >> normal.y >> normal.z;
-			normal.x *= -1.0f;
-			normals.push_back(normal);
-		}
-		// 使用マテリアル名
-		else if (identifier == "usemtl")
-		{
-			std::string useMatreialName;
-			s >> useMatreialName;
-			MtlData useMtlData = LoadMtlFile(directoryPath + '/' + useMtlFileName, useMatreialName);
-			obj->mtlData = useMtlData.material;
-			obj->textureFilePath = useMtlData.textureFilePath;
-		}
-		// index
-		else if (identifier == "f")
-		{
-			// とりあえず今は三角のみ
-			const uint32_t triangleVertex = 3;
-			VertexData triangle[triangleVertex];
-			for (int32_t faceVertex = 0; faceVertex < triangleVertex; ++faceVertex)
-			{
-				std::string vertexDefinition;
-				s >> vertexDefinition;
-				// [頂点 / UV / 法線]で格納されているため分解してindexを取得
-				std::istringstream v(vertexDefinition);
-				uint32_t elementIndecies[3]{};
-				for (int32_t element = 0; element < 3; ++element)
-				{
-					std::string index;
-					std::getline(v, index, '/'); // スラッシュ区切りで読み込み
-					elementIndecies[element] = std::stoi(index);
-				}
-				uint32_t positionIndex = elementIndecies[0] - 1;
-				uint32_t uvIndex = elementIndecies[1] - 1;
-				uint32_t normalIndex = elementIndecies[2] - 1;
-				Vector4 position = positions[positionIndex];
-				Vector2 uv = uvs[uvIndex];
-				Vector3 normal = normals[normalIndex];
-				triangle[faceVertex] = { position, uv, normal };
-			}
+	modelData_ = std::make_unique<ModelData>();
 
-			for (int i = triangleVertex - 1; i >= 0; --i)
-			{
-				obj->vertices.push_back(triangle[i]);
-			}
+	// メッシュごとに読み込みとモデルデータとしての追加
+	for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
+	{
+		std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
+		meshData->meshPtr = std::make_unique<Mesh>();
+		meshData->meshPtr->SetTextureDirectoryPath(directoryPath);
+		bool isMeshLoadCompleted = meshData->meshPtr->ReadMesh(scene, meshIndex);
+		if (!isMeshLoadCompleted) { return false; }
+
+		modelData_->meshes.push_back(std::move(meshData));
+	}
+	// ファイル名からモデル名を設定
+	std::filesystem::path path(fileName);
+	modelData_->modelName = path.stem().string();
+	// 親子関係の行列などを格納する
+	modelData_->rootNode = ReadNode(scene->mRootNode, MakeIdentityMatrix());
+
+	return true;
+}
+
+Model::Node Model::ReadNode(aiNode *node, const Matrix4x4 &parentMatrix)
+{
+	Node result{};
+
+	aiMatrix4x4 aiLocalMatrix = node->mTransformation;
+	aiLocalMatrix = node->mTransformation;
+
+	aiLocalMatrix.Transpose(); // 列ベクトルから行ベクトルに転置
+
+	Matrix4x4 localMatrix{};
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			localMatrix.m[i][j] = aiLocalMatrix[i][j];
 		}
 	}
 
-	result.objects.push_back(std::make_pair(*obj, ObjectDataGPU()));
-	// 最後にモデル名をfilePathから取得して終了
-	std::filesystem::path path(filePath);
-	result.modelName = path.stem().string();
+	result.worldMatrix = parentMatrix * localMatrix;
+
+	result.name = node->mName.C_Str();
+	result.children.resize(node->mNumChildren);
+
+	for (uint32_t i = 0; i < node->mNumMeshes; i++)
+	{
+		result.useMeshIndecies.push_back(node->mMeshes[i]);
+	}
+	for (uint32_t childIndex = 0; childIndex < node->mNumChildren; childIndex++)
+	{
+		result.children[childIndex] = ReadNode(node->mChildren[childIndex], result.worldMatrix);
+	}
+
 
 	return result;
 }
 
-Model::MtlData Model::LoadMtlFile(const std::string &fileName, const std::string &useMaterialName)
+void Model::DrawNode(const Node &node)
 {
-	MtlData result{};
-
-	std::string line;
-	std::ifstream file(fileName);
-
-	std::unique_ptr<std::string> materialName = std::make_unique<std::string>();
-
-	while (std::getline(file, line))
+	for (const auto &index : node.useMeshIndecies)
 	{
-		std::string identifier;
-		std::istringstream s(line);
-		s >> identifier;
-		if (identifier == "newmtl")
+		auto meshData = std::find_if(
+			modelData_->meshes.begin(),
+			modelData_->meshes.end(),
+			[&](auto &m) { return m->meshPtr->GetOriginIndex() == index; }
+		);
+
+		auto *mesh = meshData->get();
+		if (meshData != modelData_->meshes.end())
 		{
-			s >> *materialName;
-		}
-		if (useMaterialName == *materialName)
-		{
-			if (identifier == "Ns")
+			mesh->transformationMatrixData_->world = node.worldMatrix * modelMatrix_;
+			mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
+			if (camera_)
 			{
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+			}
+			else
+			{
+				Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+				Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+			}
 
-			}
-			else if (identifier == "Ns")
-			{
-
-			}
-			else if (identifier == "Ka")
-			{
-				s >> result.material.Ka.x >> result.material.Ka.y >> result.material.Ka.z;
-				result.material.Ka.w = 1.0f;
-			}
-			else if (identifier == "Kd")
-			{
-				s >> result.material.Kd.x >> result.material.Kd.y >> result.material.Kd.z;
-				result.material.Kd.w = 1.0f;
-			}
-			else if (identifier == "Ks")
-			{
-				s >> result.material.Ks.x >> result.material.Ks.y >> result.material.Ks.z;
-				result.material.Ks.w = 1.0f;
-			}
-			else if (identifier == "Ke")
-			{
-
-			}
-			else if (identifier == "Ni")
-			{
-
-			}
-			else if (identifier == "ilumi")
-			{
-
-			}
-			else if (identifier == "map_Kd")
-			{
-				s >> result.textureFilePath;
-			}
+			ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+			cmdList->SetGraphicsRootConstantBufferView(1, mesh->transformationMatrixResource_->GetGPUVirtualAddress());
+			mesh->meshPtr->Draw();
 		}
 	}
-	return result;
+	// 更に階層を下る
+	if(!node.children.empty())
+	{
+		for(const auto& child : node.children)
+		{
+			DrawNode(child);
+		}
+	}
 }

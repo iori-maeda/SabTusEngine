@@ -2,12 +2,15 @@
 #include <cmath>
 #include "Matrix3x3.h"
 
-Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2)
+Matrix4x4 operator*(const Matrix4x4 &m1, const Matrix4x4 &m2)
 {
 	Matrix4x4 result{ 0 };
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			for (int k = 0; k < 4; k++) {
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			for (int k = 0; k < 4; k++)
+			{
 				result.m[i][j] += m1.m[i][k] * m2.m[k][j];
 			}
 		}
@@ -15,7 +18,7 @@ Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2)
 	return result;
 }
 
-Vector3 operator*(const Vector3& v, const Matrix4x4& m)
+Vector3 operator*(const Vector3 &v, const Matrix4x4 &m)
 {
 	Vector3 result{};
 	result.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
@@ -24,14 +27,15 @@ Vector3 operator*(const Vector3& v, const Matrix4x4& m)
 	return result;
 }
 
-Vector3 ConvertToTransform(const Vector3& v, const Matrix4x4& m)
+Vector3 ConvertToTransform(const Vector3 &v, const Matrix4x4 &m)
 {
 	Vector3 result{};
 	result.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
 	result.y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1] + m.m[3][1];
 	result.z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2] + m.m[3][2];
 	float w = v.x * m.m[0][3] + v.y * m.m[1][3] + v.z * m.m[2][3] + m.m[3][3];
-	if (w != 0) {
+	if (w != 0)
+	{
 		result.x /= w;
 		result.y /= w;
 		result.z /= w;
@@ -50,11 +54,11 @@ Matrix4x4 MakeIdentityMatrix()
 	return identity;
 }
 
-Matrix4x4 MakeInVerse(const Matrix4x4& m)
+Matrix4x4 MakeInVerse(const Matrix4x4 &m)
 {
 #pragma region 行列の大きさを求める
 	float length =
-		+ m.m[0][0] * m.m[1][1] * m.m[2][2] * m.m[3][3]
+		+m.m[0][0] * m.m[1][1] * m.m[2][2] * m.m[3][3]
 		+ m.m[0][0] * m.m[1][2] * m.m[2][3] * m.m[3][1]
 		+ m.m[0][0] * m.m[1][3] * m.m[2][1] * m.m[3][2]
 
@@ -90,7 +94,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 	Matrix4x4 result{};
 #pragma region Matrixe4x4[0][n]
 	result.m[0][0] = 1.0f / length
-		* ( + m.m[1][1] * m.m[2][2] * m.m[3][3]
+		* (+m.m[1][1] * m.m[2][2] * m.m[3][3]
 			+ m.m[1][2] * m.m[2][3] * m.m[3][1]
 			+ m.m[1][3] * m.m[2][1] * m.m[3][2]
 
@@ -99,7 +103,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[1][1] * m.m[2][3] * m.m[3][2]);
 
 	result.m[0][1] = 1.0f / length
-		* ( - m.m[0][1] * m.m[2][2] * m.m[3][3]
+		* (-m.m[0][1] * m.m[2][2] * m.m[3][3]
 			- m.m[0][2] * m.m[2][3] * m.m[3][1]
 			- m.m[0][3] * m.m[2][1] * m.m[3][2]
 
@@ -108,7 +112,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[0][1] * m.m[2][3] * m.m[3][2]);
 
 	result.m[0][2] = 1.0f / length
-		* ( + m.m[0][1] * m.m[1][2] * m.m[3][3]
+		* (+m.m[0][1] * m.m[1][2] * m.m[3][3]
 			+ m.m[0][2] * m.m[1][3] * m.m[3][1]
 			+ m.m[0][3] * m.m[1][1] * m.m[3][2]
 
@@ -117,7 +121,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[0][1] * m.m[1][3] * m.m[3][2]);
 
 	result.m[0][3] = 1.0f / length
-		* ( - m.m[0][1] * m.m[1][2] * m.m[2][3]
+		* (-m.m[0][1] * m.m[1][2] * m.m[2][3]
 			- m.m[0][2] * m.m[1][3] * m.m[2][1]
 			- m.m[0][3] * m.m[1][1] * m.m[2][2]
 
@@ -127,7 +131,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 #pragma endregion end
 #pragma region Marix4x4[1][n]
 	result.m[1][0] = 1.0f / length
-		* ( - m.m[1][0] * m.m[2][2] * m.m[3][3]
+		* (-m.m[1][0] * m.m[2][2] * m.m[3][3]
 			- m.m[1][2] * m.m[2][3] * m.m[3][1]
 			- m.m[1][3] * m.m[2][0] * m.m[3][2]
 
@@ -136,7 +140,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[1][0] * m.m[2][3] * m.m[3][2]);
 
 	result.m[1][1] = 1.0f / length
-		* ( + m.m[0][0] * m.m[2][2] * m.m[3][3]
+		* (+m.m[0][0] * m.m[2][2] * m.m[3][3]
 			+ m.m[0][2] * m.m[2][3] * m.m[3][0]
 			+ m.m[0][3] * m.m[2][0] * m.m[3][2]
 
@@ -145,7 +149,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[0][0] * m.m[2][3] * m.m[3][2]);
 
 	result.m[1][2] = 1.0f / length
-		* ( - m.m[0][0] * m.m[1][2] * m.m[3][3]
+		* (-m.m[0][0] * m.m[1][2] * m.m[3][3]
 			- m.m[0][2] * m.m[1][3] * m.m[3][0]
 			- m.m[0][3] * m.m[1][0] * m.m[3][2]
 
@@ -154,7 +158,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[0][0] * m.m[1][3] * m.m[3][2]);
 
 	result.m[1][3] = 1.0f / length
-		* ( + m.m[0][0] * m.m[1][2] * m.m[2][3]
+		* (+m.m[0][0] * m.m[1][2] * m.m[2][3]
 			+ m.m[0][2] * m.m[1][3] * m.m[3][0]
 			+ m.m[0][3] * m.m[1][0] * m.m[2][2]
 
@@ -164,7 +168,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 #pragma endregion end
 #pragma region Marix4x4[2][n]
 	result.m[2][0] = 1.0f / length
-		* ( + m.m[1][0] * m.m[2][1] * m.m[3][3]
+		* (+m.m[1][0] * m.m[2][1] * m.m[3][3]
 			+ m.m[1][1] * m.m[2][3] * m.m[3][0]
 			+ m.m[1][3] * m.m[2][0] * m.m[3][1]
 
@@ -173,7 +177,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[1][0] * m.m[2][3] * m.m[3][1]);
 
 	result.m[2][1] = 1.0f / length
-		* ( - m.m[0][0] * m.m[2][1] * m.m[3][3]
+		* (-m.m[0][0] * m.m[2][1] * m.m[3][3]
 			- m.m[0][1] * m.m[2][3] * m.m[3][0]
 			- m.m[0][3] * m.m[2][0] * m.m[3][1]
 
@@ -182,7 +186,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[0][0] * m.m[2][3] * m.m[3][1]);
 
 	result.m[2][2] = 1.0f / length
-		* ( + m.m[0][0] * m.m[1][1] * m.m[3][3]
+		* (+m.m[0][0] * m.m[1][1] * m.m[3][3]
 			+ m.m[0][1] * m.m[1][3] * m.m[3][0]
 			+ m.m[0][3] * m.m[1][0] * m.m[3][1]
 
@@ -191,7 +195,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[0][0] * m.m[1][3] * m.m[3][1]);
 
 	result.m[2][3] = 1.0f / length
-		* ( - m.m[0][0] * m.m[1][1] * m.m[2][3]
+		* (-m.m[0][0] * m.m[1][1] * m.m[2][3]
 			- m.m[0][1] * m.m[1][3] * m.m[2][0]
 			- m.m[0][3] * m.m[1][0] * m.m[2][1]
 
@@ -201,7 +205,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 #pragma endregion end
 #pragma region Marix4x4[3][n]
 	result.m[3][0] = 1.0f / length
-		* ( - m.m[1][0] * m.m[2][1] * m.m[3][2]
+		* (-m.m[1][0] * m.m[2][1] * m.m[3][2]
 			- m.m[1][1] * m.m[2][2] * m.m[3][0]
 			- m.m[1][2] * m.m[2][0] * m.m[3][1]
 
@@ -210,7 +214,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[1][0] * m.m[2][2] * m.m[3][1]);
 
 	result.m[3][1] = 1.0f / length
-		* ( + m.m[0][0] * m.m[2][1] * m.m[3][2]
+		* (+m.m[0][0] * m.m[2][1] * m.m[3][2]
 			+ m.m[0][1] * m.m[2][2] * m.m[3][0]
 			+ m.m[0][2] * m.m[2][0] * m.m[3][1]
 
@@ -219,7 +223,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			- m.m[0][0] * m.m[2][2] * m.m[3][1]);
 
 	result.m[3][2] = 1.0f / length
-		* ( - m.m[0][0] * m.m[1][1] * m.m[3][2]
+		* (-m.m[0][0] * m.m[1][1] * m.m[3][2]
 			- m.m[0][1] * m.m[1][2] * m.m[3][0]
 			- m.m[0][2] * m.m[1][0] * m.m[3][1]
 
@@ -228,7 +232,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 			+ m.m[0][0] * m.m[1][2] * m.m[3][1]);
 
 	result.m[3][3] = 1.0f / length
-		* ( + m.m[0][0] * m.m[1][1] * m.m[2][2]
+		* (+m.m[0][0] * m.m[1][1] * m.m[2][2]
 			+ m.m[0][1] * m.m[1][2] * m.m[2][0]
 			+ m.m[0][2] * m.m[1][0] * m.m[2][1]
 
@@ -240,7 +244,7 @@ Matrix4x4 MakeInVerse(const Matrix4x4& m)
 	return result;
 }
 
-Matrix4x4 MakeScaleMatrix(const Vector3& s)
+Matrix4x4 MakeScaleMatrix(const Vector3 &s)
 {
 	Matrix4x4 scale{
 		s.x,0.0f,0.0f,0.0f,
@@ -251,7 +255,7 @@ Matrix4x4 MakeScaleMatrix(const Vector3& s)
 	return scale;
 }
 
-Matrix4x4 MakeRotateMatrix(const Vector3& rotation)
+Matrix4x4 MakeRotateMatrix(const Vector3 &rotation)
 {
 	// X Rotate 
 	float sin = std::sinf(rotation.x);
@@ -329,7 +333,7 @@ Matrix4x4 MakeRotateZ(float angle)
 	return rotateZ;
 }
 
-Matrix4x4 MakeTranslateMatrix(const Vector3& t)
+Matrix4x4 MakeTranslateMatrix(const Vector3 &t)
 {
 	Matrix4x4 translate = {
 		1.0f,0.0f,0.0f,0.0f,
@@ -340,7 +344,7 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& t)
 	return translate;
 }
 
-Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotation, const Vector3& translate)
+Matrix4x4 MakeAffineMatrix(const Vector3 &scale, const Vector3 &rotation, const Vector3 &translate)
 {
 	return MakeScaleMatrix(scale) * MakeRotateMatrix(rotation) * MakeTranslateMatrix(translate);
 }
@@ -383,11 +387,13 @@ Matrix4x4 MakeViewPortMatrix(float left, float top, float width, float height, f
 	return result;
 }
 
-Matrix4x4 MakeTransposeMatrix(const Matrix4x4& m)
+Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m)
 {
 	Matrix4x4 result = MakeIdentityMatrix();
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
 			result.m[i][j] = m.m[j][i];
 		}
 	}

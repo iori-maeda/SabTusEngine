@@ -73,7 +73,7 @@ private:
 	Matrix4x4 modelWorldMatrix_{};
 
 	std::unique_ptr<Object3d> object3d2_ = nullptr;
-	Object3d::Transform modelTransform2_{};
+	Model::Transform modelTransform2_{};
 	Matrix4x4 modelWorldMatrix2_{};
 
 	TextureDataCPU textureDataCPU2_;

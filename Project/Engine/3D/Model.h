@@ -5,66 +5,57 @@
 #include <vector>
 #include <memory>
 
+#include <assimp/scene.h>
+
 #include "ComPtr.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 #include "Math/Vector2.h"
 #include "Math/Matrix4x4.h"
 
+#include "Mesh.h"
+
 class DirectXCommon;
+class Camera;
 
 class Model
 {
 public:
-	static std::string defaultDirectoryPath;
 
-
-	struct VertexData
+	struct Node
 	{
-		Vector4 position{};
-		Vector2 uv{};
-		Vector3 normal{};
-	};
-
-	struct MaterialData
-	{
-		Vector4 Ka{};
-		Vector4 Kd{};
-		Vector4 Ks{};
-		float shininess = 1.0f;
-		int32_t enableLighting = true;
-	};
-
-	struct MtlData
-	{
-		MaterialData material{};
-		std::string textureFilePath;
-	};
-
-	struct ObjectDataCPU
-	{
+		Matrix4x4 worldMatrix{};
 		std::string name;
-		std::vector<VertexData> vertices;
-		MaterialData mtlData{};
-		std::string textureFilePath;
-		VertexData *vertexData = nullptr;
-		MaterialData *materialData = nullptr;
+		std::vector<Node>children;
+		std::vector<int32_t> useMeshIndecies;
 	};
 
-	struct ObjectDataGPU
+	struct Transform
 	{
-		std::string name;
-		ComPtr<ID3D12Resource> vertexResource = nullptr;
-		ComPtr<ID3D12Resource> materialResource = nullptr;
-		D3D12_GPU_DESCRIPTOR_HANDLE texHandle_{};
-		Vector2 texSize_{};
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews_{};
+		Vector3 scale{ 1.0f, 1.0f, 1.0f };
+		Vector3 rotate{};
+		Vector3 translate{};
+	};
+
+	struct TransformationMatrix
+	{
+		Matrix4x4 wvp{};
+		Matrix4x4 world{};
+		Matrix4x4 worldInverseTranspose{};
+	};
+
+	struct MeshData
+	{
+		std::unique_ptr<Mesh> meshPtr = nullptr;
+		ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
+		TransformationMatrix *transformationMatrixData_ = nullptr;
 	};
 
 	struct ModelData
 	{
 		std::string modelName;
-		std::vector<std::pair<ObjectDataCPU, ObjectDataGPU>> objects;
+		std::vector <std::unique_ptr<MeshData>> meshes;
+		Node rootNode{};
 	};
 
 public:
@@ -73,50 +64,56 @@ public:
 	~Model();
 
 	void Initialize(DirectXCommon *dxCommon);
-	void Initialize(DirectXCommon *dxCommon, const std::string &fileName);
+	void Update();
 	void Draw();
 
-
-	static ModelData LoadObjFile(const std::string &directoryPath, const std::string &filePath);
-	static MtlData LoadMtlFile(const std::string &fileName, const std::string &useMaterialName);
+	bool LoadModelFile(const std::string &directoryPath, const std::string &fileName);
 
 public:
 
-	std::string GetName() { return modelData_.modelName; }
-	Vector4 GetColor() { return modelData_.objects[0].first.materialData->Kd; }
-	float GetShininess() { return modelData_.objects[0].first.materialData->shininess; }
+	std::string GetName() { return modelData_->modelName; }
+	size_t GetNumMeshies() { return modelData_->meshes.size(); }
+	Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
+	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetData().materialData->shininess; }
 
+	void SetCamera(Camera *camera) { camera_ = camera; }
+	void SetTransform(const Model::Transform &transform) { transform_ = transform; }
 	void SetColor(const Vector4 &color)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_->meshes)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->Kd = color;
-			objCPU.materialData->Ka = color / 0.5f;
+			mesh->meshPtr->SetDiffuse(color);
+			mesh->meshPtr->SetAmbient(color / 2);
 		}
 	}
-	
+
 	void SetEnableLighting(bool enableLighting)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_->meshes)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->enableLighting = enableLighting;
+			mesh->meshPtr->SetEnableLighting(enableLighting);
 		}
 	}
 
 	void SetShininess(float shininess)
 	{
-		for (auto &object : modelData_.objects)
+		for (auto &mesh : modelData_->meshes)
 		{
-			ObjectDataCPU &objCPU = object.first;
-			objCPU.materialData->shininess = shininess;
+			mesh->meshPtr->SetShininess(shininess);
 		}
 	}
 
 private:
+	Model::Node ReadNode(aiNode *node, const Matrix4x4 &parentMatrix);
+	void DrawNode(const Node& node);
+
+private:
 	DirectXCommon *dxCommon_ = nullptr;
+	Camera *camera_ = nullptr;
 
-	ModelData modelData_{};
+	std::unique_ptr<ModelData> modelData_ = nullptr;
+
+	Transform transform_{};
+	// モデルの変換行列
+	Matrix4x4 modelMatrix_{};
 };
-

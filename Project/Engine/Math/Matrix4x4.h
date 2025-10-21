@@ -6,11 +6,11 @@ struct Matrix4x4
 public:
 	float m[4][4];
 };
-Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2);
+Matrix4x4 operator*(const Matrix4x4 &m1, const Matrix4x4 &m2);
 
-Vector3 operator*(const Vector3& v, const Matrix4x4& m);
+Vector3 operator*(const Vector3 &v, const Matrix4x4 &m);
 
-Vector3 ConvertToTransform(const Vector3&, const Matrix4x4&);
+Vector3 ConvertToTransform(const Vector3 &, const Matrix4x4 &);
 
 /// <summary>
 /// 単位行列作成
@@ -22,20 +22,20 @@ Matrix4x4 MakeIdentityMatrix();
 /// </summary>
 /// <param name="m">逆行列を作る行列</param>
 /// <returns>引数に渡された行列の逆行列</returns>
-Matrix4x4 MakeInVerse(const Matrix4x4& m);
+Matrix4x4 MakeInVerse(const Matrix4x4 &m);
 /// <summary>
 /// スカラー倍行列の作成
 /// </summary>
 /// <param name="s">各方向への倍率を格納したベクトル</param>
 /// <returns>拡大縮小行列のMatrix4x4</returns>
-Matrix4x4 MakeScaleMatrix(const Vector3& s);
+Matrix4x4 MakeScaleMatrix(const Vector3 &s);
 /// <summary>
 /// 回転行列の作成と合成
 /// 回転順序はz -> x -> y->
 /// </summary>
 /// <param name="angle">各軸の角度を格納したベクトル</param>
 /// <returns>回転行列のMatrix4x4</returns>
-Matrix4x4 MakeRotateMatrix(const Vector3& angle);
+Matrix4x4 MakeRotateMatrix(const Vector3 &angle);
 /// <summary>
 /// X軸を中心に回転
 /// </summary>
@@ -59,7 +59,7 @@ Matrix4x4 MakeRotateZ(float angle);
 /// </summary>
 /// <param name="translate">各軸への平行移動量を格納したベクトル</param>
 /// <returns></returns>
-Matrix4x4 MakeTranslateMatrix(const Vector3& t);
+Matrix4x4 MakeTranslateMatrix(const Vector3 &t);
 /// <summary>
 /// アフィン行列の作成
 /// </summary>
@@ -67,7 +67,7 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& t);
 /// <param name="rotate">各軸の角度を格納したベクトル</param>
 /// <param name="translate">各軸への平行移動量を格納したベクトル</param>
 /// <returns></returns>
-Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate);
+Matrix4x4 MakeAffineMatrix(const Vector3 &scale, const Vector3 &rotate, const Vector3 &translate);
 /// <summary>
 /// 透視投影行列
 /// </summary>
@@ -100,4 +100,4 @@ Matrix4x4 MakeOrthoGraphicsMatrix(float left, float top, float width, float heig
 /// <returns></returns>
 Matrix4x4 MakeViewPortMatrix(float left, float top, float width, float height, float minDepth, float maxDeppth);
 
-Matrix4x4 MakeTransposeMatrix(const Matrix4x4&);
+Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &);
