@@ -105,7 +105,7 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\TextureManager.cpp">
+    <ClCompile Include="Engine\Base\TextureManager.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine\2D\Sprite.cpp">
@@ -132,7 +132,7 @@
     <ClCompile Include="Engine\3D\Model.cpp">
       <Filter>ソース ファイル\Engine\3D</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\ModelManager.cpp">
+    <ClCompile Include="Engine\Base\ModelManager.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine\DxObjects\DirectX12ObjectsFunction.cpp">
@@ -156,7 +156,7 @@
     <ClCompile Include="Engine\ImGuiManager\ImGuiManager.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DirectXCommon.cpp">
+    <ClCompile Include="Engine\Base\DirectXCommon.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine\GameClass\BaseGame.cpp">
@@ -179,6 +179,9 @@
     </ClCompile>
     <ClCompile Include="Engine\3D\Mesh.cpp">
       <Filter>ソース ファイル\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\IO\Input.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,10 +224,10 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DirectXCommon.h">
+    <ClInclude Include="Engine\Base\DirectXCommon.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\TextureManager.h">
+    <ClInclude Include="Engine\Base\TextureManager.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\2D\Sprite.h">
@@ -236,7 +239,7 @@
     <ClInclude Include="Engine\3D\Object3dCommon.h">
       <Filter>ヘッダー ファイル\Engine\3D</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\ComPtr.h">
+    <ClInclude Include="Engine\Utility\ComPtr.h">
       <Filter>ヘッダー ファイル\Engine\Utility</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Utility\Logger.h">
@@ -254,7 +257,7 @@
     <ClInclude Include="Engine\3D\Model.h">
       <Filter>ヘッダー ファイル\Engine\3D</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\ModelManager.h">
+    <ClInclude Include="Engine\Base\ModelManager.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DxObjects\DirectX12ObjectsFunction.h">
@@ -298,6 +301,9 @@
     </ClInclude>
     <ClInclude Include="Engine\3D\Mesh.h">
       <Filter>ヘッダー ファイル\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\IO\Input.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -22,6 +22,7 @@
 #include "3D/Object3d.h"
 #include "ModelManager.h"
 #include "Camera/Camera.h"
+#include "IO/Input.h"
 //#include "BasicShapes/Triangle.h"
 #include "ParticleSystem/ParticleEmitter.h"
 
@@ -58,7 +59,11 @@ private:
 
 	std::unique_ptr<Object3dCommon> object3dCommon_ = nullptr;
 
-	std::unique_ptr<Camera> mainCamera_ = std::make_unique<Camera>();
+	std::unique_ptr<Camera> mainCamera_ = nullptr;
+
+	std::unique_ptr<Input> input_ = nullptr;
+
+	Camera::Transform cameraTransform_ = { .scale{1.0f,1.0f,1.0f},.rotate{}, .translate{} };
 #pragma endregion
 
 	std::vector<std::pair<std::string, Object3d*>> drawObjects_;

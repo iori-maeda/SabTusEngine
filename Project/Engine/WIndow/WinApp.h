@@ -20,6 +20,7 @@ public:
 	// getter
 	HWND GetHWND()const;
 	RECT GetWindowRect();
+	HINSTANCE GetHInstance() const { return windClass_.hInstance; }
 
 private:
 

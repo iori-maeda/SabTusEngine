@@ -33,6 +33,9 @@ void BaseGame::Initialize()
 	mainCamera_->SetPosition(Vector3(0.0f, 5.0f, -15.0f));
 	mainCamera_->SetRotation(Vector3(0.26f, 0.0f, 0.0f));
 
+	input_ = std::make_unique<Input>();
+	input_->Initialize(winApp_.get());
+
 	ParticleSystem::GetInstance()->Initialize(dxCommon_.get());
 	ParticleSystem::GetInstance()->SetCamera(mainCamera_.get());
 #pragma endregion
@@ -63,9 +66,9 @@ void BaseGame::Initialize()
 	textureDataCPU2_ = TextureManager::GetInstace().Load("whiteTest.png");
 	texColor_ = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	drawObjects_.resize(2);
-	drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
-	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
+	drawObjects_.resize(1);
+	//drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
+	drawObjects_[0] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
 
 	particleEmitter_ = std::make_unique<ParticleEmitter>();
 	particleEmitter_->Initialize(emitPosition_, emitCount_);
@@ -85,6 +88,7 @@ void BaseGame::Finalize()
 void BaseGame::Upate()
 {
 	winApp_->Update();
+	input_->Update();
 
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
@@ -101,9 +105,30 @@ void BaseGame::Upate()
 	{
 		ParticleSystem::GetInstance()->Emit(emitPosition_, emitCount_);
 	}
+
+	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
 	ImGui::End();
 	ImGuiManager::End();
 #endif
+
+	cameraTransform_ = mainCamera_->GetTransform();
+	if (input_->PushKey(DIK_W))
+	{
+		cameraTransform_.translate.z += 0.01f;
+	}
+	if (input_->PushKey(DIK_S))
+	{
+		cameraTransform_.translate.z -= 0.01f;
+	}
+	if (input_->PushKey(DIK_A))
+	{
+		cameraTransform_.translate.x -= 0.01f;
+	}
+	if (input_->PushKey(DIK_D))
+	{
+		cameraTransform_.translate.x += 0.01f;
+	}
+	mainCamera_->SetTransform(cameraTransform_);
 	mainCamera_->Update();
 
 	object3d_->Upadate();
@@ -132,8 +157,8 @@ void BaseGame::Draw()
 	dxCommon_->BeginRendering();
 
 	object3dCommon_->PreDraw();
-	
-	for (auto& obj : drawObjects_)
+
+	for (auto &obj : drawObjects_)
 	{
 		obj.second->Draw();
 	}

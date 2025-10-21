@@ -273,7 +273,7 @@ ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(size_t sizeInBytes) c
 	ComPtr<ID3D12Resource> resource = nullptr;
 	HRESULT hr = device->GetDevice()->CreateCommittedResource(&uploadHeapPoperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&resource));
 	assert(SUCCEEDED(hr));
-	Logger::Log("Created Resource\n");
+	//Logger::Log("Created Resource\n");
 	return resource;
 }
 
