@@ -28,7 +28,6 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileNa
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
 
-	ModelManager::GetInstace().Initialize(obj3dCommon_->GetDirectXCommon());
 	model_ = ModelManager::GetInstace().Load(fileName);
 }
 

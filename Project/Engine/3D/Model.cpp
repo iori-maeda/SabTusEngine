@@ -32,11 +32,10 @@ void Model::Initialize(DirectXCommon *dxCommon)
 	transform_.rotate = {};
 	transform_.translate = {};
 
-	localMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+	modelMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
 	for (auto &mesh : modelData_->meshes)
 	{
-		//mesh->meshPtr = std::make_unique<Mesh>();
 		mesh->meshPtr->Initialize(dxCommon_);
 		mesh->transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
 		mesh->transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&mesh->transformationMatrixData_));
@@ -50,7 +49,7 @@ void Model::Initialize(DirectXCommon *dxCommon)
 void Model::Update()
 {
 	assert(dxCommon_ != nullptr);
-	localMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+	modelMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 }
 
 void Model::Draw()
@@ -59,38 +58,7 @@ void Model::Draw()
 
 	for (auto &nodeChild : modelData_->rootNode.children)
 	{
-		for (auto &cNodeChild : nodeChild.children)
-		{
-			for (int32_t &index : cNodeChild.useMeshIndecies)
-			{
-				auto meshData = std::find_if(
-					modelData_->meshes.begin(),
-					modelData_->meshes.end(),
-					[&](auto &m) { return m->meshPtr->GetOriginIndex() == index; }
-				);
-
-				auto* mesh = meshData->get();
-				if (meshData != modelData_->meshes.end())
-				{
-					mesh->transformationMatrixData_->world = localMatrix_ * modelData_->rootNode.worldMatrix * cNodeChild.worldMatrix;
-					mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
-					if (camera_)
-					{
-						mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
-					}
-					else
-					{
-						Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-						Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
-						mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
-					}
-
-					ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
-					cmdList->SetGraphicsRootConstantBufferView(1, mesh->transformationMatrixResource_->GetGPUVirtualAddress());
-					mesh->meshPtr->Draw();
-				}
-			}
-		}
+		DrawNode(nodeChild);
 	}
 }
 
@@ -113,19 +81,21 @@ bool Model::LoadModelFile(const std::string &directoryPath, const std::string &f
 
 	modelData_ = std::make_unique<ModelData>();
 
+	// メッシュごとに読み込みとモデルデータとしての追加
 	for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
 	{
 		std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
 		meshData->meshPtr = std::make_unique<Mesh>();
-		//meshData->meshPtr->Initialize(dxCommon_);
 		meshData->meshPtr->SetTextureDirectoryPath(directoryPath);
 		bool isMeshLoadCompleted = meshData->meshPtr->ReadMesh(scene, meshIndex);
 		if (!isMeshLoadCompleted) { return false; }
 
 		modelData_->meshes.push_back(std::move(meshData));
 	}
+	// ファイル名からモデル名を設定
 	std::filesystem::path path(fileName);
 	modelData_->modelName = path.stem().string();
+	// 親子関係の行列などを格納する
 	modelData_->rootNode = ReadNode(scene->mRootNode, MakeIdentityMatrix());
 
 	return true;
@@ -165,4 +135,45 @@ Model::Node Model::ReadNode(aiNode *node, const Matrix4x4 &parentMatrix)
 
 
 	return result;
+}
+
+void Model::DrawNode(const Node &node)
+{
+	for (const auto &index : node.useMeshIndecies)
+	{
+		auto meshData = std::find_if(
+			modelData_->meshes.begin(),
+			modelData_->meshes.end(),
+			[&](auto &m) { return m->meshPtr->GetOriginIndex() == index; }
+		);
+
+		auto *mesh = meshData->get();
+		if (meshData != modelData_->meshes.end())
+		{
+			mesh->transformationMatrixData_->world = node.worldMatrix * modelMatrix_;
+			mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
+			if (camera_)
+			{
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+			}
+			else
+			{
+				Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+				Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+			}
+
+			ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+			cmdList->SetGraphicsRootConstantBufferView(1, mesh->transformationMatrixResource_->GetGPUVirtualAddress());
+			mesh->meshPtr->Draw();
+		}
+	}
+	// 更に階層を下る
+	if(!node.children.empty())
+	{
+		for(const auto& child : node.children)
+		{
+			DrawNode(child);
+		}
+	}
 }

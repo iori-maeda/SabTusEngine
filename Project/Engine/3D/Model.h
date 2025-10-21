@@ -105,6 +105,7 @@ public:
 
 private:
 	Model::Node ReadNode(aiNode *node, const Matrix4x4 &parentMatrix);
+	void DrawNode(const Node& node);
 
 private:
 	DirectXCommon *dxCommon_ = nullptr;
@@ -113,5 +114,6 @@ private:
 	std::unique_ptr<ModelData> modelData_ = nullptr;
 
 	Transform transform_{};
-	Matrix4x4 localMatrix_{};
+	// モデルの変換行列
+	Matrix4x4 modelMatrix_{};
 };
