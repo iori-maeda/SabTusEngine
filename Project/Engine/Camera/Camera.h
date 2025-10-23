@@ -38,10 +38,12 @@ public:
 public:
 	Vector3 GetPosition()const { return transform_.translate; }
 	Matrix4x4 GetWorldMatrix() const { return worldMatrix_; }
-	Matrix3x3 GetRotateMatrix() const {return MakeRotationMatrix3x3(worldMatrix_);}
+	Matrix3x3 GetRotateMatrix() const { return MakeRotationMatrix3x3(worldMatrix_); }
 	Matrix4x4 GetViewMatrix() const { return viewMatrix_; }
 	Matrix4x4 GetProjectionMatrix() const { return projectionMatrix_; }
 	Camera::Transform GetTransform()const { return transform_; }
+	Vector3 GetForward() const { return forward_; }
+	Vector3 GetRight() const { return right_; }
 
 	void SetTransform(const Transform &transform) { transform_ = transform; }
 	void SetPosition(const Vector3 &position) { transform_.translate = position; }
@@ -64,6 +66,9 @@ private:
 	Matrix4x4 worldMatrix_{};
 	Matrix4x4 viewMatrix_{};
 	Matrix4x4 projectionMatrix_{};
+
+	Vector3 forward_ = {};
+	Vector3 right_ = {};
 
 	ProjectionMode projMode_ = ProjectionMode::Perspective;
 };

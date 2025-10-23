@@ -16,4 +16,7 @@ public:
 	static void Begin();
 	static void End();
 	static void Draw(DirectXCommon* dxCommon);
+
+private:
+	static WinApp* winApp_;
 };

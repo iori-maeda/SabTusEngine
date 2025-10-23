@@ -17,6 +17,9 @@ void Camera::Update()
 {
 	worldMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 	viewMatrix_ = MakeInVerse(worldMatrix_);
+	
+	forward_ = Normalize(ConvertToTransform(Vector3(0.0f, 0.0f, 1.0f), MakeRotationMatrix3x3(worldMatrix_)));
+	right_ = Normalize(ConvertToTransform(Vector3(1.0f, 0.0f, 0.0f), MakeRotationMatrix3x3(worldMatrix_)));
 	switch (projMode_)
 	{
 	case Camera::ProjectionMode::Perspective:

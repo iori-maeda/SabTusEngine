@@ -10,6 +10,8 @@ void BaseGame::Initialize()
 {
 #pragma region SystemVaiable
 	winApp_ = std::make_unique<WinApp>();
+	WinApp::sWindoWidth =1920;
+	WinApp::sWindoHeight = 1080;
 	winApp_->Initialize();
 
 	dxCommon_ = std::make_unique<DirectXCommon>();
@@ -66,9 +68,9 @@ void BaseGame::Initialize()
 	textureDataCPU2_ = TextureManager::GetInstace().Load("whiteTest.png");
 	texColor_ = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	drawObjects_.resize(1);
-	//drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
-	drawObjects_[0] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
+	drawObjects_.resize(2);
+	drawObjects_[0] = std::make_pair(object3d_->GetModelName(), object3d_.get());
+	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
 
 	particleEmitter_ = std::make_unique<ParticleEmitter>();
 	particleEmitter_->Initialize(emitPosition_, emitCount_);
@@ -113,22 +115,27 @@ void BaseGame::Upate()
 #endif
 
 	cameraTransform_ = mainCamera_->GetTransform();
-	cameraTransform_.translate += Normalize(ConvertToTransform(Vector3(0.0f, 0.0f, 1.0f), mainCamera_->GetRotateMatrix())) * (input_->GetMouseWheel() / 100.0f);
+	cameraTransform_.translate += mainCamera_->GetForward() * (input_->GetMouseWheel() / 100.0f);
+	const float kCameraMoveSpeed = 0.1f;
 	if (input_->PushKey(DIK_W))
 	{
-		cameraTransform_.translate.z += 0.01f;
+		cameraTransform_.translate.x += mainCamera_->GetForward().x * kCameraMoveSpeed;
+		cameraTransform_.translate.z += mainCamera_->GetForward().z * kCameraMoveSpeed;
 	}
 	if (input_->PushKey(DIK_S))
 	{
-		cameraTransform_.translate.z -= 0.01f;
+		cameraTransform_.translate.x += mainCamera_->GetForward().x * -kCameraMoveSpeed;
+		cameraTransform_.translate.z += mainCamera_->GetForward().z * -kCameraMoveSpeed;
 	}
 	if (input_->PushKey(DIK_A))
 	{
-		cameraTransform_.translate.x -= 0.01f;
+		cameraTransform_.translate.x += mainCamera_->GetRight().x * -kCameraMoveSpeed;
+		cameraTransform_.translate.z += mainCamera_->GetRight().z * -kCameraMoveSpeed;
 	}
 	if (input_->PushKey(DIK_D))
 	{
-		cameraTransform_.translate.x += 0.01f;
+		cameraTransform_.translate.x += mainCamera_->GetRight().x * kCameraMoveSpeed;
+		cameraTransform_.translate.z += mainCamera_->GetRight().z * kCameraMoveSpeed;
 	}
 
 	input_->SetCursorVisible(true);
@@ -140,8 +147,8 @@ void BaseGame::Upate()
 			input_->SetCursorVisible(false);
 			input_->SetMouseControll(false);
 			Vector2 dir = input_->GetDeltaMousePosition();
-			cameraTransform_.rotate.x += dir.y * 0.01f;
-			cameraTransform_.rotate.y += dir.x * 0.01f;
+			cameraTransform_.rotate.x += dir.y * 0.005f;
+			cameraTransform_.rotate.y += dir.x * 0.005f;
 		}
 	}
 

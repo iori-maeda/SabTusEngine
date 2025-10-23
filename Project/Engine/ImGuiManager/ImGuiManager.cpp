@@ -6,9 +6,13 @@
 #include "DxSwapChain.h"
 #include "DxCommand.h"
 
+WinApp* ImGuiManager::winApp_ = nullptr;
+
 void ImGuiManager::Initialize([[maybe_unused]]WinApp *winApp, [[maybe_unused]]DirectXCommon *dxCommon)
 {
 #ifdef USE_IMGUI
+	assert(winApp != nullptr);
+	winApp_ = winApp;
 	// こういうもん
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -36,6 +40,7 @@ void ImGuiManager::Finalize()
 void ImGuiManager::Begin()
 {
 #ifdef USE_IMGUI
+	
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
