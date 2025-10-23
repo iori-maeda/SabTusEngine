@@ -91,7 +91,7 @@ void BaseGame::Upate()
 {
 	winApp_->Update();
 	input_->Update();
-
+	bool isImGuiWindowCapture = false;
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
 	mainCamera_->DebugWindow();
@@ -112,6 +112,7 @@ void BaseGame::Upate()
 	ImGui::Text("drag position (x:%.1f, y:%.1f)", clickPosition_.x, clickPosition_.y);
 	ImGui::End();
 	ImGuiManager::End();
+	isImGuiWindowCapture = ImGui::GetIO().WantCaptureMouse;
 #endif
 
 	cameraTransform_ = mainCamera_->GetTransform();
@@ -140,7 +141,7 @@ void BaseGame::Upate()
 
 	input_->SetCursorVisible(true);
 	input_->SetMouseControll(true);
-	if (!ImGui::GetIO().WantCaptureMouse || WinApp::sIsCursorOverTitleBar)
+	if (!isImGuiWindowCapture|| WinApp::sIsCursorOverTitleBar)
 	{
 		if (input_->PushMouseButton(MouseButton::LEFT))
 		{
