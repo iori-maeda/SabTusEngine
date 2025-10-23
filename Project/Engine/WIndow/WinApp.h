@@ -15,7 +15,7 @@ public:
 
 public:
 
-	void Initialize(const std::string& title = "SubTusEngine");
+	void Initialize(const std::string &title = "SubTusEngine");
 	bool PoccesMessage();
 	void Update();
 	void Finalize();
