@@ -399,3 +399,17 @@ Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m)
 	}
 	return result;
 }
+
+Matrix3x3 MakeRotationMatrix3x3(const Matrix4x4 &m)
+{
+	Matrix3x3 result = MakeIdentityMatrix3x3();
+
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			result.m[i][j] = m.m[i][j];
+		}
+	}
+	return result;
+}

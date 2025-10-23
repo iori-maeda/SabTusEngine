@@ -30,6 +30,15 @@ void Input::Update()
 	keyboardDevice_->GetDeviceState(sizeof(keys_), keys_);
 
 	// マウス
+	if(isCursorVisible_)
+	{
+		while(ShowCursor(isCursorVisible_) < 0);
+	}
+	else
+	{
+		while(ShowCursor(isCursorVisible_) >= 0);
+	}
+
 	memcpy(mouseState_.preButtons, mouseState_.buttons, 8);
 	DIMOUSESTATE2 mouseState{};
 	mouseDevice_->GetDeviceState(sizeof(mouseState), &mouseState);
@@ -39,9 +48,15 @@ void Input::Update()
 	ScreenToClient(winApp_->GetHWND(), &mousePoint);
 
 	// 情報を自作構造体へ変換
+	mouseState_.deltaPosition = Vector2(static_cast<float>(mouseState.lX), static_cast<float>(mouseState.lY));
 	mouseState_.scPosition = Vector2(static_cast<float>(mousePoint.x), static_cast<float>(mousePoint.y));
 	mouseState_.wheel = static_cast<float>(mouseState.lZ);
 	memcpy(mouseState_.buttons, mouseState.rgbButtons, 8);
+
+	if (!isMouseConroll_)
+	{
+		mouseState_.scPosition = Vector2(static_cast<float>(WinApp::kWindoWidth / 2), static_cast<float>(WinApp::kWindoHeight / 2));
+	}
 }
 
 bool Input::InitializeDirectInput()

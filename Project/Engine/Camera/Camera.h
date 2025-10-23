@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Math/Vector3.h"
+#include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "ComPtr.h"
 
@@ -37,6 +38,7 @@ public:
 public:
 	Vector3 GetPosition()const { return transform_.translate; }
 	Matrix4x4 GetWorldMatrix() const { return worldMatrix_; }
+	Matrix3x3 GetRotateMatrix() const {return MakeRotationMatrix3x3(worldMatrix_);}
 	Matrix4x4 GetViewMatrix() const { return viewMatrix_; }
 	Matrix4x4 GetProjectionMatrix() const { return projectionMatrix_; }
 	Camera::Transform GetTransform()const { return transform_; }

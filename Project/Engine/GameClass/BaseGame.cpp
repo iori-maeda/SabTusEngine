@@ -107,11 +107,13 @@ void BaseGame::Upate()
 	}
 
 	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
+	ImGui::Text("drag position (x:%.1f, y:%.1f)", clickPosition_.x, clickPosition_.y);
 	ImGui::End();
 	ImGuiManager::End();
 #endif
 
 	cameraTransform_ = mainCamera_->GetTransform();
+	cameraTransform_.translate += Normalize(ConvertToTransform(Vector3(0.0f, 0.0f, 1.0f), mainCamera_->GetRotateMatrix())) * (input_->GetMouseWheel() / 100.0f);
 	if (input_->PushKey(DIK_W))
 	{
 		cameraTransform_.translate.z += 0.01f;
@@ -128,6 +130,21 @@ void BaseGame::Upate()
 	{
 		cameraTransform_.translate.x += 0.01f;
 	}
+
+	input_->SetCursorVisible(true);
+	input_->SetMouseControll(true);
+	if (!ImGui::GetIO().WantCaptureMouse)
+	{
+		if (input_->PushMouseButton(MouseButton::LEFT))
+		{
+			input_->SetCursorVisible(false);
+			input_->SetMouseControll(false);
+			Vector2 dir = input_->GetDeltaMousePosition();
+			cameraTransform_.rotate.x += dir.y * 0.01f;
+			cameraTransform_.rotate.y += dir.x * 0.01f;
+		}
+	}
+
 	mainCamera_->SetTransform(cameraTransform_);
 	mainCamera_->Update();
 

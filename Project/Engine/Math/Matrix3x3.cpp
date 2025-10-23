@@ -1,4 +1,5 @@
-﻿#include "Matrix3x3.h"
+#include "Matrix3x3.h"
+#include "Vector3.h"
 #include <cmath>
 Matrix3x3 operator*(const Matrix3x3& m1, const Matrix3x3& m2)
 {
@@ -87,4 +88,13 @@ Matrix3x3 MakeTranslateMatrix3x3(const Vector2& t)
 Matrix3x3 MakeAffineMatrix3x3(const Vector2& scale, const Vector2& rotation, const Vector2& translate)
 {
 	return MakeScaleMatrix3x3(scale) * MakeRotateMatrix3x3(rotation) * MakeTranslateMatrix3x3(translate);
+}
+
+Vector3 ConvertToTransform(const Vector3 &v, const Matrix3x3 &m)
+{
+	Vector3 result{};
+	result.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0];
+	result.y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1];
+	result.z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2];
+	return result;
 }

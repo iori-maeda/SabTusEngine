@@ -1,5 +1,6 @@
 #pragma once
 #include "Vector3.h"
+#include "Matrix3x3.h"
 
 struct Matrix4x4
 {
@@ -10,6 +11,12 @@ Matrix4x4 operator*(const Matrix4x4 &m1, const Matrix4x4 &m2);
 
 Vector3 operator*(const Vector3 &v, const Matrix4x4 &m);
 
+/// <summary>
+/// ワールド座標の取得
+/// </summary>
+/// <param name=""></param>
+/// <param name=""></param>
+/// <returns></returns>
 Vector3 ConvertToTransform(const Vector3 &, const Matrix4x4 &);
 
 /// <summary>
@@ -100,4 +107,16 @@ Matrix4x4 MakeOrthoGraphicsMatrix(float left, float top, float width, float heig
 /// <returns></returns>
 Matrix4x4 MakeViewPortMatrix(float left, float top, float width, float height, float minDepth, float maxDeppth);
 
-Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &);
+/// <summary>
+/// 転置行列の作成
+/// </summary>
+/// <param name="m">転置する行列</param>
+/// <returns></returns>
+Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m);
+
+/// <summary>
+/// 回転行列の取得
+///</summary>
+/// <param name="m">ワールド行列</param>
+/// <returns></returns>
+Matrix3x3 MakeRotationMatrix3x3(const Matrix4x4& m);

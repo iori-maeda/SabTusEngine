@@ -52,21 +52,16 @@ public:
 private:
 #pragma region SystemVaiable
 	std::unique_ptr<WinApp> winApp_ = nullptr;
-
 	std::unique_ptr<DirectXCommon> dxCommon_ = nullptr;
-
 	std::unique_ptr<SpriteCommon> spriteCommon_ = nullptr;
-
 	std::unique_ptr<Object3dCommon> object3dCommon_ = nullptr;
-
 	std::unique_ptr<Camera> mainCamera_ = nullptr;
-
 	std::unique_ptr<Input> input_ = nullptr;
 
 	Camera::Transform cameraTransform_ = { .scale{1.0f,1.0f,1.0f},.rotate{}, .translate{} };
+	Vector2 clickPosition_ = Vector2();
 #pragma endregion
-
-	std::vector<std::pair<std::string, Object3d*>> drawObjects_;
+	std::vector<std::pair<std::string, Object3d *>> drawObjects_;
 
 
 	std::unique_ptr<Sprite> sprite_ = nullptr;
