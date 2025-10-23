@@ -133,7 +133,7 @@ void BaseGame::Upate()
 
 	input_->SetCursorVisible(true);
 	input_->SetMouseControll(true);
-	if (!ImGui::GetIO().WantCaptureMouse)
+	if (!ImGui::GetIO().WantCaptureMouse || WinApp::sIsCursorOverTitleBar)
 	{
 		if (input_->PushMouseButton(MouseButton::LEFT))
 		{

@@ -159,7 +159,7 @@ void Model::DrawNode(const Node &node)
 			else
 			{
 				Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-				Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+				Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
 				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
 			}
 

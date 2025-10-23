@@ -10,7 +10,7 @@ void Camera::Initialize()
 
 	worldMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 	viewMatrix_ = MakeInVerse(worldMatrix_);
-	projectionMatrix_ = MakePerspectiveFovMatrix(fovAngleY_, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), nearZ_, farZ_);
+	projectionMatrix_ = MakePerspectiveFovMatrix(fovAngleY_, static_cast<float>(WinApp::sWindoWidth) / static_cast<float>(WinApp::sWindoHeight), nearZ_, farZ_);
 }
 
 void Camera::Update()
@@ -20,10 +20,10 @@ void Camera::Update()
 	switch (projMode_)
 	{
 	case Camera::ProjectionMode::Perspective:
-		projectionMatrix_ = MakePerspectiveFovMatrix(fovAngleY_, static_cast<float>(WinApp::kWindoWidth) / static_cast<float>(WinApp::kWindoHeight), nearZ_, farZ_);
+		projectionMatrix_ = MakePerspectiveFovMatrix(fovAngleY_, static_cast<float>(WinApp::sWindoWidth) / static_cast<float>(WinApp::sWindoHeight), nearZ_, farZ_);
 		break;
 	case Camera::ProjectionMode::Orthographic:
-		projectionMatrix_ = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), nearZ_, farZ_);
+		projectionMatrix_ = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), nearZ_, farZ_);
 		break;
 	}
 }

@@ -7,8 +7,9 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
-int32_t WinApp::kWindoWidth = 1280;
-int32_t WinApp::kWindoHeight = 720;
+int32_t WinApp::sWindoWidth = 1280;
+int32_t WinApp::sWindoHeight = 720;
+bool WinApp::sIsCursorOverTitleBar = false;
 
 LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
@@ -23,13 +24,14 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+
 	default:
 		break;
 	}
 	return DefWindowProc(hwnd, message, wparam, lparam);
 }
 
-void WinApp::Initialize(const std::string& title)
+void WinApp::Initialize(const std::string &title)
 {
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));
@@ -42,7 +44,7 @@ void WinApp::Initialize(const std::string& title)
 	RegisterClass(&windClass_);
 
 
-	windRect_ = { 0, 0, kWindoWidth, kWindoHeight };
+	windRect_ = { 0, 0, sWindoWidth, sWindoHeight };
 
 	// クライアント領域として調整
 	AdjustWindowRect(&windRect_, WS_OVERLAPPEDWINDOW, false);
@@ -76,9 +78,15 @@ bool WinApp::PoccesMessage()
 		DispatchMessage(&msg);
 	}
 
-	if (msg.message == WM_QUIT) {
+	sIsCursorOverTitleBar = false;
+	switch (msg.message)
+	{
+	case WM_QUIT:
 		Logger::Log(std::format("WindowClosed\n"));
 		return true;
+	case HTCAPTION:
+		sIsCursorOverTitleBar = true;
+		return false;
 	}
 	return false;
 }
@@ -95,12 +103,12 @@ void WinApp::Finalize()
 	if (checkClientSize.right != windRect_.right)
 	{
 		windRect_.right = checkClientSize.right;
-		kWindoWidth = checkClientSize.right - checkClientSize.left;
+		sWindoWidth = checkClientSize.right - checkClientSize.left;
 	}
 	if (checkClientSize.bottom != windRect_.bottom)
 	{
 		windRect_.bottom = checkClientSize.bottom;
-		kWindoHeight = checkClientSize.bottom - checkClientSize.top;
+		sWindoHeight = checkClientSize.bottom - checkClientSize.top;
 	}
 	CloseWindow(hwnd_);
 	// COM終了

@@ -60,7 +60,7 @@ void Sprite::Initiazlize(SpriteCommon* spriteCommon, const std::string& fileName
 
 	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixData_));
 	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
 
 	transformationMatrixData_->world = MakeAffineMatrix(Vector3(scale_.x, scale_.y, 1.0f), Vector3(0.0f, 0.0f, rotation_), Vector3(position_.x, position_.y, 0.0f));
 	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
@@ -85,7 +85,7 @@ void Sprite::Upadate()
 	vertexData_[3].uv = { 1.0f, 0.0f };
 
 	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindoWidth), static_cast<float>(WinApp::kWindoHeight), 0.0f, 100.0f);
+	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
 
 	transformationMatrixData_->world = MakeAffineMatrix(Vector3(scale_.x, scale_.y, 1.0f), Vector3(0.0f, 0.0f, rotation_), Vector3(position_.x, position_.y, 0.0f));
 	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;

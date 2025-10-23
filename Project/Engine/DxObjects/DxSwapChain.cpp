@@ -9,8 +9,8 @@
 void DxSwapChain::Initialize(const WinApp& winApp, DxDevice* device, DxCommand* command)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	swapChainDesc.Width = WinApp::kWindoWidth;
-	swapChainDesc.Height = WinApp::kWindoHeight;
+	swapChainDesc.Width = WinApp::sWindoWidth;
+	swapChainDesc.Height = WinApp::sWindoHeight;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;								//マルチサンプルしない
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	// 描画ターゲットとして利用する

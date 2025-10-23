@@ -55,7 +55,7 @@ void Input::Update()
 
 	if (!isMouseConroll_)
 	{
-		mouseState_.scPosition = Vector2(static_cast<float>(WinApp::kWindoWidth / 2), static_cast<float>(WinApp::kWindoHeight / 2));
+		mouseState_.scPosition = Vector2(static_cast<float>(WinApp::sWindoWidth / 2), static_cast<float>(WinApp::sWindoHeight / 2));
 	}
 }
 

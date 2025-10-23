@@ -176,7 +176,7 @@ void DirectXCommon::CreateRenderTaegetrView()
 
 void DirectXCommon::CreateDepthStencilView()
 {
-	depthStencilResource = CreateDepthStencilTextureResource(WinApp::kWindoWidth, WinApp::kWindoHeight);
+	depthStencilResource = CreateDepthStencilTextureResource(WinApp::sWindoWidth, WinApp::sWindoHeight);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// 基本Resouceにあわせる
@@ -190,8 +190,8 @@ void DirectXCommon::CreateDepthStencilView()
 void DirectXCommon::CreateViewPortAndSiccorRect()
 {
 	// 画面全体に表示
-	viewport.Width = static_cast<FLOAT>(WinApp::kWindoWidth);
-	viewport.Height = static_cast<FLOAT>(WinApp::kWindoHeight);
+	viewport.Width = static_cast<FLOAT>(WinApp::sWindoWidth);
+	viewport.Height = static_cast<FLOAT>(WinApp::sWindoHeight);
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 	viewport.MinDepth = 0.0f;
@@ -200,9 +200,9 @@ void DirectXCommon::CreateViewPortAndSiccorRect()
 
 	// 基本的にはviewportと同じ構成で
 	scissorRect.left = 0;
-	scissorRect.right = WinApp::kWindoWidth;
+	scissorRect.right = WinApp::sWindoWidth;
 	scissorRect.top = 0;
-	scissorRect.bottom = WinApp::kWindoHeight;
+	scissorRect.bottom = WinApp::sWindoHeight;
 }
 
 ComPtr<ID3D12DescriptorHeap> DirectXCommon::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible)
