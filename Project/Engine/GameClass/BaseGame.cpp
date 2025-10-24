@@ -10,8 +10,8 @@ void BaseGame::Initialize()
 {
 #pragma region SystemVaiable
 	winApp_ = std::make_unique<WinApp>();
-	WinApp::sWindoWidth =1920;
-	WinApp::sWindoHeight = 1080;
+	WinApp::sWindoWidth =1280;
+	WinApp::sWindoHeight = 720;
 	winApp_->Initialize();
 
 	dxCommon_ = std::make_unique<DirectXCommon>();

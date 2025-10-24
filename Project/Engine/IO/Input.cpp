@@ -25,22 +25,33 @@ bool Input::Initialize(WinApp *winApp)
 
 void Input::Update()
 {
+	DIMOUSESTATE2 mouseState{};
+	// キーボードの入力情報が断絶していれば取得を再開する
+	if (FAILED(keyboardDevice_->GetDeviceState(sizeof(keys_), &keys_)))
+	{
+		keyboardDevice_->Acquire();
+	}
+	// マウスの入力情報が断絶していれば取得を再開する
+	if(FAILED(mouseDevice_->GetDeviceState(sizeof(mouseState), &mouseState)))
+	{
+		mouseDevice_->Acquire();
+	}
+
 	// キーボード
 	memcpy(preKeys_, keys_, kAllKey);
 	keyboardDevice_->GetDeviceState(sizeof(keys_), keys_);
 
 	// マウス
-	if(isCursorVisible_)
+	if (isCursorVisible_)
 	{
-		while(ShowCursor(isCursorVisible_) < 0);
+		while (ShowCursor(isCursorVisible_) < 0);
 	}
 	else
 	{
-		while(ShowCursor(isCursorVisible_) >= 0);
+		while (ShowCursor(isCursorVisible_) >= 0);
 	}
 
 	memcpy(mouseState_.preButtons, mouseState_.buttons, 8);
-	DIMOUSESTATE2 mouseState{};
 	mouseDevice_->GetDeviceState(sizeof(mouseState), &mouseState);
 	// マウスの絶対座標を取得
 	POINT mousePoint{};
