@@ -5,7 +5,7 @@
 #include "Logger.h"
 #include "StringUtility.h"
 
-#pragma comment(lib, "winmm.lib")
+//#pragma comment(lib, "winmm.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
@@ -35,8 +35,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
 void WinApp::Initialize(const std::string &title)
 {
-	// タイマーの精度設定
-	timeBeginPeriod(1);
 
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));

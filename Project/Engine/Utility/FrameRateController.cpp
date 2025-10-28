@@ -2,9 +2,12 @@
 
 #include <thread>
 #include <format>
+#include <Windows.h>
 
 #include "ImGuiManager.h"
 #include "Logger.h"
+
+#pragma comment(lib, "winmm.lib")
 
 using namespace std::chrono;
 
@@ -12,6 +15,8 @@ float FrameRateController::sTargetFrame = 60.0f;
 
 void FrameRateController::Initialize()
 {
+	// タイマーの精度設定
+	timeBeginPeriod(1);
 	// 現在時刻の記録
 	lastTime_ = std::chrono::steady_clock::now();
 }
@@ -28,9 +33,9 @@ void FrameRateController::Update()
 	// 経過時間
 	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastTime_);
 
-	//if (elapsed < kMinCheckTime)
+	// 1/n秒の経過待ち
+	if (elapsed < kMinCheckTime)
 	{
-		// 1/n秒の経過待ち
 		do
 		{
 			// スリープして待機

@@ -146,6 +146,8 @@ void BaseGame::Upate()
 	}
 
 
+	input_->SetCursorVisible(true);
+	input_->SetMouseControll(true);
 	if (!isImGuiWindowCapture || WinApp::sIsCursorOverTitleBar)
 	{
 		if (input_->PushMouseButton(MouseButton::LEFT))
@@ -153,14 +155,9 @@ void BaseGame::Upate()
 			input_->SetCursorVisible(false);
 			input_->SetMouseControll(false);
 			Vector2 dir = input_->GetDeltaMousePosition();
-			cameraTransform_.rotate.x += dir.y * 0.01f;
-			cameraTransform_.rotate.y += dir.x * 0.01f;
+			cameraTransform_.rotate.x += dir.y * 0.005f;
+			cameraTransform_.rotate.y += dir.x * 0.005f;
 		}
-	}
-	else
-	{
-		input_->SetCursorVisible(true);
-		input_->SetMouseControll(true);
 	}
 
 	mainCamera_->SetTransform(cameraTransform_);
