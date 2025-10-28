@@ -5,6 +5,8 @@
 #include "Logger.h"
 #include "StringUtility.h"
 
+#pragma comment(lib, "winmm.lib")
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
 int32_t WinApp::sWindoWidth = 1280;
@@ -33,6 +35,9 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
 void WinApp::Initialize(const std::string &title)
 {
+	// タイマーの精度設定
+	timeBeginPeriod(1);
+
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));
 	// 使用するプロシージャ
@@ -42,7 +47,6 @@ void WinApp::Initialize(const std::string &title)
 	windClass_.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
 	RegisterClass(&windClass_);
-
 
 	windRect_ = { 0, 0, sWindoWidth, sWindoHeight };
 

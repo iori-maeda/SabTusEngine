@@ -10,7 +10,7 @@ void BaseGame::Initialize()
 {
 #pragma region SystemVaiable
 	winApp_ = std::make_unique<WinApp>();
-	WinApp::sWindoWidth =1280;
+	WinApp::sWindoWidth = 1280;
 	WinApp::sWindoHeight = 720;
 	winApp_->Initialize();
 
@@ -40,6 +40,9 @@ void BaseGame::Initialize()
 
 	ParticleSystem::GetInstance()->Initialize(dxCommon_.get());
 	ParticleSystem::GetInstance()->SetCamera(mainCamera_.get());
+
+	fpsController_ = std::make_unique<FrameRateController>();
+	fpsController_->Initialize();
 #pragma endregion
 
 	sprite_ = std::make_unique<Sprite>();
@@ -89,11 +92,14 @@ void BaseGame::Finalize()
 
 void BaseGame::Upate()
 {
+
 	winApp_->Update();
+	fpsController_->Update();
 	input_->Update();
 	bool isImGuiWindowCapture = false;
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
+	fpsController_->DebugWindow();
 	mainCamera_->DebugWindow();
 	object3dCommon_->DebugWindow();
 	object3d_->DebugWindow();
@@ -109,7 +115,7 @@ void BaseGame::Upate()
 	}
 
 	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
-	ImGui::Text("drag position (x:%.1f, y:%.1f)", clickPosition_.x, clickPosition_.y);
+	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
 	ImGui::End();
 	ImGuiManager::End();
 	isImGuiWindowCapture = ImGui::GetIO().WantCaptureMouse;
@@ -139,18 +145,22 @@ void BaseGame::Upate()
 		cameraTransform_.translate.z += mainCamera_->GetRight().z * kCameraMoveSpeed;
 	}
 
-	input_->SetCursorVisible(true);
-	input_->SetMouseControll(true);
-	if (!isImGuiWindowCapture|| WinApp::sIsCursorOverTitleBar)
+
+	if (!isImGuiWindowCapture || WinApp::sIsCursorOverTitleBar)
 	{
 		if (input_->PushMouseButton(MouseButton::LEFT))
 		{
 			input_->SetCursorVisible(false);
 			input_->SetMouseControll(false);
 			Vector2 dir = input_->GetDeltaMousePosition();
-			cameraTransform_.rotate.x += dir.y * 0.005f;
-			cameraTransform_.rotate.y += dir.x * 0.005f;
+			cameraTransform_.rotate.x += dir.y * 0.01f;
+			cameraTransform_.rotate.y += dir.x * 0.01f;
 		}
+	}
+	else
+	{
+		input_->SetCursorVisible(true);
+		input_->SetMouseControll(true);
 	}
 
 	mainCamera_->SetTransform(cameraTransform_);

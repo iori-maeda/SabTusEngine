@@ -38,10 +38,11 @@ public:
 
 public:
 	Input() = default;
-	~Input() = default;
+	~Input();
 
 	bool Initialize(WinApp *winApp);
 	void Update();
+	void Finalize();
 
 	bool PushKey(KeyCode keyCode) { return keys_[keyCode]; }
 	bool TriggerKey(KeyCode keyCode) { return keys_[keyCode] && !preKeys_[keyCode]; }

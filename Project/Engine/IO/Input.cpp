@@ -6,6 +6,11 @@
 
 #pragma comment (lib, "dinput8.lib")
 
+Input::~Input()
+{
+	Finalize();
+}
+
 bool Input::Initialize(WinApp *winApp)
 {
 	if (winApp == nullptr) { return false; }
@@ -68,6 +73,12 @@ void Input::Update()
 	{
 		mouseState_.scPosition = Vector2(static_cast<float>(WinApp::sWindoWidth / 2), static_cast<float>(WinApp::sWindoHeight / 2));
 	}
+}
+
+void Input::Finalize()
+{
+	keyboardDevice_->Unacquire();
+	mouseDevice_->Unacquire();
 }
 
 bool Input::InitializeDirectInput()

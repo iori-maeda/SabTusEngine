@@ -25,6 +25,7 @@
 #include "IO/Input.h"
 //#include "BasicShapes/Triangle.h"
 #include "ParticleSystem/ParticleEmitter.h"
+#include "FrameRateController.h"
 
 class BaseGame
 {
@@ -57,6 +58,7 @@ private:
 	std::unique_ptr<Object3dCommon> object3dCommon_ = nullptr;
 	std::unique_ptr<Camera> mainCamera_ = nullptr;
 	std::unique_ptr<Input> input_ = nullptr;
+	std::unique_ptr<FrameRateController>fpsController_ = nullptr;
 
 	Camera::Transform cameraTransform_ = { .scale{1.0f,1.0f,1.0f},.rotate{}, .translate{} };
 	Vector2 clickPosition_ = Vector2();
