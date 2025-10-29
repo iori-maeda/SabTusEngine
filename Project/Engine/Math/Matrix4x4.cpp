@@ -400,6 +400,11 @@ Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m)
 	return result;
 }
 
+Matrix4x4 MakeRotateAxisAngle(const Vector2 &axis, float angle)
+{
+	return Matrix4x4();
+}
+
 Matrix3x3 MakeRotationMatrix3x3(const Matrix4x4 &m)
 {
 	Matrix3x3 result = MakeIdentityMatrix3x3();

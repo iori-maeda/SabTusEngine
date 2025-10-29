@@ -106,13 +106,19 @@ Matrix4x4 MakeOrthoGraphicsMatrix(float left, float top, float width, float heig
 /// <param name="maxDepth"></param>
 /// <returns></returns>
 Matrix4x4 MakeViewPortMatrix(float left, float top, float width, float height, float minDepth, float maxDeppth);
-
 /// <summary>
 /// 転置行列の作成
 /// </summary>
 /// <param name="m">転置する行列</param>
 /// <returns></returns>
 Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m);
+/// <summary>
+/// 任意軸回転行列の作成
+/// </summary>
+/// <param name="axis"></param>
+/// <param name="angle"></param>
+/// <returns></returns>
+Matrix4x4 MakeRotateAxisAngle(const Vector2& axis, float angle);
 
 /// <summary>
 /// 回転行列の取得
