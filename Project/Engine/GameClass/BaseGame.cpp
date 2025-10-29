@@ -50,7 +50,7 @@ void BaseGame::Initialize()
 	spriteTransform_.scale = Vector3(0.5f, 0.5f, 0.5f);
 	spriteWorldMatrix_ = MakeIdentityMatrix();
 
-	ModelManager::GetInstace().Load("sphere.obj");
+	ModelManager::GetInstace().Load("PointLightSphere.obj");
 
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon_.get(), "smoothSphere.obj");
