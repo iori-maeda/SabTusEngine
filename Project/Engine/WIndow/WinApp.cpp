@@ -35,6 +35,8 @@ LRESULT WindowProcedure(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
 void WinApp::Initialize(const std::string &title)
 {
+	// タイマーの精度設定
+	timeBeginPeriod(1);
 
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));

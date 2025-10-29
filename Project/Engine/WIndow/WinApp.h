@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#pragma comment(lib, "winmm.lib")
+
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 class WinApp
