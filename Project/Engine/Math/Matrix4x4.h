@@ -118,7 +118,7 @@ Matrix4x4 MakeTransposeMatrix(const Matrix4x4 &m);
 /// <param name="axis"></param>
 /// <param name="angle"></param>
 /// <returns></returns>
-Matrix4x4 MakeRotateAxisAngle(const Vector2& axis, float angle);
+Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle);
 
 /// <summary>
 /// 回転行列の取得
