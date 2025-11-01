@@ -41,9 +41,13 @@ public:
 	~Input();
 
 	bool Initialize(WinApp *winApp);
-	void Update();
+	void UpdateAllDevice();
+	void UpdateKeyboardState();
+	void UpdateMouseState();
 	void Finalize();
 
+
+public:
 	bool PushKey(KeyCode keyCode) { return keys_[keyCode]; }
 	bool TriggerKey(KeyCode keyCode) { return keys_[keyCode] && !preKeys_[keyCode]; }
 	bool ReleaseKey(KeyCode keyCode) { return !keys_[keyCode] && preKeys_[keyCode]; }
@@ -51,12 +55,13 @@ public:
 	Vector2 GetDeltaMousePosition()const { return mouseState_.deltaPosition; }
 	Vector2 GetMousePosition()const { return mouseState_.scPosition; }
 	float GetMouseWheel() const { return mouseState_.wheel; }
+	bool OnDebugWindow()const { return isImGuiWindowCapture_; }
 	bool PushMouseButton(MouseButton button) const { return mouseState_.buttons[static_cast<int8_t>(button)]; }
 	bool TriggerMouseButton(MouseButton button) const { return mouseState_.buttons[static_cast<int8_t>(button)] && !mouseState_.preButtons[static_cast<int8_t>(button)]; }
 	bool ReleaseMouseButton(MouseButton button) const { return !mouseState_.buttons[static_cast<int8_t>(button)] && mouseState_.preButtons[static_cast<int8_t>(button)]; }
 
-	void SetCursorVisible(bool flag) { isCursorVisible_ = flag; }
-	void SetMouseControll(bool flag) { isMouseConroll_ = flag; }
+	void SetCursorVisible(bool flag);
+	void SetMouseControll(bool flag);
 
 private:
 
@@ -76,6 +81,8 @@ private:
 	BYTE preKeys_[kAllKey]{};
 
 	bool isCursorVisible_ = true;
-	bool isMouseConroll_ = true;
+	bool isMouseControll_ = true;
+
+	bool isImGuiWindowCapture_ = false;
 	MouseState mouseState_{};
 };

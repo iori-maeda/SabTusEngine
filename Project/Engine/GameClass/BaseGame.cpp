@@ -95,8 +95,8 @@ void BaseGame::Upate()
 
 	winApp_->Update();
 	fpsController_->Update();
-	input_->Update();
-	bool isImGuiWindowCapture = false;
+	input_->UpdateAllDevice();
+	
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
 	fpsController_->DebugWindow();
@@ -118,7 +118,6 @@ void BaseGame::Upate()
 	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
 	ImGui::End();
 	ImGuiManager::End();
-	isImGuiWindowCapture = ImGui::GetIO().WantCaptureMouse;
 #endif
 
 	cameraTransform_ = mainCamera_->GetTransform();
@@ -148,7 +147,7 @@ void BaseGame::Upate()
 
 	input_->SetCursorVisible(true);
 	input_->SetMouseControll(true);
-	if (!isImGuiWindowCapture || WinApp::sIsCursorOverTitleBar)
+	if (!input_->OnDebugWindow() || WinApp::sIsCursorOverTitleBar)
 	{
 		if (input_->PushMouseButton(MouseButton::LEFT))
 		{

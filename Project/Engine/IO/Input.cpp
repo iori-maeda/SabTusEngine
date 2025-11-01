@@ -2,6 +2,7 @@
 #include <format>
 
 #include "Window/WinApp.h"
+#include "ImGuiManager.h"
 #include "Logger.h"
 
 #pragma comment (lib, "dinput8.lib")
@@ -28,7 +29,13 @@ bool Input::Initialize(WinApp *winApp)
 	return true;
 }
 
-void Input::Update()
+void Input::UpdateAllDevice()
+{
+	UpdateKeyboardState();
+	UpdateMouseState();
+}
+
+void Input::UpdateKeyboardState()
 {
 	// キーボード
 	memcpy(preKeys_, keys_, kAllKey);
@@ -38,9 +45,13 @@ void Input::Update()
 		keyboardDevice_->Acquire();
 		keyboardDevice_->GetDeviceState(sizeof(keys_), keys_);
 	}
+}
 
-
-
+void Input::UpdateMouseState()
+{
+#ifdef USE_IMGUI
+	isImGuiWindowCapture_ = ImGui::GetIO().WantCaptureMouse;
+#endif
 	// マウス
 	memcpy(mouseState_.preButtons, mouseState_.buttons, 8);
 	DIMOUSESTATE2 mouseState{};
@@ -49,14 +60,6 @@ void Input::Update()
 	{
 		mouseDevice_->Acquire();
 		mouseDevice_->GetDeviceState(sizeof(mouseState), &mouseState);
-	}
-	if (isCursorVisible_)
-	{
-		while (ShowCursor(isCursorVisible_) < 0);
-	}
-	else
-	{
-		while (ShowCursor(isCursorVisible_) >= 0);
 	}
 	// マウスの絶対座標を取得
 	POINT mousePoint{};
@@ -69,7 +72,7 @@ void Input::Update()
 	mouseState_.wheel = static_cast<float>(mouseState.lZ);
 	memcpy(mouseState_.buttons, mouseState.rgbButtons, 8);
 
-	if (!isMouseConroll_)
+	if (!isMouseControll_)
 	{
 		mouseState_.scPosition = Vector2(static_cast<float>(WinApp::sWindoWidth / 2), static_cast<float>(WinApp::sWindoHeight / 2));
 	}
@@ -77,8 +80,22 @@ void Input::Update()
 
 void Input::Finalize()
 {
-	keyboardDevice_->Unacquire();
-	mouseDevice_->Unacquire();
+	if (keyboardDevice_) { keyboardDevice_->Unacquire(); }
+	if (mouseDevice_) { mouseDevice_->Unacquire(); }
+}
+
+void Input::SetCursorVisible(bool flag)
+{
+	if (isCursorVisible_ == flag) { return; }
+	isCursorVisible_ = flag;
+	ShowCursor(isCursorVisible_);
+}
+
+void Input::SetMouseControll(bool flag)
+{
+	if (isMouseControll_ == flag) { return; }
+	isMouseControll_ = flag;
+	ShowCursor(isCursorVisible_);
 }
 
 bool Input::InitializeDirectInput()
