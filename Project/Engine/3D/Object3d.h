@@ -77,9 +77,6 @@ private:
 
 	Model::Transform transform_{};
 
-	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
-	TransformationMatrix *transformationMatrixData_ = nullptr;
-
 	ComPtr<ID3D12Resource> cameraForGPUResource_ = nullptr;
 	CameraForGPU* cameraForGPUData_ = nullptr;
 

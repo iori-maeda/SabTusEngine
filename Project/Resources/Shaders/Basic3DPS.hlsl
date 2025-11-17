@@ -103,7 +103,7 @@ Output main(VertexOutput input)
     // 角度減衰
     float cosAngle = dot(spotLightDirectionOnSurface, normalize(gSpotLight.direction));
     float cosDivide = gSpotLight.cosFallOffStart >= gSpotLight.cosAngle ? gSpotLight.cosFallOffStart - gSpotLight.cosAngle : 0.0f;
-    if (cosDivide <= 0.0f)
+    if (cosDivide < 0.0f)
     {
         output.color = float4(1.0f, 0.0f, 1.0f, 1.0f);
         return output;

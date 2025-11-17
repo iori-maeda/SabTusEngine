@@ -15,16 +15,6 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileNa
 {
 	obj3dCommon_ = obj3dCommon;
 
-	transformationMatrixResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(TransformationMatrix));
-
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixData_));
-	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
-
-	transformationMatrixData_->world = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
-	transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(transformationMatrixData_->world));
-
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
 
@@ -36,25 +26,12 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
 	obj3dCommon_ = obj3dCommon;
 	model_ = model;
 
-	transformationMatrixResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(TransformationMatrix));
-
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixData_));
-	Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
-	Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
-
-	transformationMatrixData_->world = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-	transformationMatrixData_->wvp = transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
-	transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(transformationMatrixData_->world));
-
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
 }
 
 void Object3d::Upadate()
 {
-
-	transformationMatrixData_->world = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-	transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(transformationMatrixData_->world));
 	if (camera_ == nullptr)
 	{
 
@@ -65,13 +42,10 @@ void Object3d::Upadate()
 		Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::sWindoWidth) / static_cast<float>(WinApp::sWindoHeight), 0.1f, 100.0f);
 
-		transformationMatrixData_->wvp = transformationMatrixData_->world * mainCameraViewMatrix * projectionMatrix;
-
 		cameraForGPUData_->worldPosition = Vector3(0.0f, 0.0f, -10.0f);
 	}
 	else
 	{
-		transformationMatrixData_->wvp = transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
 		cameraForGPUData_->worldPosition = camera_->GetPosition();
 
 		model_->SetCamera(camera_);
@@ -85,7 +59,6 @@ void Object3d::Draw()
 	// 描画コマンドリストの取得
 	ID3D12GraphicsCommandList *commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
 
-	//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
 	model_->Draw();
 }
