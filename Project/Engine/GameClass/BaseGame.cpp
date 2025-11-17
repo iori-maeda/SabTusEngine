@@ -43,6 +43,10 @@ void BaseGame::Initialize()
 
 	fpsController_ = std::make_unique<FrameRateController>();
 	fpsController_->Initialize();
+
+	lights_ = std::make_unique<Lights>();
+	lights_->Initialize(dxCommon_.get());
+	object3dCommon_->SetLights(lights_.get());
 #pragma endregion
 
 	sprite_ = std::make_unique<Sprite>();
