@@ -296,7 +296,7 @@ void ParticleSystem::CreateSRV()
 	instancingDesc4TransformationMatrix.Buffer.FirstElement = 0;
 	instancingDesc4TransformationMatrix.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 	instancingDesc4TransformationMatrix.Buffer.NumElements = kMaxParticles;
-	instancingDesc4TransformationMatrix.Buffer.StructureByteStride = sizeof(TransformationMatrix);
+	instancingDesc4TransformationMatrix.Buffer.StructureByteStride = sizeof(ParticleForGPU);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle = dxCommon_->GetSRVDescriptorCPUHandle(1);
 	particleForGPUSrvGpuHandle_ = dxCommon_->GetSRVDescriptorGPUHandle(1);
