@@ -48,7 +48,6 @@ private:
 		float intensity = 1.0f;
 		float radius = 1.0f;
 		float decay = 1.0f;
-		float pad[2]{};
 	};
 
 	struct SpotLight
@@ -61,7 +60,6 @@ private:
 		float decay = 0.0f;
 		float cosFallOffStart = 0.0f;
 		float cosAngle = 0.0f;
-		float pad[2]{};
 	};
 
 	ComPtr<ID3D12Resource> directionalLightResource_ = nullptr;
