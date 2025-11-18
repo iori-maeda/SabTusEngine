@@ -14,7 +14,7 @@ public:
 	Vector3() :x(0.0f), y(0.0f), z(0.0f) {};
 	Vector3(float x, float y, float z) :x(x), y(y), z(z) {};
 
-	float Length();
+	float Length() const;
 };
 
 Vector3 operator+(const Vector3&, const Vector3&);

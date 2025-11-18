@@ -23,6 +23,7 @@ struct PointLight
     float intensity;
     float radius;
     float decay;
+    int numLights;
 };
 
 struct SpotLight
@@ -35,6 +36,7 @@ struct SpotLight
     float decay;
     float cosFallOffStart;
     float cosAngle;
+    int numLights;
 };
 
 struct Camera

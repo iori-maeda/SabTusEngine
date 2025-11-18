@@ -29,6 +29,7 @@ public:
 		float intensity = 1.0f;
 		float radius = 1.0f;
 		float decay = 1.0f;
+		static int sNumLights = 0;
 	};
 
 	struct SpotLight
@@ -41,12 +42,14 @@ public:
 		float decay = 0.0f;
 		float cosFallOffStart = 0.5f;
 		float cosAngle = 0.6f;
+		static int sNumLights = 0;
 	};
 
 public:
 
 	void Initialize(DirectXCommon* dxCommon);
 	void CommandSet();
+	void CommandSet(const Vector3& objectPos);
 	void AddPointLight(const Lights::PointLight& pointLight) { pointLights_.push_back(pointLight); }
 	void AddSpotLight(const Lights::PointLight& spotLight) { spotLights_.push_back(spotLight); }
 	void AllClear();
@@ -55,18 +58,22 @@ public:
 	std::vector<Lights::PointLight> GetPointLights() { pointLights_; }
 	std::vector<Lights::PointLight> GetSpotLights() { spotLights_; }
 
+private:
+	void CreateSRVHandle();
+
 
 private:
 	DirectXCommon* dxCommon_ = nullptr;
 
 	ComPtr<ID3D12Resource> directionalLightResource_ = nullptr;
 	DirectionalLight* directionalLightData_ = nullptr;
-
 	ComPtr<ID3D12Resource> pointLightResource_ = nullptr;
 	PointLight* pointLightData_ = nullptr;
-
 	ComPtr<ID3D12Resource> spotLightResource_ = nullptr;
 	SpotLight* spotLightData_ = nullptr;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE pointLightGPUHandle_{};
+	D3D12_GPU_DESCRIPTOR_HANDLE spotLightGPUHandle_{};
 
 	std::vector<PointLight> pointLights_;
 	std::vector<PointLight> spotLights_;
