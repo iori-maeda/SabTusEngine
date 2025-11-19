@@ -71,7 +71,7 @@ void Object3dCommon::PreDraw()
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[7] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
 
 	// Material
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -104,19 +104,24 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[4].Descriptor.ShaderRegister = 2;
 
+	D3D12_DESCRIPTOR_RANGE descriptorRangePointLight[2] = {};
 	// Point Light
-	D3D12_DESCRIPTOR_RANGE descriptorRangePointLight[1] = {};
 	descriptorRangePointLight[0].BaseShaderRegister = 0;
 	descriptorRangePointLight[0].NumDescriptors = Lights::sMaxPointLights;
 	descriptorRangePointLight[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRangePointLight[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	// Spot Light
+	descriptorRangePointLight[1].BaseShaderRegister = descriptorRangePointLight[0].NumDescriptors;
+	descriptorRangePointLight[1].NumDescriptors = Lights::sMaxSpotLights;
+	descriptorRangePointLight[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangePointLight[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[5].DescriptorTable.pDescriptorRanges = descriptorRangePointLight;
 	rootParameters[5].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangePointLight);
 
-	// Spot Light
-	D3D12_DESCRIPTOR_RANGE descriptorRangeSpotLight[1] = {};
+	/*D3D12_DESCRIPTOR_RANGE descriptorRangeSpotLight[1] = {};
 	descriptorRangeSpotLight[0].BaseShaderRegister = descriptorRangePointLight[0].NumDescriptors;
 	descriptorRangeSpotLight[0].NumDescriptors = Lights::sMaxSpotLights;
 	descriptorRangeSpotLight[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -124,7 +129,7 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[6].DescriptorTable.pDescriptorRanges = descriptorRangeSpotLight;
-	rootParameters[6].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeSpotLight);
+	rootParameters[6].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeSpotLight);*/
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
