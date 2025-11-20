@@ -198,7 +198,7 @@ void BaseGame::Draw()
 		obj.second->Draw();
 	}
 
-	ParticleSystem::GetInstance()->Draw();
+	//ParticleSystem::GetInstance()->Draw();
 
 	spriteCommon_->PreDraw();
 

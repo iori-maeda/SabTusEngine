@@ -12,70 +12,54 @@ class DirectXCommon;
 class Lights
 {
 public:
-	static const int32_t sMaxPointLights = 100;
-	static const int32_t sMaxSpotLights = 100;
+	static const int32_t sMaxLights = 3000;
 
-	struct DirectionalLight
+	enum LightType
 	{
-		Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-		Vector3 direction{ 0.0f, -1.0f, 0.0f };
-		float intensity = 0.5f;
+		DIRECTIONAL,
+		POINT,
+		SPOT
 	};
 
-	struct PointLight
+	struct LightStatus
 	{
-		Vector4 color{ 1.0f, 1.0f, 1.0f,1.0f };
-		Vector3 position{ 0.0f, 1.0f, 0.0f };
-		float intensity = 1.0f;
-		float radius = 1.0f;
-		float decay = 1.0f;
-		static int sNumLights = 0;
-	};
-
-	struct SpotLight
-	{
-		Vector4 color{ 1.0f, 1.0f, 1.0f,1.0f };
-		Vector3 position{ 0.0f, 1.0f, 0.0f };
-		float intensity = 1.0f;
+		uint32_t type = DIRECTIONAL;
 		Vector3 direction{ 0.0f, -1.0f, 0.0f };
+		Vector4 color{ 1.0f, 1.0f, 1.0f,1.0f };
+		float intensity = 1.0f;
+		Vector3 position{ 0.0f, 1.0f, 0.0f };
 		float distance = 1.0f;
+		float range = 1.0f;
 		float decay = 0.0f;
 		float cosFallOffStart = 0.5f;
 		float cosAngle = 0.6f;
-		static int sNumLights = 0;
 	};
 
 public:
 
-	void Initialize(DirectXCommon* dxCommon);
-	void CommandSet();
-	void CommandSet(const Vector3& objectPos);
-	void AddPointLight(const Lights::PointLight& pointLight) { pointLights_.push_back(pointLight); }
-	void AddSpotLight(const Lights::PointLight& spotLight) { spotLights_.push_back(spotLight); }
+	void Initialize(DirectXCommon *dxCommon);
+	void SetDrawCommand();
+	uint32_t GetReflectLights(const Vector3 &objectPos);
+	void AddLight(const Lights::LightStatus &light) { lights_.push_back(light); }
 	void AllClear();
 
 public:
-	std::vector<Lights::PointLight> GetPointLights() { pointLights_; }
-	std::vector<Lights::PointLight> GetSpotLights() { spotLights_; }
+	std::vector<Lights::LightStatus> GetLights() { lights_; }
+	uint32_t GetNumLights() { return numLights_; }
 
 private:
 	void CreateSRVHandle();
 
 
 private:
-	DirectXCommon* dxCommon_ = nullptr;
+	DirectXCommon *dxCommon_ = nullptr;
 
-	ComPtr<ID3D12Resource> directionalLightResource_ = nullptr;
-	DirectionalLight* directionalLightData_ = nullptr;
-	ComPtr<ID3D12Resource> pointLightResource_ = nullptr;
-	PointLight* pointLightData_ = nullptr;
-	ComPtr<ID3D12Resource> spotLightResource_ = nullptr;
-	SpotLight* spotLightData_ = nullptr;
+	ComPtr<ID3D12Resource> resource_ = nullptr;
+	LightStatus *lightData_ = nullptr;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE pointLightGPUHandle_{};
-	D3D12_GPU_DESCRIPTOR_HANDLE spotLightGPUHandle_{};
+	D3D12_GPU_DESCRIPTOR_HANDLE srvGPUHandle_{};
 
-	std::vector<PointLight> pointLights_;
-	std::vector<PointLight> spotLights_;
+	std::vector<LightStatus> lights_;
+	uint32_t numLights_ = 0;
 };
 

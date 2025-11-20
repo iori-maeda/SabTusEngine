@@ -6,6 +6,7 @@
 #include "DxCommand.h"
 #include "ModelManager.h"
 #include "Camera/Camera.h"
+#include "Lights.h"
 #include "ImGuiManager.h"
 
 Object3d::~Object3d()
@@ -18,6 +19,9 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileNa
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
 
+	essentialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Essential));
+	essentialResources_->Map(0, nullptr, reinterpret_cast<void **>(&essentialData_));
+
 	model_ = ModelManager::GetInstace().Load(fileName);
 }
 
@@ -28,6 +32,9 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
 
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
+
+	essentialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Essential));
+	essentialResources_->Map(0, nullptr, reinterpret_cast<void **>(&essentialData_));
 }
 
 void Object3d::Upadate()
@@ -58,8 +65,11 @@ void Object3d::Draw()
 {
 	// 描画コマンドリストの取得
 	ID3D12GraphicsCommandList *commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
-
+	essentialData_->numLights = obj3dCommon_->GetLights()->GetReflectLights(transform_.translate);
+	obj3dCommon_->GetLights()->SetDrawCommand();
+	commandList->SetGraphicsRootConstantBufferView(3, essentialResources_->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
+
 	model_->Draw();
 }
 

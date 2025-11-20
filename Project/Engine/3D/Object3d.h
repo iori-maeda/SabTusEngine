@@ -38,6 +38,11 @@ public:
 		Vector3 worldPosition;
 	};
 
+	struct Essential
+	{
+		uint32_t numLights = 0;
+	};
+
 
 public:
 
@@ -79,6 +84,9 @@ private:
 
 	ComPtr<ID3D12Resource> cameraForGPUResource_ = nullptr;
 	CameraForGPU* cameraForGPUData_ = nullptr;
+
+	ComPtr<ID3D12Resource> essentialResources_ = nullptr;
+	Essential* essentialData_ = nullptr;
 
 	Model *model_ = nullptr;
 };
