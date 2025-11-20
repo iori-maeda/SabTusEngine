@@ -71,7 +71,7 @@ void Object3dCommon::PreDraw()
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[7] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
 
 	// Material
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
