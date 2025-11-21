@@ -122,10 +122,16 @@ Output main(VertexOutput input)
                 specularHalfVector = normalize(-gLights[i].direction + toEyeDir);
                 NdotSpecular = saturate(dot(normalize(input.normal), specularHalfVector));
                 specularIntensity = pow(NdotSpecular, gMaterial.shininess);
-                specularRefrectionColor = baseSpecularColor * specularIntensity * directionalLightColor;
+                
+                // 合成
+                specularRefrectionColor += baseSpecularColor * specularIntensity * directionalLightColor;
                 break;
             
             case 1:
+                if (gLights[i].range < length(input.worldPosition - gLights[i].position))
+                {
+                    continue;
+                }
                 pointLightColor = gLights[i].color * gLights[i].intensity;
                 toPointLight = normalize(gLights[i].position - input.worldPosition);
                 pointHalfVector = normalize(toPointLight + toEyeDir);
@@ -134,10 +140,16 @@ Output main(VertexOutput input)
                 pointLightDistance = length(gLights[i].position - input.worldPosition);
                 factor = gLights[i].decay <= 0.1 ? 0.1f : pow(saturate(-pointLightDistance / gLights[i].range + 1.0f), gLights[i].decay);
                 lambartIntensityToPoint = saturate(dot(normalize(input.normal), toPointLight));
+            
+                // 合成
                 attenuationPointLightColor += pointLightColor * factor;
                 break;
             
             case 2:
+                if (gLights[i].range < length(input.worldPosition - gLights[i].position))
+                {
+                    continue;
+                }
                 // Spot Light
                 spotLightColor = gLights[i].color * gLights[i].intensity;
                 spotLightDirectionOnSurface = normalize(input.worldPosition - gLights[i].position);

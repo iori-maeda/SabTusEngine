@@ -1,8 +1,10 @@
 #pragma once
 #include <d3d12.h>
 #include <cstdint>
+#include <array>
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
@@ -37,23 +39,34 @@ public:
 		float cosAngle = 0.6f;
 	};
 
+	struct EntryLight
+	{
+		uint64_t id;
+		std::shared_ptr<Light> data{};
+	};
+
 public:
 
-	void Initialize(DirectXCommon *dxCommon);
-	std::vector<Lights::Light> GetReflectLights(const Vector3 &objectPos);
+	void Initialize(DirectXCommon* dxCommon);
+	std::vector<Lights::Light> GetReflectLights(const Vector3& objectPos);
 	Lights::Light* AddLight(uint64_t lightType);
 	void DeleteLight(uint64_t lightId);
 	void AllClear();
 
 	void DebugWindow();
 
-public:
-	uint32_t GetNumLights() { return numLights_; }
+private:
+	void AddLightSelect();
+	void CreeateDirectionalLightWindow(Light* light);
+	void CreeatePointLightWindow(Light* light);
+	void CreeateSpotLightWindow(Light* light);
 
 private:
-	DirectXCommon *dxCommon_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 
-	std::vector<std::pair<uint64_t, std::shared_ptr<Light>>> lights_;
-	uint32_t numLights_ = 0;
+	std::vector<Lights::EntryLight> lights_;
+
+	// ImGui用
+	std::array<std::string, SUM_LIGHT_TYPE> lightName;
 };
 

@@ -5,44 +5,46 @@
 #include "ImGuiManager/ImGuiManager.h"
 
 #include <iostream>
-#include <string>
-#include <array>
 #include <numbers>
 #include <algorithm>
 #include <iterator>
 
-void Lights::Initialize(DirectXCommon *dxCommon)
+void Lights::Initialize(DirectXCommon* dxCommon)
 {
 	if (dxCommon == nullptr) { return; }
 
 	dxCommon_ = dxCommon;
+
+	lightName = { "Directional", "Point", "Spot" };
+
+	// メモリ確保
 	lights_.reserve(sMaxLights);
 
-	//AddLight(DIRECTIONAL);
-	Lights::Light* newLight = AddLight(POINT);
-	newLight->color = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-	//AddLight(SPOT);
+	// デフォルトライト追加
+	Lights::Light* newLight = AddLight(DIRECTIONAL);
+	newLight->direction = Normalize(Vector3(1.0f, 1.0, 1.0f));
+	newLight->intensity = 3.0f;
 }
 
-std::vector<Lights::Light> Lights::GetReflectLights(const Vector3 &objectPos)
+std::vector<Lights::Light> Lights::GetReflectLights(const Vector3& objectPos)
 {
-	std::vector<std::pair<uint64_t, std::shared_ptr<Light>>> filterdPointLight;
+	std::vector<EntryLight> filterdPointLight;
 	std::vector<Light> gpuSendLights;
 	std::copy_if(
 		lights_.begin(),
 		lights_.end(),
 		std::back_inserter(filterdPointLight),
-		[&](auto &light)
+		[&](auto& light)
 		{
-			return light.second->range >= objectPos.Length() || light.second->type == DIRECTIONAL;
+			return light.data->range >= (objectPos - light.data->position).Length() || light.data->type == DIRECTIONAL;
 		});
 	std::transform(
 		filterdPointLight.begin(),
 		filterdPointLight.end(),
 		std::back_inserter(gpuSendLights),
-		[](auto &p)
+		[](auto& p)
 		{
-			return *p.second;
+			return *p.data;
 		});
 	return gpuSendLights;
 }
@@ -50,6 +52,8 @@ std::vector<Lights::Light> Lights::GetReflectLights(const Vector3 &objectPos)
 Lights::Light* Lights::AddLight(uint64_t lightType)
 {
 	std::shared_ptr<Lights::Light> newLight = std::make_shared<Lights::Light>();
+	static uint64_t newLightID = 0;
+
 	switch (lightType)
 	{
 	case DIRECTIONAL:
@@ -84,9 +88,9 @@ Lights::Light* Lights::AddLight(uint64_t lightType)
 
 		break;
 	}
-	lights_.push_back({ reinterpret_cast<std::uintptr_t>(newLight.get()), newLight });
+	lights_.push_back({ newLightID++, newLight });
 
-	return lights_.back().second.get();
+	return lights_.back().data.get();
 }
 
 void Lights::DeleteLight(uint64_t lightId)
@@ -94,11 +98,11 @@ void Lights::DeleteLight(uint64_t lightId)
 	auto deleteLight = std::remove_if(
 		lights_.begin(),
 		lights_.end(),
-		[&](auto &light)
+		[&](auto& light)
 		{
-			return light.first == lightId;
+			return light.id == lightId;
 		});
-	lights_.erase(deleteLight);
+	lights_.erase(deleteLight, lights_.end());
 }
 
 void Lights::AllClear()
@@ -109,17 +113,75 @@ void Lights::AllClear()
 void Lights::DebugWindow()
 {
 #ifdef USE_IMGUI
-	std::array<std::string, SUM_LIGHT_TYPE> lightName = { "Directional", "Point", "Spot" };
 	ImGui::Begin("Lights");
+
+	AddLightSelect();
+
+	for (auto& light : lights_)
+	{
+		// 削除するID
+		uint64_t* deleteID = nullptr;
+
+		// ImGui用の内部ID
+		std::string widgetID = "##" + lightName[light.data->type] + "_" + std::to_string(light.id);
+		// ヘッダー名
+		std::string header = lightName[light.data->type] + "_" + std::to_string(light.id);
+
+		// ID設定 
+		ImGui::PushID(widgetID.c_str());
+		if (ImGui::CollapsingHeader(header.c_str()))
+		{
+			switch (light.data->type)
+			{
+			case DIRECTIONAL:
+				CreeateDirectionalLightWindow(light.data.get());
+				break;
+
+			case POINT:
+				CreeatePointLightWindow(light.data.get());
+				break;
+
+			case SPOT:
+				CreeateSpotLightWindow(light.data.get());
+				break;
+
+			default:
+				break;
+			}
+
+			if (ImGui::Button("delete"))
+			{
+				// 削除IDの登録
+				deleteID = &light.id;
+			}
+		}
+		ImGui::PopID();
+
+		// 削除
+		if (deleteID != nullptr) {
+			DeleteLight(light.id);
+			break;
+		}
+	}
+	ImGui::End();
+#endif
+}
+
+void Lights::AddLightSelect()
+{
 	static uint64_t selectedType = DIRECTIONAL;
 
 	if (ImGui::BeginCombo("Create Light Type", lightName[selectedType].c_str()))
 	{
 		for (uint64_t i = 0; i < SUM_LIGHT_TYPE; i++)
 		{
-			if (ImGui::Selectable(lightName[i].c_str(), true))
+			bool isSelected = selectedType == i;
+			if (ImGui::Selectable(lightName[i].c_str(), isSelected))
 			{
 				selectedType = i;
+			}
+			if (isSelected)
+			{
 				ImGui::SetItemDefaultFocus();
 			}
 		}
@@ -130,65 +192,49 @@ void Lights::DebugWindow()
 	{
 		AddLight(selectedType);
 	}
-	for (auto &light : lights_)
+}
+
+void Lights::CreeateDirectionalLightWindow(Light* light)
+{
+	if (light == nullptr) { return; }
+	bool isChangedDirection = false;
+	ImGui::Text("ptr=%p type=%d", light, light->type);
+	ImGui::ColorEdit4("Color", &light->color.x);
+	ImGui::DragFloat("Intensity", &light->intensity, 0.01f, 0.0f);
+	isChangedDirection = ImGui::DragFloat3("Direction", &light->direction.x, 0.01f);
+	if (isChangedDirection)
 	{
-		std::string widgetID = "##" + lightName[light.second->type] + "_" + std::to_string(light.first);
-		std::string header = lightName[light.second->type] + "_" + std::to_string(light.first) + widgetID;
-
-		std::string textColor = "color" + widgetID;
-		std::string textDirection = "direction" + widgetID;
-		std::string textIntensity = "intensity" + widgetID;
-		std::string textPosition = "position" + widgetID;
-		std::string textDistance = "distance" + widgetID;
-		std::string textRange = "range" + widgetID;
-		std::string textDecay = "decay" + widgetID;
-		std::string textFalloff = "falloff" + widgetID;
-		std::string textAngle = "angle" + widgetID;
-		std::string textDelete = "delete" + widgetID;
-
-		if (ImGui::CollapsingHeader(header.c_str()))
-		{
-			ImGui::Text("ptr=%p type=%d", &light, light.second->type);
-			ImGui::ColorEdit4(textColor.c_str(), &light.second->color.x);
-			ImGui::DragFloat(textIntensity.c_str(), &light.second->intensity, 0.01f, 0.0f);
-
-			switch (light.second->type)
-			{
-			case DIRECTIONAL:
-				ImGui::DragFloat3(textDirection.c_str(), &light.second->direction.x, 0.01f);
-				light.second->direction = Normalize(light.second->direction);
-				break;
-
-			case POINT:
-				ImGui::DragFloat3(textPosition.c_str(), &light.second->position.x, 0.01f);
-				ImGui::DragFloat(textRange.c_str(), &light.second->range, 0.01f, 0.0f);
-				ImGui::DragFloat(textDecay.c_str(), &light.second->decay, 0.01f, 0.0f);
-				break;
-
-			case SPOT:
-				ImGui::DragFloat3(textPosition.c_str(), &light.second->position.x, 0.01f);
-				ImGui::DragFloat(textRange.c_str(), &light.second->range, 0.01f, 0.0f);
-				ImGui::DragFloat(textDecay.c_str(), &light.second->decay, 0.01f, 0.0f);
-				ImGui::DragFloat3(textDirection.c_str(), &light.second->direction.x, 0.01f);
-				ImGui::DragFloat(textDistance.c_str(), &light.second->distance, 0.01f, 0.0f);
-				ImGui::DragFloat(textFalloff.c_str(), &light.second->cosFallOffStart, 0.001f);
-				ImGui::DragFloat(textAngle.c_str(), &light.second->cosAngle, 0.001f);
-				light.second->direction = Normalize(light.second->direction);
-				/*light.second->cosFallOffStart = std::cosf(std::numbers::pi_v<float> / 6.0f);
-				light.second->cosAngle = std::cosf(std::numbers::pi_v<float> / 3.0f);*/
-				break;
-
-			default:
-				break;
-			}
-
-			if (ImGui::Button(textDelete.c_str()))
-			{
-				DeleteLight(light.first);
-				break;
-			}
-		}
+		light->direction = Normalize(light->direction);
 	}
-	ImGui::End();
-#endif
+}
+
+void Lights::CreeatePointLightWindow(Light* light)
+{
+	if (light == nullptr) { return; }
+	ImGui::Text("ptr=%p type=%d", light, light->type);
+	ImGui::DragFloat3("Position", &light->position.x, 0.01f);
+	ImGui::DragFloat("Intensity", &light->intensity, 0.01f, 0.0f);
+	ImGui::ColorEdit4("Color", &light->color.x);
+	ImGui::DragFloat("Range", &light->range, 0.01f, 0.0f);
+	ImGui::DragFloat("Decay", &light->decay, 0.01f, 0.0f);
+}
+
+void Lights::CreeateSpotLightWindow(Light* light)
+{
+	if (light == nullptr) { return; }
+	bool isChangedDirection = false;
+	ImGui::Text("ptr=%p type=%d", light, light->type);
+	ImGui::DragFloat3("Position", &light->position.x, 0.01f);
+	isChangedDirection = ImGui::DragFloat3("Direction", &light->direction.x, 0.01f);
+	ImGui::DragFloat("Intensity", &light->intensity, 0.01f, 0.0f);
+	ImGui::ColorEdit4("Color", &light->color.x);
+	ImGui::DragFloat("Range", &light->range, 0.01f, 0.0f);
+	ImGui::DragFloat("Decay", &light->decay, 0.01f, 0.0f);
+	ImGui::DragFloat("Distance", &light->distance, 0.01f, 0.0f);
+	ImGui::DragFloat("Falloff", &light->cosFallOffStart, 0.001f);
+	ImGui::DragFloat("Angle", &light->cosAngle, 0.001f);
+	if (isChangedDirection)
+	{
+		light->direction = Normalize(light->direction);
+	}
 }
