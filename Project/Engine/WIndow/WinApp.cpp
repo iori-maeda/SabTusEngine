@@ -72,7 +72,7 @@ void WinApp::Initialize(const std::string &title)
 	Logger::Log(std::format("WindowOpened\n"));
 }
 
-bool WinApp::PoccesMessage()
+bool WinApp::ProccesMessage()
 {
 	MSG msg{};
 

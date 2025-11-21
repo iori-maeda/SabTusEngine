@@ -88,5 +88,5 @@ void FrameRateController::FPSCounter()
 		return;
 	}
 	fps_ = 1.0f / avgDeltaTime;
-	Logger::Log(std::format("FPS Rate:{}\n", fps_));
+	//Logger::Log(std::format("FPS Rate:{}\n", fps_));
 }

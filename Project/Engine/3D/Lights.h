@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
@@ -18,10 +19,11 @@ public:
 	{
 		DIRECTIONAL,
 		POINT,
-		SPOT
+		SPOT,
+		SUM_LIGHT_TYPE
 	};
 
-	struct LightStatus
+	struct Light
 	{
 		uint32_t type = DIRECTIONAL;
 		Vector3 direction{ 0.0f, -1.0f, 0.0f };
@@ -38,28 +40,20 @@ public:
 public:
 
 	void Initialize(DirectXCommon *dxCommon);
-	void SetDrawCommand();
-	uint32_t GetReflectLights(const Vector3 &objectPos);
-	void AddLight(const Lights::LightStatus &light) { lights_.push_back(light); }
+	std::vector<Lights::Light> GetReflectLights(const Vector3 &objectPos);
+	Lights::Light* AddLight(uint64_t lightType);
+	void DeleteLight(uint64_t lightId);
 	void AllClear();
 
+	void DebugWindow();
+
 public:
-	std::vector<Lights::LightStatus> GetLights() { lights_; }
 	uint32_t GetNumLights() { return numLights_; }
-
-private:
-	void CreateSRVHandle();
-
 
 private:
 	DirectXCommon *dxCommon_ = nullptr;
 
-	ComPtr<ID3D12Resource> resource_ = nullptr;
-	LightStatus *lightData_ = nullptr;
-
-	D3D12_GPU_DESCRIPTOR_HANDLE srvGPUHandle_{};
-
-	std::vector<LightStatus> lights_;
+	std::vector<std::pair<uint64_t, std::shared_ptr<Light>>> lights_;
 	uint32_t numLights_ = 0;
 };
 

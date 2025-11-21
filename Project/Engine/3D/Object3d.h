@@ -10,6 +10,7 @@
 #include "Math/Vector2.h"
 #include "Math/Matrix4x4.h"
 #include "Model.h"
+#include "Lights.h"
 
 class Object3dCommon;
 class Camera;
@@ -74,6 +75,11 @@ public:
 	}
 	void SetCamera(Camera *camera) { camera_ = camera; }
 
+private:
+
+	void CreateResource();
+	void CreateLightsSRV();
+
 
 private:
 
@@ -87,6 +93,11 @@ private:
 
 	ComPtr<ID3D12Resource> essentialResources_ = nullptr;
 	Essential* essentialData_ = nullptr;
+
+	ComPtr<ID3D12Resource> lightsResource_ = nullptr;
+	Lights::Light *lightData_ = nullptr;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE lightsSrvGPUHandle_{};
 
 	Model *model_ = nullptr;
 };

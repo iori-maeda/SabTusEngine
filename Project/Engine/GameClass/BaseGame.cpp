@@ -100,7 +100,7 @@ void BaseGame::Upate()
 	winApp_->Update();
 	fpsController_->Update();
 	input_->UpdateAllDevice();
-	
+
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
 	fpsController_->DebugWindow();
@@ -125,7 +125,6 @@ void BaseGame::Upate()
 #endif
 
 	cameraTransform_ = mainCamera_->GetTransform();
-	cameraTransform_.translate += mainCamera_->GetForward() * (input_->GetMouseWheel() / 100.0f);
 	const float kCameraMoveSpeed = 0.1f;
 	if (input_->PushKey(DIK_W))
 	{
@@ -148,6 +147,16 @@ void BaseGame::Upate()
 		cameraTransform_.translate.z += mainCamera_->GetRight().z * kCameraMoveSpeed;
 	}
 
+	if(!input_->OnDebugWindow())
+	{
+		Vector2 mousePosition = input_->GetMousePosition();
+		RECT winRect = winApp_->GetWindowRect();
+		if (winRect.left <= mousePosition.x && winRect.right >= mousePosition.x
+			&& winRect.top <= mousePosition.y && winRect.bottom >= mousePosition.y)
+		{
+			cameraTransform_.translate += mainCamera_->GetForward() * (input_->GetMouseWheel() / 100.0f);
+		}
+	}
 
 	input_->SetCursorVisible(true);
 	input_->SetMouseControll(true);
@@ -211,5 +220,5 @@ void BaseGame::Draw()
 
 bool BaseGame::EndRequest()
 {
-	return winApp_->PoccesMessage();
+	return winApp_->ProccesMessage() || input_->TriggerKey(DIK_ESCAPE);
 }

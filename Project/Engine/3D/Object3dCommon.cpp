@@ -30,29 +30,7 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 void Object3dCommon::DebugWindow()
 {
 #ifdef USE_IMGUI
-	/*ImGui::Begin("Object3dCommon");
-	ImGui::DragFloat3("DirectionalLight Direction", &directionalLightData_->direction.x, 0.01f);
-	ImGui::ColorEdit4("DirectionalLight Color", &directionalLightData_->color.x);
-	ImGui::SliderFloat("DirectionalLight Intensity", &directionalLightData_->intensity, 0.0f, 100.0f);
-
-	ImGui::DragFloat3("PointLight position", &pointLightData_->position.x, 0.01f);
-	ImGui::ColorEdit4("PointLight Color", &pointLightData_->color.x);
-	ImGui::DragFloat("PointLight Intensity", &pointLightData_->intensity, 0.01f);
-	ImGui::SliderFloat("PointLight Radius", &pointLightData_->radius, 0.00f, 100.0f);
-	ImGui::SliderFloat("PointLight Decay", &pointLightData_->decay, 0.0f, 100.0f);
-
-	ImGui::DragFloat3("SpotLight position", &spotLightData_->position.x, 0.01f);
-	ImGui::DragFloat3("SpotLight Direction", &spotLightData_->direction.x, 0.01f);
-	ImGui::ColorEdit4("SpotLight Color", &spotLightData_->color.x);
-	ImGui::SliderFloat("SpotLight Intensity", &spotLightData_->intensity, 0.0f, 100.0f);
-	ImGui::SliderFloat("SpotLight Distance", &spotLightData_->distance, 0.00f, 100.0f);
-	ImGui::SliderFloat("SpotLight Decay", &spotLightData_->decay, 0.0f, 100.0f);
-	ImGui::SliderFloat("SpotLight CosStartFallOff", &spotLightData_->cosFallOffStart, 0.0f, 1.0f);
-	ImGui::SliderFloat("SpotLight CosAngle", &spotLightData_->cosAngle, 0.0f, 1.0f);
-	ImGui::End();
-
-	directionalLightData_->direction = Normalize(directionalLightData_->direction);
-	spotLightData_->direction = Normalize(spotLightData_->direction);*/
+	lights_->DebugWindow();
 #endif 
 }
 
@@ -63,7 +41,6 @@ void Object3dCommon::PreDraw()
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
-	lights_->SetDrawCommand();
 
 	
 }
@@ -114,17 +91,6 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[5].DescriptorTable.pDescriptorRanges = descriptorRangeLight;
 	rootParameters[5].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeLight);
-
-	//// Spot Light
-	//D3D12_DESCRIPTOR_RANGE descriptorRangeSpotLight[1] = {};
-	//descriptorRangeSpotLight[0].BaseShaderRegister = descriptorRangePointLight[0].NumDescriptors;
-	//descriptorRangeSpotLight[0].NumDescriptors = Lights::sMaxSpotLights;
-	//descriptorRangeSpotLight[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//descriptorRangeSpotLight[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	//rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	//rootParameters[6].DescriptorTable.pDescriptorRanges = descriptorRangeSpotLight;
-	//rootParameters[6].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeSpotLight);
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};

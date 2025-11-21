@@ -134,7 +134,7 @@ Output main(VertexOutput input)
                 pointLightDistance = length(gLights[i].position - input.worldPosition);
                 factor = gLights[i].decay <= 0.1 ? 0.1f : pow(saturate(-pointLightDistance / gLights[i].range + 1.0f), gLights[i].decay);
                 lambartIntensityToPoint = saturate(dot(normalize(input.normal), toPointLight));
-                attenuationPointLightColor = pointLightColor * factor;
+                attenuationPointLightColor += pointLightColor * factor;
                 break;
             
             case 2:
@@ -153,13 +153,13 @@ Output main(VertexOutput input)
                 // 距離減衰
                 spotDistance = length(gLights[i].position - input.worldPosition);
                 spotDistanceFactor = gLights[i].decay <= 0.1 ? 0.1f : pow(saturate(1.0f - spotDistance / gLights[i].distance), gLights[i].decay);
-                // 減衰後の色
-                attenuationSpotLightColor = spotLightColor * spotDistanceFactor * fallOffFactor;
                 // Diffuse Intensity
                 lambartIntensityToSpot = saturate(dot(normalize(input.normal), -spotLightDirectionOnSurface));
                 // Specular Intensity
                 spotHaldfVector = normalize(-spotLightDirectionOnSurface + toEyeDir);
                 specularIntensityToSpot = pow(saturate(dot(input.normal, spotHaldfVector)), gMaterial.shininess);
+                // 減衰後の色
+                attenuationSpotLightColor += spotLightColor * spotDistanceFactor * fallOffFactor;
                 break;
             
             default:
