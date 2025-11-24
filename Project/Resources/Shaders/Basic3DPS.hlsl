@@ -1,5 +1,12 @@
 #include "Basic3D.hlsli"
 
+enum LightType
+{
+    DIRECTIONAL = 0,
+    POINT = 1,
+    SPOT = 2
+};
+
 struct Material
 {
     float4 Ka;
@@ -20,7 +27,6 @@ struct LightStatus
     float3 direction;
     float intensity;
     float3 position;
-    float distance;
     float range;
     float decay;
     float cosFallOffStart;
@@ -59,119 +65,99 @@ Output main(VertexOutput input)
     }
     
     // Base Color
-    float4 ambientColor = gMaterial.Ka * texColor;
-    float4 baseDiffuseColor = gMaterial.Kd * texColor;
-    float4 baseSpecularColor = gMaterial.Ks;
+    const float4 kObjectAmbientColor = gMaterial.Ka * texColor;
+    const float4 kObjectDiffuseColor = gMaterial.Kd * texColor;
+    const float4 kObjectSpecularColor = gMaterial.Ks;
+    
+    if (gMaterial.enableLighting == 0)
+    {
+        output.color = kObjectAmbientColor + kObjectDiffuseColor + kObjectSpecularColor;
+        output.color.a = texColor.a;
+        return output;
+    }
     
     // View Direction
-    float3 toEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
+    const float3 kToEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
     
-    // Directional Light
-    float4 directionalLightColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    float NdotDirectional = 0.0f;
-    
-    // Blinn-Phong Reflection Model
-    // Phongと違いLightの反射ベクトルではなくハーフベクトルを利用する
-    float3 specularHalfVector = float3(0.0f, 0.0f, 0.0f);
-    float NdotSpecular = 0.0f;
-    float specularIntensity = 0.0f;
-    float4 specularRefrectionColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    
-    // Point Light
-    float4 pointLightColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    float3 toPointLight = float3(0.0f, 0.0f, 0.0f);
-    float3 pointHalfVector = float3(0.0f, 0.0f, 0.0f);
-    float NdotPointLight = 0.0f;
-    float specularIntensityToPoint = 0.0f;
-    float pointLightDistance = 0.0f;
-    float factor = 0.0f;
-    float lambartIntensityToPoint = 0.0f;
-    float4 attenuationPointLightColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    
-    // Spot Light
-    float4 spotLightColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    float3 spotLightDirectionOnSurface = float3(0.0f, 0.0f, 0.0f);
-    // 角度減衰
-    float cosAngle = 0.0f;
-    float cosDivide = 0.0f;
-  
-    float fallOffFactor = 0.0f;
-    // 距離減衰
-    float spotDistance = 0.0f;
-    float spotDistanceFactor = 0.0f;
-    // 減衰後の色
-    float4 attenuationSpotLightColor = float4(0.0f, 0.0f, 0.0f, 0.0f);;
-    // Diffuse Intensity
-    float lambartIntensityToSpot = 0.0f;
-    // Specular Intensity
-    float3 spotHaldfVector = float3(0.0f, 0.0f, 0.0f);
-    float specularIntensityToSpot = 0.0f;
-    
+    const float3 kNormal = normalize(input.normal);
+    float4 finaleColor = kObjectAmbientColor;
     
     for (uint i = 0; i < gEssential.numLights; i++)
     {
+        // 共通処理
+        // 光源色
+        const float4 kLightColor = gLights[i].color * gLights[i].intensity;
+        
         switch (gLights[i].type)
         {
-            case 0:
-                // Directional Light
-                directionalLightColor = gLights[i].color * gLights[i].intensity;
-                NdotDirectional = saturate(dot(normalize(input.normal), -gLights[i].direction));
-    
-                // Blinn-Phong Reflection Model
-                // Phongと違いLightの反射ベクトルではなくハーフベクトルを利用する
-                specularHalfVector = normalize(-gLights[i].direction + toEyeDir);
-                NdotSpecular = saturate(dot(normalize(input.normal), specularHalfVector));
-                specularIntensity = pow(NdotSpecular, gMaterial.shininess);
+            case DIRECTIONAL:
+                {
+                    const float3 kLightDirectionNormal = -normalize(gLights[i].direction);
+                    const float kNdotL = saturate(dot(kNormal, kLightDirectionNormal));
+                    const float3 kHalfVector = normalize(kLightDirectionNormal + kToEyeDir);
+                    const float kNdotH = saturate(dot(kNormal, kHalfVector));
+                    
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL;
+                    const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity;
                 
-                // 合成
-                specularRefrectionColor += baseSpecularColor * specularIntensity * directionalLightColor;
+                    finaleColor += kLightDiffuse + kLightSpecular;
+                }
                 break;
             
-            case 1:
-                if (gLights[i].range < length(input.worldPosition - gLights[i].position))
+            case POINT:
                 {
-                    continue;
+                    const float3 kToLight = gLights[i].position - input.worldPosition;
+                    const float kToLightLength = length(kToLight);
+                    if (kToLightLength > gLights[i].range)
+                    {
+                        continue;
+                    }
+                
+                    const float3 kToLightNormal = normalize(kToLight);
+                    const float kNdotL = saturate(dot(kNormal, kToLightNormal));
+                    const float3 kHalfVector = normalize(kToLightNormal + kToEyeDir);
+                    const float kNdotH = saturate(dot(kNormal, kHalfVector));
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    // 距離減衰
+                    const float kRange = max(gLights[i].range, 0.0001f);
+                    const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), gLights[i].decay);
+                  
+                    const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL * kAttenuationFactor;
+                    const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity * kAttenuationFactor;
+               
+                    finaleColor += kLightDiffuse + kLightSpecular;
                 }
-                pointLightColor = gLights[i].color * gLights[i].intensity;
-                toPointLight = normalize(gLights[i].position - input.worldPosition);
-                pointHalfVector = normalize(toPointLight + toEyeDir);
-                NdotPointLight = saturate(dot(input.normal, pointHalfVector));
-                specularIntensityToPoint = pow(NdotPointLight, gMaterial.shininess);
-                pointLightDistance = length(gLights[i].position - input.worldPosition);
-                factor = gLights[i].decay <= 0.1 ? 0.1f : pow(saturate(-pointLightDistance / gLights[i].range + 1.0f), gLights[i].decay);
-                lambartIntensityToPoint = saturate(dot(normalize(input.normal), toPointLight));
-            
-                // 合成
-                attenuationPointLightColor += pointLightColor * factor;
                 break;
             
-            case 2:
-                if (gLights[i].range < length(input.worldPosition - gLights[i].position))
+            case SPOT:
                 {
-                    continue;
+                    const float3 kToLight = gLights[i].position - input.worldPosition;
+                    const float kToLightLength = length(kToLight);
+                    if (kToLightLength > gLights[i].range)
+                    {
+                        continue;
+                    }
+                
+                    const float3 kLightDirectionNormal = -normalize(gLights[i].direction);
+                    const float3 kToLightNormal = normalize(kToLight);
+                    const float kNdotL = saturate(dot(kNormal, kToLightNormal));
+                    const float3 kHalfVector = normalize(kToLightNormal + kToEyeDir);
+                    const float kNdotH = saturate(dot(kNormal, kHalfVector));
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    // 距離減衰
+                    const float kRange = max(gLights[i].range, 0.0001f);
+                    const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), gLights[i].decay);
+                    // 範囲減衰
+                    const float kCosAngle = dot(kToLightNormal, kLightDirectionNormal);
+                    const float kCosAngleDiff = max(gLights[i].cosFallOffStart - gLights[i].cosAngle, 0.0001f);
+                    const float kFalloffFactor = saturate((kCosAngle - gLights[i].cosAngle) / kCosAngleDiff);
+                
+                    const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL * kAttenuationFactor * kFalloffFactor;
+                    const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity * kAttenuationFactor * kFalloffFactor;
+               
+                    finaleColor += kLightDiffuse + kLightSpecular;
                 }
-                // Spot Light
-                spotLightColor = gLights[i].color * gLights[i].intensity;
-                spotLightDirectionOnSurface = normalize(input.worldPosition - gLights[i].position);
-                // 角度減衰
-                cosAngle = dot(spotLightDirectionOnSurface, normalize(gLights[i].direction));
-                cosDivide = gLights[i].cosFallOffStart >= gLights[i].cosAngle ? gLights[i].cosFallOffStart - gLights[i].cosAngle : 0.0f;
-                if (cosDivide < 0.0f)
-                {
-                    output.color = float4(1.0f, 0.0f, 1.0f, 1.0f);
-                    return output;
-                }
-                fallOffFactor = saturate((cosAngle - gLights[i].cosAngle) / (gLights[i].cosFallOffStart - gLights[i].cosAngle));
-                // 距離減衰
-                spotDistance = length(gLights[i].position - input.worldPosition);
-                spotDistanceFactor = gLights[i].decay <= 0.1 ? 0.1f : pow(saturate(1.0f - spotDistance / gLights[i].distance), gLights[i].decay);
-                // Diffuse Intensity
-                lambartIntensityToSpot = saturate(dot(normalize(input.normal), -spotLightDirectionOnSurface));
-                // Specular Intensity
-                spotHaldfVector = normalize(-spotLightDirectionOnSurface + toEyeDir);
-                specularIntensityToSpot = pow(saturate(dot(input.normal, spotHaldfVector)), gMaterial.shininess);
-                // 減衰後の色
-                attenuationSpotLightColor += spotLightColor * spotDistanceFactor * fallOffFactor;
                 break;
             
             default:
@@ -179,46 +165,18 @@ Output main(VertexOutput input)
         }
     }
     
-    // Ambient
-    float4 ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    ambient.rgb = gMaterial.Ka.rgb * texColor.rgb;
-    ambient.a = gMaterial.Ka.a * texColor.a;
-	
-    // Diffuse
-    float4 diffuse = gMaterial.Kd * texColor;
-    diffuse = gMaterial.enableLighting ? diffuse * directionalLightColor * NdotDirectional : diffuse;
-    diffuse.a = gMaterial.Kd.a * texColor.a;
-    
-    // Specular
-    float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    specular = gMaterial.enableLighting ? specularRefrectionColor : float4(0.0f, 0.0f, 0.0f, 0.0f);
-    specular.a = gMaterial.Ks.a;
-    
-    // Point Ligh Diffuse
-    float4 pointLightDiffuseColor = baseDiffuseColor * lambartIntensityToPoint * attenuationPointLightColor;
-    // Point Light Specilar
-    float4 pointLightSpecularColor = baseSpecularColor * specularIntensityToPoint * attenuationPointLightColor;
-    // Spot Light Diffuse
-    float4 spotLightDiffuseColor = baseDiffuseColor * lambartIntensityToSpot * attenuationSpotLightColor;
-    // Spot Light Specular
-    float4 spotLightSpecularColor = baseSpecularColor * specularIntensityToSpot * attenuationSpotLightColor;
-    
-    // ADS合成
-    output.color = ambient + diffuse + specular + pointLightDiffuseColor + pointLightSpecularColor + spotLightDiffuseColor + spotLightSpecularColor;
+    output.color = finaleColor;
     output.color.a = texColor.a;
     return output;
 }
 
-    // HalfLambart
-    //float halfLambert = pow(NdotDirectional * 0.5 + 0.5, 2.0f);
+// 半透明オブジェクトが消えるので注意
+//if (output.color.a <= 0.5f)
+//{
+//    discard;
+//}
 
-    // 半透明オブジェクトが消えるので注意
-    //if (output.color.a <= 0.5f)
-    //{
-    //    discard;
-    //}
-
-    // Phong Reflection Model
-    //float3 reflectDir = reflect(gDirectionalLight.direction, normalize(input.normal));
-    //float RdotE = dot(reflectDir, toEyeDir);
-    //float specularIntensity = pow(saturate(RdotE), gMaterial.shininess);
+// Phong Reflection Model
+//float3 reflectDir = reflect(gDirectionalLight.direction, normalize(input.normal));
+//float RdotE = dot(reflectDir, toEyeDir);
+//float specularIntensity = pow(saturate(RdotE), gMaterial.shininess);

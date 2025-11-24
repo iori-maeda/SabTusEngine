@@ -32,7 +32,6 @@ public:
 		Vector3 direction{ 0.0f, -1.0f, 0.0f };
 		float intensity = 1.0f;
 		Vector3 position{ 0.0f, 1.0f, 0.0f };
-		float distance = 1.0f;
 		float range = 1.0f;
 		float decay = 0.0f;
 		float cosFallOffStart = 0.5f;

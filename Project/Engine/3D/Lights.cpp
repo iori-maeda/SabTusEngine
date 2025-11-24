@@ -83,7 +83,6 @@ Lights::Light* Lights::AddLight(Lights::LightType type)
 		newLight->direction = Normalize(Vector3(1.0f, -1.0f, 0.0f));
 		newLight->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		newLight->intensity = 4.0f;
-		newLight->distance = 7.0f;
 		newLight->decay = 2.0f;
 		newLight->cosFallOffStart = std::cosf(std::numbers::pi_v<float> / 6.0f);
 		newLight->cosAngle = std::cosf(std::numbers::pi_v<float> / 3.0f);
@@ -257,7 +256,6 @@ void Lights::CreeateSpotLightWindow(Light* light)
 	ImGui::ColorEdit4("Color", &light->color.x);
 	ImGui::DragFloat("Range", &light->range, 0.01f, 0.0f);
 	ImGui::DragFloat("Decay", &light->decay, 0.01f, 0.0f);
-	ImGui::DragFloat("Distance", &light->distance, 0.01f, 0.0f);
 	ImGui::DragFloat("Falloff", &light->cosFallOffStart, 0.001f);
 	ImGui::DragFloat("Angle", &light->cosAngle, 0.001f);
 	if (isChangedDirection)
