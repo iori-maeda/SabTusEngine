@@ -16,9 +16,8 @@ struct Essential
 
 struct LightStatus
 {
-    uint type;
-    float3 direction;
     float4 color;
+    float3 direction;
     float intensity;
     float3 position;
     float distance;
@@ -26,6 +25,7 @@ struct LightStatus
     float decay;
     float cosFallOffStart;
     float cosAngle;
+    uint type;
 };
 
 struct Camera

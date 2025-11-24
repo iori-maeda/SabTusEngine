@@ -44,11 +44,12 @@ public:
 	Camera::Transform GetTransform()const { return transform_; }
 	Vector3 GetForward() const { return forward_; }
 	Vector3 GetRight() const { return right_; }
+	float GetFarZ() const { return farZ_; }
 
-	void SetTransform(const Transform &transform) { transform_ = transform; }
-	void SetPosition(const Vector3 &position) { transform_.translate = position; }
-	void SetRotation(const Vector3 &rotation) { transform_.rotate = rotation; }
-	void SetScale(const Vector3 &scale) { transform_.scale = scale; }
+	void SetTransform(const Transform& transform) { transform_ = transform; }
+	void SetPosition(const Vector3& position) { transform_.translate = position; }
+	void SetRotation(const Vector3& rotation) { transform_.rotate = rotation; }
+	void SetScale(const Vector3& scale) { transform_.scale = scale; }
 	void SetFovAngleY(float fovAngleY) { fovAngleY_ = fovAngleY; }
 	void SetNearZ(float nearZ) { nearZ_ = nearZ; }
 	void SetFarZ(float farZ) { farZ_ = farZ; }

@@ -3,17 +3,23 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "ImGuiManager/ImGuiManager.h"
+#include "Camera/Camera.h"
 
 #include <iostream>
 #include <numbers>
 #include <algorithm>
 #include <iterator>
 
-void Lights::Initialize(DirectXCommon* dxCommon)
+void Lights::Initialize(DirectXCommon* dxCommon, Camera* camera)
 {
 	if (dxCommon == nullptr) { return; }
+	if (camera == nullptr) { return; }
 
 	dxCommon_ = dxCommon;
+	camera_ = camera;
+
+	// リソースとSRVの作成
+	CreateResourceAndSRV();
 
 	lightName = { "Directional", "Point", "Spot" };
 
@@ -26,27 +32,26 @@ void Lights::Initialize(DirectXCommon* dxCommon)
 	newLight->intensity = 3.0f;
 }
 
-std::vector<Lights::Light> Lights::GetReflectLights(const Vector3& objectPos)
+void Lights::DrawCommandSet()
 {
-	std::vector<EntryLight> filterdPointLight;
-	std::vector<Light> gpuSendLights;
-	std::copy_if(
-		lights_.begin(),
-		lights_.end(),
-		std::back_inserter(filterdPointLight),
-		[&](auto& light)
+	// 描画コマンドリストの取得
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
+	// ライト情報更新
+	uint32_t index = 0;
+	for (uint32_t i = 0; i < lights_.size(); i++)
+	{
+		Vector3 cameraToLight = lights_[i].data->position - camera_->GetPosition();
+		if (cameraToLight.Length() - lights_[i].data->range > camera_->GetFarZ()
+			&& lights_[i].data->type != static_cast<uint32_t>(Lights::LightType::DIRECTIONAL))
 		{
-			return light.data->range >= (objectPos - light.data->position).Length() || light.data->type == static_cast<uint32_t>(Lights::LightType::DIRECTIONAL);
-		});
-	std::transform(
-		filterdPointLight.begin(),
-		filterdPointLight.end(),
-		std::back_inserter(gpuSendLights),
-		[](auto& p)
-		{
-			return *p.data;
-		});
-	return gpuSendLights;
+			continue;
+		}
+		lightData_[index] = *lights_[i].data;
+		index++;
+	}
+	useLightsNum_ = index;
+	// ライト情報SRV設定
+	commandList->SetGraphicsRootDescriptorTable(5, lightsSrvGPUHandle_);
 }
 
 Lights::Light* Lights::AddLight(Lights::LightType type)
@@ -93,14 +98,14 @@ Lights::Light* Lights::AddLight(Lights::LightType type)
 	return lights_.back().data.get();
 }
 
-void Lights::DeleteLight(Lights::LightType type)
+void Lights::DeleteLight(uint64_t lightId)
 {
 	auto deleteLight = std::remove_if(
 		lights_.begin(),
 		lights_.end(),
 		[&](auto& light)
 		{
-			return light.id == static_cast<uint32_t>(type);
+			return light.id == lightId;
 		});
 	lights_.erase(deleteLight, lights_.end());
 }
@@ -159,12 +164,34 @@ void Lights::DebugWindow()
 
 		// 削除
 		if (deleteID != nullptr) {
-			DeleteLight(static_cast<Lights::LightType>(light.id));
+			DeleteLight(light.id);
 			break;
 		}
 	}
 	ImGui::End();
 #endif
+}
+
+void Lights::CreateResourceAndSRV()
+{
+	// リソースの作成
+	lightsResource_ = dxCommon_->CreateBufferResource(sizeof(Lights::Light) * Lights::sMaxLights);
+	lightsResource_->Map(0, nullptr, reinterpret_cast<void**>(&lightData_));
+
+	// 汎用的なSRVの設定
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	srvDesc.Buffer.NumElements = Lights::sMaxLights;
+	srvDesc.Buffer.StructureByteStride = sizeof(Lights::Light);
+
+	// SRVの作成
+	D3D12_CPU_DESCRIPTOR_HANDLE srvPointLightCpuHandle = dxCommon_->GetSRVDescriptorCPUHandle(2);
+	lightsSrvGPUHandle_ = dxCommon_->GetSRVDescriptorGPUHandle(2);
+	dxCommon_->GetDxDevice()->GetDevice()->CreateShaderResourceView(lightsResource_.Get(), &srvDesc, srvPointLightCpuHandle);
 }
 
 void Lights::AddLightSelect()

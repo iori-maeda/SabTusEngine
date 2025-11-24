@@ -45,7 +45,7 @@ void BaseGame::Initialize()
 	fpsController_->Initialize();
 
 	lights_ = std::make_unique<Lights>();
-	lights_->Initialize(dxCommon_.get());
+	lights_->Initialize(dxCommon_.get(), mainCamera_.get());
 	object3dCommon_->SetLights(lights_.get());
 #pragma endregion
 

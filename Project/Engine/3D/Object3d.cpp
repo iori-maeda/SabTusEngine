@@ -17,7 +17,6 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileNa
 	obj3dCommon_ = obj3dCommon;
 
 	CreateResource();
-	CreateLightsSRV();
 
 	model_ = ModelManager::GetInstace().Load(fileName);
 }
@@ -28,7 +27,6 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
 	model_ = model;
 
 	CreateResource();
-	CreateLightsSRV();
 }
 
 void Object3d::Upadate()
@@ -54,9 +52,7 @@ void Object3d::Upadate()
 
 	model_->Update();
 
-	std::vector<Lights::Light> refrectLights = obj3dCommon_->GetLights()->GetReflectLights(transform_.translate);
-	essentialData_->numLights = static_cast<uint32_t>(refrectLights.size());
-	memcpy(lightData_, refrectLights.data(), refrectLights.size() * sizeof(Lights::Light));
+	essentialData_->numLights = obj3dCommon_->GetLights()->GetLightsNum();
 }
 
 void Object3d::Draw()
@@ -65,7 +61,6 @@ void Object3d::Draw()
 	ID3D12GraphicsCommandList *commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
 	commandList->SetGraphicsRootConstantBufferView(3, essentialResources_->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootDescriptorTable(5, lightsSrvGPUHandle_);
 
 	model_->Draw();
 }
@@ -99,23 +94,5 @@ void Object3d::CreateResource()
 
 	essentialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Essential));
 	essentialResources_->Map(0, nullptr, reinterpret_cast<void **>(&essentialData_));
-
-	lightsResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Lights::Light) * Lights::sMaxLights);
-	lightsResource_->Map(0, nullptr, reinterpret_cast<void **>(&lightData_));
 }
 
-void Object3d::CreateLightsSRV()
-{
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-	srvDesc.Buffer.NumElements = Lights::sMaxLights;
-	srvDesc.Buffer.StructureByteStride = sizeof(Lights::Light);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE srvPointLightCpuHandle = obj3dCommon_->GetDirectXCommon()->GetSRVDescriptorCPUHandle(2);
-	lightsSrvGPUHandle_ = obj3dCommon_->GetDirectXCommon()->GetSRVDescriptorGPUHandle(2);
-	obj3dCommon_->GetDirectXCommon()->GetDxDevice()->GetDevice()->CreateShaderResourceView(lightsResource_.Get(), &srvDesc, srvPointLightCpuHandle);
-}

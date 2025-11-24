@@ -41,6 +41,7 @@ void Object3dCommon::PreDraw()
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
+	lights_->DrawCommandSet();
 
 	
 }
