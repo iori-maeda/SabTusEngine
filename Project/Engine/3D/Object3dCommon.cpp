@@ -9,10 +9,10 @@
 #include "DirectX12ObjectsFunction.h"
 #include "ImGuiManager.h"
 #include "ModelManager.h"
+#include "Lights.h"
 
 Object3dCommon::~Object3dCommon()
 {
-	directionalLightResource_->Unmap(0, nullptr);
 }
 
 void Object3dCommon::Initialize(DirectXCommon* dxCommon)
@@ -24,58 +24,13 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 	CreateRootSignature();
 	CreatePipelineStateObject();
 
-	directionalLightResource_ = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
-	directionalLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData_));
-	directionalLightData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	directionalLightData_->direction = Vector3(0.0f, -1.0f, 0.0f);
-	directionalLightData_->intensity = 1.0f;
-
-	pointLightResource_ = dxCommon->CreateBufferResource(sizeof(PointLight));
-	pointLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&pointLightData_));
-	pointLightData_->position = Vector3(0.0f, 2.0f, 0.0f);
-	pointLightData_->color = Vector4(0.0f, 1.0f, 1.0f, 1.0f);
-	pointLightData_->intensity = 20.0f;
-	pointLightData_->radius = 3.0f;
-	pointLightData_->decay = 1.0f;
-
-	spotLightResource_ = dxCommon_->CreateBufferResource(sizeof(SpotLight));
-	spotLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&spotLightData_));
-	spotLightData_->position = Vector3(-2.0f, 1.25f, 0.0f);
-	spotLightData_->direction = Normalize(Vector3(1.0f, -1.0f, 0.0f));
-	spotLightData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	spotLightData_->intensity = 4.0f;
-	spotLightData_->distance = 7.0f;
-	spotLightData_->decay = 2.0f;
-	spotLightData_->cosFallOffStart = std::cosf(std::numbers::pi_v<float> / 6.0f);
-	spotLightData_->cosAngle = std::cosf(std::numbers::pi_v<float> / 3.0f);
+	
 }
 
 void Object3dCommon::DebugWindow()
 {
 #ifdef USE_IMGUI
-	ImGui::Begin("Object3dCommon");
-	ImGui::DragFloat3("DirectionalLight Direction", &directionalLightData_->direction.x, 0.01f);
-	ImGui::ColorEdit4("DirectionalLight Color", &directionalLightData_->color.x);
-	ImGui::SliderFloat("DirectionalLight Intensity", &directionalLightData_->intensity, 0.0f, 100.0f);
-
-	ImGui::DragFloat3("PointLight position", &pointLightData_->position.x, 0.01f);
-	ImGui::ColorEdit4("PointLight Color", &pointLightData_->color.x);
-	ImGui::DragFloat("PointLight Intensity", &pointLightData_->intensity, 0.01f);
-	ImGui::SliderFloat("PointLight Radius", &pointLightData_->radius, 0.00f, 100.0f);
-	ImGui::SliderFloat("PointLight Decay", &pointLightData_->decay, 0.0f, 100.0f);
-
-	ImGui::DragFloat3("SpotLight position", &spotLightData_->position.x, 0.01f);
-	ImGui::DragFloat3("SpotLight Direction", &spotLightData_->direction.x, 0.01f);
-	ImGui::ColorEdit4("SpotLight Color", &spotLightData_->color.x);
-	ImGui::SliderFloat("SpotLight Intensity", &spotLightData_->intensity, 0.0f, 100.0f);
-	ImGui::SliderFloat("SpotLight Distance", &spotLightData_->distance, 0.00f, 100.0f);
-	ImGui::SliderFloat("SpotLight Decay", &spotLightData_->decay, 0.0f, 100.0f);
-	ImGui::SliderFloat("SpotLight CosStartFallOff", &spotLightData_->cosFallOffStart, 0.0f, 1.0f);
-	ImGui::SliderFloat("SpotLight CosAngle", &spotLightData_->cosAngle, 0.0f, 1.0f);
-	ImGui::End();
-
-	directionalLightData_->direction = Normalize(directionalLightData_->direction);
-	spotLightData_->direction = Normalize(spotLightData_->direction);
+	lights_->DebugWindow();
 #endif 
 }
 
@@ -86,51 +41,57 @@ void Object3dCommon::PreDraw()
 
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
+	lights_->DrawCommandSet();
 
-	commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootConstantBufferView(5, pointLightResource_->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootConstantBufferView(6, spotLightResource_->GetGPUVirtualAddress());
+	
 }
 
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[7] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
+
+	// Material
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
 
+	// TransformationMatrix
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 	rootParameters[1].Descriptor.ShaderRegister = 0;
 
-	// Texture用
-	D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
-	descriptorRange[0].BaseShaderRegister = 0;
-	descriptorRange[0].NumDescriptors = 1;
-	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
+	// Texture
+	D3D12_DESCRIPTOR_RANGE descriptorRangeTexture[1] = {};
+	descriptorRangeTexture[0].BaseShaderRegister = 0;
+	descriptorRangeTexture[0].NumDescriptors = 1;
+	descriptorRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRangeTexture;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeTexture);
 
+	// Essential
 	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[3].Descriptor.ShaderRegister = 1;
 
+	// Camera
 	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[4].Descriptor.ShaderRegister = 2;
 
-	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	// Lights
+	D3D12_DESCRIPTOR_RANGE descriptorRangeLight[1] = {};
+	descriptorRangeLight[0].BaseShaderRegister = 1;
+	descriptorRangeLight[0].NumDescriptors = 1;
+	descriptorRangeLight[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeLight[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[5].Descriptor.ShaderRegister = 3;
-
-	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[6].Descriptor.ShaderRegister = 4;
+	rootParameters[5].DescriptorTable.pDescriptorRanges = descriptorRangeLight;
+	rootParameters[5].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeLight);
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};

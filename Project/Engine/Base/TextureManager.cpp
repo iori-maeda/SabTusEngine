@@ -9,7 +9,7 @@
 
 std::string TextureManager::defaultDirectoryPath = "Resources/Textures/";
 
-uint32_t TextureManager::textureIndex = 2;	// 0は現状ImGuiが利用する
+uint32_t TextureManager::textureIndex = 3;	// 0は現状ImGuiが利用する
 
 TextureManager& TextureManager::GetInstace()
 {

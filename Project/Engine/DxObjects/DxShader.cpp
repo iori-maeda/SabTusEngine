@@ -90,9 +90,6 @@ ComPtr<IDxcBlob> DxShaderCompiler::CompileShader(const std::string& filePath, co
 	hr = shaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
 	assert(SUCCEEDED(hr));
 	Logger::Log(StringUtility::ConvertToString(std::format(L"Complie Succeeded, path:{}, profile:{}\n", filePathW, profile)));
-	// Release
-	shaderSource->Release();
-	shaderResult->Release();
 #pragma endregion
 	return shaderBlob;
 }

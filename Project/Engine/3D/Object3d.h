@@ -10,6 +10,7 @@
 #include "Math/Vector2.h"
 #include "Math/Matrix4x4.h"
 #include "Model.h"
+#include "Lights.h"
 
 class Object3dCommon;
 class Camera;
@@ -36,6 +37,11 @@ public:
 	struct CameraForGPU
 	{
 		Vector3 worldPosition;
+	};
+
+	struct Essential
+	{
+		uint32_t numLights = 0;
 	};
 
 
@@ -69,6 +75,10 @@ public:
 	}
 	void SetCamera(Camera *camera) { camera_ = camera; }
 
+private:
+
+	void CreateResource();
+
 
 private:
 
@@ -77,11 +87,11 @@ private:
 
 	Model::Transform transform_{};
 
-	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
-	TransformationMatrix *transformationMatrixData_ = nullptr;
-
 	ComPtr<ID3D12Resource> cameraForGPUResource_ = nullptr;
 	CameraForGPU* cameraForGPUData_ = nullptr;
+
+	ComPtr<ID3D12Resource> essentialResources_ = nullptr;
+	Essential* essentialData_ = nullptr;
 
 	Model *model_ = nullptr;
 };

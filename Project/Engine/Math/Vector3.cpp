@@ -16,7 +16,7 @@ void Vector3::operator+=(const Vector3& v)
 	z += v.z;
 }
 
-float Vector3::Length()
+float Vector3::Length() const 
 {
 	return sqrtf(x * x + y * y + z * z);
 }
