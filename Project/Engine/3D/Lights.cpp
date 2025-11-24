@@ -21,7 +21,7 @@ void Lights::Initialize(DirectXCommon* dxCommon)
 	lights_.reserve(sMaxLights);
 
 	// デフォルトライト追加
-	Lights::Light* newLight = AddLight(DIRECTIONAL);
+	Lights::Light* newLight = AddLight(Lights::LightType::DIRECTIONAL);
 	newLight->direction = Normalize(Vector3(1.0f, 1.0, 1.0f));
 	newLight->intensity = 3.0f;
 }
@@ -36,7 +36,7 @@ std::vector<Lights::Light> Lights::GetReflectLights(const Vector3& objectPos)
 		std::back_inserter(filterdPointLight),
 		[&](auto& light)
 		{
-			return light.data->range >= (objectPos - light.data->position).Length() || light.data->type == DIRECTIONAL;
+			return light.data->range >= (objectPos - light.data->position).Length() || light.data->type == static_cast<uint32_t>(Lights::LightType::DIRECTIONAL);
 		});
 	std::transform(
 		filterdPointLight.begin(),
@@ -49,22 +49,22 @@ std::vector<Lights::Light> Lights::GetReflectLights(const Vector3& objectPos)
 	return gpuSendLights;
 }
 
-Lights::Light* Lights::AddLight(uint64_t lightType)
+Lights::Light* Lights::AddLight(Lights::LightType type)
 {
 	std::shared_ptr<Lights::Light> newLight = std::make_shared<Lights::Light>();
 	static uint64_t newLightID = 0;
 
-	switch (lightType)
+	switch (type)
 	{
-	case DIRECTIONAL:
-		newLight->type = DIRECTIONAL;
+	case Lights::LightType::DIRECTIONAL:
+		newLight->type = static_cast<uint32_t>(Lights::LightType::DIRECTIONAL);
 		newLight->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		newLight->direction = Vector3(0.0f, -1.0f, 0.0f);
 		newLight->intensity = 10.0f;
 		break;
 
-	case POINT:
-		newLight->type = POINT;
+	case Lights::LightType::POINT:
+		newLight->type = static_cast<uint32_t>(Lights::LightType::POINT);
 		newLight->position = Vector3(0.0f, 2.0f, 0.0f);
 		newLight->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		newLight->intensity = 20.0f;
@@ -72,8 +72,8 @@ Lights::Light* Lights::AddLight(uint64_t lightType)
 		newLight->decay = 1.0f;
 		break;
 
-	case SPOT:
-		newLight->type = SPOT;
+	case Lights::LightType::SPOT:
+		newLight->type = static_cast<uint32_t>(Lights::LightType::SPOT);
 		newLight->position = Vector3(-2.0f, 1.25f, 0.0f);
 		newLight->direction = Normalize(Vector3(1.0f, -1.0f, 0.0f));
 		newLight->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -93,14 +93,14 @@ Lights::Light* Lights::AddLight(uint64_t lightType)
 	return lights_.back().data.get();
 }
 
-void Lights::DeleteLight(uint64_t lightId)
+void Lights::DeleteLight(Lights::LightType type)
 {
 	auto deleteLight = std::remove_if(
 		lights_.begin(),
 		lights_.end(),
 		[&](auto& light)
 		{
-			return light.id == lightId;
+			return light.id == static_cast<uint32_t>(type);
 		});
 	lights_.erase(deleteLight, lights_.end());
 }
@@ -131,17 +131,17 @@ void Lights::DebugWindow()
 		ImGui::PushID(widgetID.c_str());
 		if (ImGui::CollapsingHeader(header.c_str()))
 		{
-			switch (light.data->type)
+			switch (static_cast<Lights::LightType>(light.data->type))
 			{
-			case DIRECTIONAL:
+			case Lights::LightType::DIRECTIONAL:
 				CreeateDirectionalLightWindow(light.data.get());
 				break;
 
-			case POINT:
+			case Lights::LightType::POINT:
 				CreeatePointLightWindow(light.data.get());
 				break;
 
-			case SPOT:
+			case Lights::LightType::SPOT:
 				CreeateSpotLightWindow(light.data.get());
 				break;
 
@@ -159,7 +159,7 @@ void Lights::DebugWindow()
 
 		// 削除
 		if (deleteID != nullptr) {
-			DeleteLight(light.id);
+			DeleteLight(static_cast<Lights::LightType>(light.id));
 			break;
 		}
 	}
@@ -169,11 +169,11 @@ void Lights::DebugWindow()
 
 void Lights::AddLightSelect()
 {
-	static uint64_t selectedType = DIRECTIONAL;
+	static uint32_t selectedType = static_cast<uint32_t>(Lights::LightType::DIRECTIONAL);
 
 	if (ImGui::BeginCombo("Create Light Type", lightName[selectedType].c_str()))
 	{
-		for (uint64_t i = 0; i < SUM_LIGHT_TYPE; i++)
+		for (uint32_t i = 0; i < static_cast<uint32_t>(Lights::LightType::SUM_LIGHT_TYPE); i++)
 		{
 			bool isSelected = selectedType == i;
 			if (ImGui::Selectable(lightName[i].c_str(), isSelected))
@@ -190,7 +190,7 @@ void Lights::AddLightSelect()
 
 	if (ImGui::Button("Add Light"))
 	{
-		AddLight(selectedType);
+		AddLight(static_cast<Lights::LightType>(selectedType));
 	}
 }
 

@@ -17,7 +17,7 @@ class Lights
 public:
 	static const int32_t sMaxLights = 3000;
 
-	enum LightType
+	enum class LightType
 	{
 		DIRECTIONAL,
 		POINT,
@@ -27,7 +27,7 @@ public:
 
 	struct Light
 	{
-		uint32_t type = DIRECTIONAL;
+		uint32_t type = static_cast<uint32_t>(LightType::DIRECTIONAL);
 		Vector3 direction{ 0.0f, -1.0f, 0.0f };
 		Vector4 color{ 1.0f, 1.0f, 1.0f,1.0f };
 		float intensity = 1.0f;
@@ -49,8 +49,8 @@ public:
 
 	void Initialize(DirectXCommon* dxCommon);
 	std::vector<Lights::Light> GetReflectLights(const Vector3& objectPos);
-	Lights::Light* AddLight(uint64_t lightType);
-	void DeleteLight(uint64_t lightId);
+	Lights::Light* AddLight(Lights::LightType type);
+	void DeleteLight(Lights::LightType type);
 	void AllClear();
 
 	void DebugWindow();
@@ -67,6 +67,6 @@ private:
 	std::vector<Lights::EntryLight> lights_;
 
 	// ImGui用
-	std::array<std::string, SUM_LIGHT_TYPE> lightName;
+	std::array<std::string, static_cast<size_t>(Lights::LightType::SUM_LIGHT_TYPE)> lightName;
 };
 
