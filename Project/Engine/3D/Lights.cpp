@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <iterator>
 
-void Lights::Initialize(DirectXCommon* dxCommon, Camera* camera)
+void Lights::Initialize(DirectXCommon *dxCommon, Camera *camera)
 {
 	if (dxCommon == nullptr) { return; }
 	if (camera == nullptr) { return; }
@@ -27,15 +27,13 @@ void Lights::Initialize(DirectXCommon* dxCommon, Camera* camera)
 	lights_.reserve(sMaxLights);
 
 	// デフォルトライト追加
-	Lights::Light* newLight = AddLight(Lights::LightType::DIRECTIONAL);
+	Lights::Light *newLight = AddLight(Lights::LightType::DIRECTIONAL);
 	newLight->direction = Normalize(Vector3(1.0f, 1.0, 1.0f));
 	newLight->intensity = 3.0f;
 }
 
-void Lights::DrawCommandSet()
+void Lights::Update()
 {
-	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
 	// ライト情報更新
 	uint32_t index = 0;
 	for (uint32_t i = 0; i < lights_.size(); i++)
@@ -50,11 +48,17 @@ void Lights::DrawCommandSet()
 		index++;
 	}
 	useLightsNum_ = index;
+}
+
+void Lights::DrawCommandSet()
+{
+	// 描画コマンドリストの取得
+	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
 	// ライト情報SRV設定
 	commandList->SetGraphicsRootDescriptorTable(5, lightsSrvGPUHandle_);
 }
 
-Lights::Light* Lights::AddLight(Lights::LightType type)
+Lights::Light *Lights::AddLight(Lights::LightType type)
 {
 	std::shared_ptr<Lights::Light> newLight = std::make_shared<Lights::Light>();
 	static uint64_t newLightID = 0;
@@ -102,7 +106,7 @@ void Lights::DeleteLight(uint64_t lightId)
 	auto deleteLight = std::remove_if(
 		lights_.begin(),
 		lights_.end(),
-		[&](auto& light)
+		[&](auto &light)
 		{
 			return light.id == lightId;
 		});
@@ -121,10 +125,10 @@ void Lights::DebugWindow()
 
 	AddLightSelect();
 
-	for (auto& light : lights_)
+	for (auto &light : lights_)
 	{
 		// 削除するID
-		uint64_t* deleteID = nullptr;
+		uint64_t *deleteID = nullptr;
 
 		// ImGui用の内部ID
 		std::string widgetID = "##" + lightName[light.data->type] + "_" + std::to_string(light.id);
@@ -162,7 +166,8 @@ void Lights::DebugWindow()
 		ImGui::PopID();
 
 		// 削除
-		if (deleteID != nullptr) {
+		if (deleteID != nullptr)
+		{
 			DeleteLight(light.id);
 			break;
 		}
@@ -175,7 +180,7 @@ void Lights::CreateResourceAndSRV()
 {
 	// リソースの作成
 	lightsResource_ = dxCommon_->CreateBufferResource(sizeof(Lights::Light) * Lights::sMaxLights);
-	lightsResource_->Map(0, nullptr, reinterpret_cast<void**>(&lightData_));
+	lightsResource_->Map(0, nullptr, reinterpret_cast<void **>(&lightData_));
 
 	// 汎用的なSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -195,6 +200,7 @@ void Lights::CreateResourceAndSRV()
 
 void Lights::AddLightSelect()
 {
+#ifdef USE_IMGUI
 	static uint32_t selectedType = static_cast<uint32_t>(Lights::LightType::DIRECTIONAL);
 
 	if (ImGui::BeginCombo("Create Light Type", lightName[selectedType].c_str()))
@@ -218,10 +224,12 @@ void Lights::AddLightSelect()
 	{
 		AddLight(static_cast<Lights::LightType>(selectedType));
 	}
+#endif
 }
 
-void Lights::CreeateDirectionalLightWindow(Light* light)
+void Lights::CreeateDirectionalLightWindow(Light *light)
 {
+#ifdef USE_IMGUI
 	if (light == nullptr) { return; }
 	bool isChangedDirection = false;
 	ImGui::Text("ptr=%p type=%d", light, light->type);
@@ -232,10 +240,12 @@ void Lights::CreeateDirectionalLightWindow(Light* light)
 	{
 		light->direction = Normalize(light->direction);
 	}
+#endif
 }
 
-void Lights::CreeatePointLightWindow(Light* light)
+void Lights::CreeatePointLightWindow(Light *light)
 {
+#ifdef USE_IMGUI
 	if (light == nullptr) { return; }
 	ImGui::Text("ptr=%p type=%d", light, light->type);
 	ImGui::DragFloat3("Position", &light->position.x, 0.01f);
@@ -243,10 +253,12 @@ void Lights::CreeatePointLightWindow(Light* light)
 	ImGui::ColorEdit4("Color", &light->color.x);
 	ImGui::DragFloat("Range", &light->range, 0.01f, 0.0f);
 	ImGui::DragFloat("Decay", &light->decay, 0.01f, 0.0f);
+#endif
 }
 
-void Lights::CreeateSpotLightWindow(Light* light)
+void Lights::CreeateSpotLightWindow(Light *light)
 {
+#ifdef USE_IMGUI
 	if (light == nullptr) { return; }
 	bool isChangedDirection = false;
 	ImGui::Text("ptr=%p type=%d", light, light->type);
@@ -262,4 +274,5 @@ void Lights::CreeateSpotLightWindow(Light* light)
 	{
 		light->direction = Normalize(light->direction);
 	}
+#endif
 }

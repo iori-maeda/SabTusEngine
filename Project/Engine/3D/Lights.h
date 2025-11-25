@@ -49,6 +49,7 @@ public:
 public:
 
 	void Initialize(DirectXCommon* dxCommon, Camera* camera);
+	void Update();
 	void DrawCommandSet();
 	Lights::Light* AddLight(Lights::LightType type);
 	void DeleteLight(uint64_t lightId);

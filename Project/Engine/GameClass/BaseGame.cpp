@@ -175,6 +175,8 @@ void BaseGame::Upate()
 	mainCamera_->SetTransform(cameraTransform_);
 	mainCamera_->Update();
 
+	lights_->Update();
+
 	object3d_->Upadate();
 	object3d2_->Upadate();
 
