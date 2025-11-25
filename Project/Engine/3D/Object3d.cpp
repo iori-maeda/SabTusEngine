@@ -10,9 +10,10 @@
 #include "ImGuiManager.h"
 
 Object3d::~Object3d()
-{}
+{
+}
 
-void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileName)
+void Object3d::Initialize(Object3dCommon* obj3dCommon, const std::string& fileName)
 {
 	obj3dCommon_ = obj3dCommon;
 
@@ -21,7 +22,7 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileNa
 	model_ = ModelManager::GetInstace().Load(fileName);
 }
 
-void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
+void Object3d::Initialize(Object3dCommon* obj3dCommon, Model* model)
 {
 	obj3dCommon_ = obj3dCommon;
 	model_ = model;
@@ -58,9 +59,10 @@ void Object3d::Upadate()
 void Object3d::Draw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList *commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
 	commandList->SetGraphicsRootConstantBufferView(3, essentialResources_->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(6, objectMaterialResources_->GetGPUVirtualAddress());
 
 	model_->Draw();
 }
@@ -75,9 +77,8 @@ void Object3d::DebugWindow()
 	ImGui::DragFloat3("scale", &transform_.scale.x, 0.01f);
 	model_->SetTransform(transform_);
 
-	Vector4 color = model_->GetColor();
-	ImGui::ColorEdit4("color", &color.x);
-	model_->SetColor(color);
+	ImGui::ColorEdit4("color", &objectMaterialData_->color.x);
+
 
 	float shininess = model_->GetShininess();
 	ImGui::DragFloat("shininess", &shininess, 0.1f, 1.0f, 100.0f);
@@ -90,9 +91,14 @@ void Object3d::DebugWindow()
 void Object3d::CreateResource()
 {
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
-	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
+	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void**>(&cameraForGPUData_));
 
 	essentialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Essential));
-	essentialResources_->Map(0, nullptr, reinterpret_cast<void **>(&essentialData_));
+	essentialResources_->Map(0, nullptr, reinterpret_cast<void**>(&essentialData_));
+
+	objectMaterialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(ObjectMaterial));
+	objectMaterialResources_->Map(0, nullptr, reinterpret_cast<void**>(&objectMaterialData_));
+	objectMaterialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	objectMaterialData_->enableLighting = true;
 }
 

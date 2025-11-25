@@ -41,7 +41,6 @@ public:
 		Vector4 Kd{};
 		Vector4 Ks{};
 		float shininess = 1.0f;
-		int32_t enableLighting = true;
 	};
 
 	struct MtlData
@@ -84,7 +83,6 @@ public:
 	int32_t GetOriginIndex()const { return originIndex_; }
 
 	void SetParent(Mesh *parentPtr) { parent_ = parentPtr; }
-	void SetEnableLighting(int flag) { meshCPU.materialData->enableLighting = flag; }
 	void SetAmbient(const Vector4 &ambient) { meshCPU.materialData->Ka = ambient; }
 	void SetDiffuse(const Vector4 &diffuse) { meshCPU.materialData->Kd = diffuse; }
 	void SetSpecular(const Vector4 &specular) { meshCPU.materialData->Ks = specular; }

@@ -49,9 +49,9 @@ void Object3dCommon::PreDraw()
 void Object3dCommon::CreateRootSignature()
 {
 #pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[6] = {};
+	std::array<D3D12_ROOT_PARAMETER, 7> rootParameters = {};
 
-	// Material
+	// MeshMaterial
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -92,6 +92,11 @@ void Object3dCommon::CreateRootSignature()
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[5].DescriptorTable.pDescriptorRanges = descriptorRangeLight;
 	rootParameters[5].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeLight);
+
+	// ObjectMateial
+	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[6].Descriptor.ShaderRegister = 3;
 #pragma endregion
 #pragma region Smapler Settings
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
@@ -107,8 +112,8 @@ void Object3dCommon::CreateRootSignature()
 #pragma region RootSignature Create
 	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
 	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	descriptorRootSignature.pParameters = rootParameters;
-	descriptorRootSignature.NumParameters = _countof(rootParameters);
+	descriptorRootSignature.pParameters = rootParameters.data();
+	descriptorRootSignature.NumParameters = static_cast<UINT>(rootParameters.size());
 	descriptorRootSignature.pStaticSamplers = staticSamplers;
 	descriptorRootSignature.NumStaticSamplers = _countof(staticSamplers);
 	// シリアライズしてバイナリ化
