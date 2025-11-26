@@ -1,6 +1,7 @@
 #include "Object3d.h"
 
 #include "Object3dCommon.h"
+#include "DxRootSignature.h"
 #include "TextureManager.h"
 #include "WIndow/WinApp.h"
 #include "DxCommand.h"
@@ -52,19 +53,31 @@ void Object3d::Upadate()
 	}
 
 	model_->Update();
-
-	essentialData_->numLights = obj3dCommon_->GetLights()->GetLightsNum();
 }
 
 void Object3d::Draw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
-	commandList->SetGraphicsRootConstantBufferView(3, essentialResources_->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootConstantBufferView(4, cameraForGPUResource_->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootConstantBufferView(6, objectMaterialResources_->GetGPUVirtualAddress());
+	ID3D12GraphicsCommandList* cmdList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
+	DxRootSignature* dxRootSignature = obj3dCommon_->GetRootSignature();
 
-	model_->Draw();
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::CameraTransform),
+		cameraForGPUResource_->GetGPUVirtualAddress()
+	);
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::ObjectMaterial),
+		objectMaterialResources_->GetGPUVirtualAddress()
+	);
+
+	while (true)
+	{
+	UINT verticiesCount = 
+
+	}
+
+
+	//model_->Draw();
 }
 
 void Object3d::DebugWindow()
@@ -92,9 +105,6 @@ void Object3d::CreateResource()
 {
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
 	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void**>(&cameraForGPUData_));
-
-	essentialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(Essential));
-	essentialResources_->Map(0, nullptr, reinterpret_cast<void**>(&essentialData_));
 
 	objectMaterialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(ObjectMaterial));
 	objectMaterialResources_->Map(0, nullptr, reinterpret_cast<void**>(&objectMaterialData_));

@@ -5,6 +5,7 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "DxShader.h"
+#include "DxRootSignature.h"
 #include "Logger.h" 
 #include "DirectX12ObjectsFunction.h"
 #include "ImGuiManager.h"
@@ -24,111 +25,88 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 	CreateRootSignature();
 	CreatePipelineStateObject();
 
-	
+	essentialResource_ = dxCommon_->CreateBufferResource(sizeof(Essential));
+	essentialResource_->Map(0, nullptr, reinterpret_cast<void**>(&essentialForGPUData_));
 }
 
 void Object3dCommon::DebugWindow()
 {
 #ifdef USE_IMGUI
-	lights_->DebugWindow();
+
 #endif 
 }
 
 void Object3dCommon::PreDraw()
 {
+	essentialForGPUData_->numLights = lights_->GetLightsNum();
+
 	// 描画コマンドリストの取得
 	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
 
-	commandList->SetGraphicsRootSignature(rootSignature_.Get());
+	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
-	lights_->DrawCommandSet();
-
-	
+	commandList->SetGraphicsRootConstantBufferView(
+		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Essential),
+		essentialResource_->GetGPUVirtualAddress()
+	);
 }
 
 void Object3dCommon::CreateRootSignature()
 {
-#pragma region RootParameter Create
-	std::array<D3D12_ROOT_PARAMETER, 7> rootParameters = {};
+	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
-	// MeshMaterial
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[0].Descriptor.ShaderRegister = 0;
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::MeshMaterial,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Pixel,
+		0
+	);
 
-	// TransformationMatrix
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	rootParameters[1].Descriptor.ShaderRegister = 0;
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::TransformationMatrix,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Vertex,
+		0
+	);
+	
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Texture,
+		DxRootSignature::ParamType::DescriptorTable,
+		DxRootSignature::ShaderVisibility::Pixel,
+		0,
+		1
+	);
 
-	// Texture
-	D3D12_DESCRIPTOR_RANGE descriptorRangeTexture[1] = {};
-	descriptorRangeTexture[0].BaseShaderRegister = 0;
-	descriptorRangeTexture[0].NumDescriptors = 1;
-	descriptorRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRangeTexture;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeTexture);
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Essential,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Pixel,
+		1
+	);
 
-	// Essential
-	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[3].Descriptor.ShaderRegister = 1;
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::CameraTransform,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Pixel,
+		2
+	);
 
-	// Camera
-	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[4].Descriptor.ShaderRegister = 2;
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Lights,
+		DxRootSignature::ParamType::DescriptorTable,
+		DxRootSignature::ShaderVisibility::Pixel,
+		1,
+		1
+	);
+	
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::ObjectMaterial,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Pixel,
+		3
+	);
 
-	// Lights
-	D3D12_DESCRIPTOR_RANGE descriptorRangeLight[1] = {};
-	descriptorRangeLight[0].BaseShaderRegister = 1;
-	descriptorRangeLight[0].NumDescriptors = 1;
-	descriptorRangeLight[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRangeLight[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[5].DescriptorTable.pDescriptorRanges = descriptorRangeLight;
-	rootParameters[5].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeLight);
-
-	// ObjectMateial
-	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[6].Descriptor.ShaderRegister = 3;
-#pragma endregion
-#pragma region Smapler Settings
-	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
-	staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;			// バイナリフィルタ
-	staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 0~1リピート
-	staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
-	staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
-	staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;		// 比較しない
-	staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;						// 最大まで使用
-	staticSamplers[0].ShaderRegister = 0;
-	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-#pragma endregion
-#pragma region RootSignature Create
-	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
-	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	descriptorRootSignature.pParameters = rootParameters.data();
-	descriptorRootSignature.NumParameters = static_cast<UINT>(rootParameters.size());
-	descriptorRootSignature.pStaticSamplers = staticSamplers;
-	descriptorRootSignature.NumStaticSamplers = _countof(staticSamplers);
-	// シリアライズしてバイナリ化
-	ComPtr<ID3DBlob> signatureBlob = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
-	if (FAILED(hr))
-	{
-		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
-		assert(false);
-	}
-	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
-	assert(SUCCEEDED(hr));
-	Logger::Log("Created RootSignature\n");
-#pragma endregion
+	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void Object3dCommon::CreatePipelineStateObject()
@@ -182,7 +160,7 @@ void Object3dCommon::CreatePipelineStateObject()
 
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
-	graphicsPipelineStateDec.pRootSignature = rootSignature_.Get();
+	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
 	graphicsPipelineStateDec.InputLayout = inputLayoutDesc;
 	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };

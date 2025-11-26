@@ -48,7 +48,7 @@ public:
 	{
 		std::unique_ptr<Mesh> meshPtr = nullptr;
 		ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
-		TransformationMatrix *transformationMatrixData_ = nullptr;
+		TransformationMatrix* transformationMatrixData_ = nullptr;
 	};
 
 	struct ModelData
@@ -63,53 +63,46 @@ public:
 	Model() = default;
 	~Model();
 
-	void Initialize(DirectXCommon *dxCommon);
+	void Initialize(DirectXCommon* dxCommon);
 	void Update();
 	void Draw();
 
-	bool LoadModelFile(const std::string &directoryPath, const std::string &fileName);
+	bool LoadModelFile(const std::string& directoryPath, const std::string& fileName);
 
 public:
 
 	std::string GetName() { return modelData_->modelName; }
 	size_t GetNumMeshies() { return modelData_->meshes.size(); }
-	Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
-	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetData().materialData->shininess; }
+	Mesh* GetMesh(size_t index) { return index < modelData_->meshes.size() ? modelData_->meshes[index]->meshPtr.get() : nullptr; }
+	//Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
+	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetCpuData().materialData->shininess; }
 
-	void SetCamera(Camera *camera) { camera_ = camera; }
-	void SetTransform(const Model::Transform &transform) { transform_ = transform; }
-	void SetColor(const Vector4 &color)
+	void SetCamera(Camera* camera) { camera_ = camera; }
+	void SetTransform(const Model::Transform& transform) { transform_ = transform; }
+	void SetColor(const Vector4& color)
 	{
-		for (auto &mesh : modelData_->meshes)
+		for (auto& mesh : modelData_->meshes)
 		{
 			mesh->meshPtr->SetDiffuse(color);
 			mesh->meshPtr->SetAmbient(color / 2);
 		}
 	}
 
-	void SetEnableLighting(bool enableLighting)
-	{
-		for (auto &mesh : modelData_->meshes)
-		{
-			mesh->meshPtr->SetEnableLighting(enableLighting);
-		}
-	}
-
 	void SetShininess(float shininess)
 	{
-		for (auto &mesh : modelData_->meshes)
+		for (auto& mesh : modelData_->meshes)
 		{
 			mesh->meshPtr->SetShininess(shininess);
 		}
 	}
 
 private:
-	Model::Node ReadNode(aiNode *node, const Matrix4x4 &parentMatrix);
+	Model::Node ReadNode(aiNode* node, const Matrix4x4& parentMatrix);
 	void DrawNode(const Node& node);
 
 private:
-	DirectXCommon *dxCommon_ = nullptr;
-	Camera *camera_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
+	Camera* camera_ = nullptr;
 
 	std::unique_ptr<ModelData> modelData_ = nullptr;
 

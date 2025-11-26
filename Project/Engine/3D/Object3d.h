@@ -38,11 +38,6 @@ public:
 		Vector3 worldPosition;
 	};
 
-	struct Essential
-	{
-		uint32_t numLights = 0;
-	};
-
 	struct ObjectMaterial
 	{
 		Vector4 color{ 1.0f ,1.0f, 1.0f, 1.0f };
