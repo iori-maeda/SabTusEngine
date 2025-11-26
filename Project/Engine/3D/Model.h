@@ -87,13 +87,13 @@ public:
 		}
 	}
 
-	void SetEnableLighting(bool enableLighting)
-	{
-		for (auto &mesh : modelData_->meshes)
-		{
-			mesh->meshPtr->SetEnableLighting(enableLighting);
-		}
-	}
+	//void SetEnableLighting(bool enableLighting)
+	//{
+	//	for (auto &mesh : modelData_->meshes)
+	//	{
+	//		mesh->->SetEnableLighting(enableLighting);
+	//	}
+	//}
 
 	void SetShininess(float shininess)
 	{
