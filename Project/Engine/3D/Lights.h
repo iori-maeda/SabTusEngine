@@ -16,7 +16,7 @@ class Camera;
 class Lights
 {
 public:
-	static const int32_t sMaxLights = 3000;
+	static const int32_t sMaxLights = 128;
 
 	enum class LightType
 	{
