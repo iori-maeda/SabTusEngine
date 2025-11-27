@@ -59,7 +59,7 @@ public:
 	void AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT regster = 0, UINT numDescriptors = 0);
 
 public:
-	UINT GetRootParamIndex(ParamSemanticType type) { return rootParamSemantics_[type]; }
+	UINT GetRootParamIndex(ParamSemanticType type) const { return rootParamSemantics_.at(type); }
 
 public:
 	ID3D12RootSignature* GetRootSignature() const { return rootSignature_.Get(); }
@@ -69,5 +69,6 @@ private:
 
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters_;
 	std::unordered_map<ParamSemanticType, UINT> rootParamSemantics_;
+	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges_;
 };
 

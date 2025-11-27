@@ -79,8 +79,8 @@ public:
 public:
 
 	std::string GetName()const { return name_; }
-	Mesh::MeshDataCPU GetCpuData()const { return meshCPU; }
-	Mesh::MeshDataGPU GetGpuData() const { return meshGPU; }
+	Mesh::MeshDataCPU* GetCpuData() { return &meshCPU; }
+	Mesh::MeshDataGPU* GetGpuData() { return &meshGPU; }
 	int32_t GetOriginIndex()const { return originIndex_; }
 
 	void SetParent(Mesh *parentPtr) { parent_ = parentPtr; }

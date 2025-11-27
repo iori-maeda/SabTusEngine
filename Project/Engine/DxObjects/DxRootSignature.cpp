@@ -4,7 +4,7 @@
 #include "Logger.h"
 
 
-void DxRootSignature::Initialize(ID3D12Device* device)
+void DxRootSignature::Initialize(ID3D12Device *device)
 {
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
 	staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;			// バイナリフィルタ
@@ -29,7 +29,7 @@ void DxRootSignature::Initialize(ID3D12Device* device)
 	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 	if (FAILED(hr))
 	{
-		Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
 		assert(false);
 	}
 	hr = device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
@@ -41,6 +41,8 @@ void DxRootSignature::Initialize(ID3D12Device* device)
 void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
 {
 	D3D12_ROOT_PARAMETER addParam{};
+	D3D12_DESCRIPTOR_RANGE descriptorRange{};
+
 	switch (paramType)
 	{
 	case DxRootSignature::ParamType::CBV:
@@ -55,7 +57,7 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 	case DxRootSignature::ParamType::DescriptorTable:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		{
-			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+			;
 			descriptorRange.BaseShaderRegister = useRegister;
 			descriptorRange.NumDescriptors = numDescriptors;
 			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -89,6 +91,8 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 	{
 		addParam.Descriptor.ShaderRegister = useRegister;
 	}
+
+	descriptorRanges_.push_back(std::move(descriptorRange));
 	rootParameters_.push_back(addParam);
 	rootParamSemantics_.emplace(semanticType, static_cast<UINT>(rootParameters_.size() - 1));
 }

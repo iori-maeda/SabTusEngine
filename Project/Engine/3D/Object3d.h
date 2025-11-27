@@ -78,7 +78,7 @@ public:
 private:
 
 	void CreateResource();
-
+	void DrawNode(const Model::Node& node);
 
 private:
 
@@ -90,8 +90,8 @@ private:
 	ComPtr<ID3D12Resource> cameraForGPUResource_ = nullptr;
 	CameraForGPU* cameraForGPUData_ = nullptr;
 
-	ComPtr<ID3D12Resource> essentialResources_ = nullptr;
-	Essential* essentialData_ = nullptr;
+	/*ComPtr<ID3D12Resource> essentialResources_ = nullptr;
+	Essential* essentialData_ = nullptr;*/
 
 	ComPtr<ID3D12Resource> objectMaterialResources_ = nullptr;
 	ObjectMaterial* objectMaterialData_ = nullptr;

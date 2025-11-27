@@ -4,11 +4,12 @@
 
 #include "ComPtr.h"
 #include "DirectXCommon.h"
+#include "DxRootSignature.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
 class DirectXCommon;
-class DxRootSignature;
+//class DxRootSignature;
 class Lights;
 
 class Object3dCommon
@@ -31,7 +32,7 @@ public:
 
 public:
 	DirectXCommon* GetDirectXCommon() const { return dxCommon_; }
-	DxRootSignature* GetRootSignature() const { return dxRootSignature_.get(); }
+	DxRootSignature* GetDxRootSignature() const { return dxRootSignature_.get(); }
 
 	void SetLights(Lights* lights) { lights_ = lights; }
 

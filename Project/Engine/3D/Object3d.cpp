@@ -11,10 +11,9 @@
 #include "ImGuiManager.h"
 
 Object3d::~Object3d()
-{
-}
+{}
 
-void Object3d::Initialize(Object3dCommon* obj3dCommon, const std::string& fileName)
+void Object3d::Initialize(Object3dCommon *obj3dCommon, const std::string &fileName)
 {
 	obj3dCommon_ = obj3dCommon;
 
@@ -23,7 +22,7 @@ void Object3d::Initialize(Object3dCommon* obj3dCommon, const std::string& fileNa
 	model_ = ModelManager::GetInstace().Load(fileName);
 }
 
-void Object3d::Initialize(Object3dCommon* obj3dCommon, Model* model)
+void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
 {
 	obj3dCommon_ = obj3dCommon;
 	model_ = model;
@@ -58,8 +57,8 @@ void Object3d::Upadate()
 void Object3d::Draw()
 {
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* cmdList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
-	DxRootSignature* dxRootSignature = obj3dCommon_->GetRootSignature();
+	ID3D12GraphicsCommandList *cmdList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
+	DxRootSignature *dxRootSignature = obj3dCommon_->GetDxRootSignature();
 
 	cmdList->SetGraphicsRootConstantBufferView(
 		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::CameraTransform),
@@ -70,11 +69,7 @@ void Object3d::Draw()
 		objectMaterialResources_->GetGPUVirtualAddress()
 	);
 
-	while (true)
-	{
-	UINT verticiesCount = 
-
-	}
+	DrawNode(model_->GetModelData().rootNode);
 
 
 	//model_->Draw();
@@ -104,11 +99,65 @@ void Object3d::DebugWindow()
 void Object3d::CreateResource()
 {
 	cameraForGPUResource_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(CameraForGPU));
-	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void**>(&cameraForGPUData_));
+	cameraForGPUResource_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGPUData_));
 
 	objectMaterialResources_ = obj3dCommon_->GetDirectXCommon()->CreateBufferResource(sizeof(ObjectMaterial));
-	objectMaterialResources_->Map(0, nullptr, reinterpret_cast<void**>(&objectMaterialData_));
+	objectMaterialResources_->Map(0, nullptr, reinterpret_cast<void **>(&objectMaterialData_));
 	objectMaterialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	objectMaterialData_->enableLighting = true;
 }
 
+void Object3d::DrawNode(const Model::Node &node)
+{
+	for (const auto &index : node.useMeshIndecies)
+	{
+		auto meshData = std::find_if(
+			model_->GetModelData().meshes.begin(),
+			model_->GetModelData().meshes.end(),
+			[&](auto &m) { return m->meshPtr->GetOriginIndex() == index; }
+		);
+
+		auto *mesh = meshData->get();
+		if (meshData != model_->GetModelData().meshes.end())
+		{
+			mesh->transformationMatrixData_->world = node.worldMatrix * model_->GetWorldMatrix();;
+			mesh->transformationMatrixData_->worldInverseTranspose = MakeTransposeMatrix(MakeInVerse(mesh->transformationMatrixData_->world));
+			if (camera_)
+			{
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();
+			}
+			else
+			{
+				Matrix4x4 viewMatrix2D = MakeIdentityMatrix();
+				Matrix4x4 projectionMatrix2D = MakeOrthoGraphicsMatrix(0.0f, 0.0f, static_cast<float>(WinApp::sWindoWidth), static_cast<float>(WinApp::sWindoHeight), 0.0f, 100.0f);
+				mesh->transformationMatrixData_->wvp = mesh->transformationMatrixData_->world * viewMatrix2D * projectionMatrix2D;
+			}
+
+			ID3D12GraphicsCommandList *cmdList = obj3dCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
+			const DxRootSignature *dxRootSignature = obj3dCommon_->GetDxRootSignature();
+			cmdList->IASetVertexBuffers(0, 1, &mesh->meshPtr->GetGpuData()->vertexBufferViews_);
+			cmdList->SetGraphicsRootConstantBufferView(
+				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TransformationMatrix),
+				mesh->transformationMatrixResource_->GetGPUVirtualAddress()
+			);
+			cmdList->SetGraphicsRootConstantBufferView(
+				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::MeshMaterial),
+				mesh->meshPtr->GetGpuData()->materialResource->GetGPUVirtualAddress()
+			);
+			cmdList->SetGraphicsRootDescriptorTable(
+				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+				mesh->meshPtr->GetGpuData()->texHandle_
+			);
+			cmdList->DrawInstanced(static_cast<int>(mesh->meshPtr->GetCpuData()->vertices.size()), 1, 0, 0);
+			//mesh->meshPtr->Draw();
+		}
+	}
+	// 更に階層を下る
+	if (!node.children.empty())
+	{
+		for (const auto &child : node.children)
+		{
+			DrawNode(child);
+		}
+	}
+}
