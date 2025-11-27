@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <d3d12.h>
 #include <cstdint>
+#include <memory>
 
 #include "ComPtr.h"
 
@@ -69,6 +70,6 @@ private:
 
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters_;
 	std::unordered_map<ParamSemanticType, UINT> rootParamSemantics_;
-	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges_;
+	std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE>> descriptorRanges_;
 };
 

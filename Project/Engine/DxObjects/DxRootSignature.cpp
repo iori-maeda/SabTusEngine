@@ -41,8 +41,7 @@ void DxRootSignature::Initialize(ID3D12Device *device)
 void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
 {
 	D3D12_ROOT_PARAMETER addParam{};
-	D3D12_DESCRIPTOR_RANGE descriptorRange{};
-
+	
 	switch (paramType)
 	{
 	case DxRootSignature::ParamType::CBV:
@@ -57,14 +56,17 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 	case DxRootSignature::ParamType::DescriptorTable:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		{
-			;
-			descriptorRange.BaseShaderRegister = useRegister;
-			descriptorRange.NumDescriptors = numDescriptors;
-			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			descriptorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+			std::unique_ptr<D3D12_DESCRIPTOR_RANGE> descriptorRange = std::make_unique<D3D12_DESCRIPTOR_RANGE>();
+			
+			descriptorRange->BaseShaderRegister = useRegister;
+			descriptorRange->NumDescriptors = numDescriptors;
+			descriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			descriptorRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-			addParam.DescriptorTable.pDescriptorRanges = &descriptorRange;
+			addParam.DescriptorTable.pDescriptorRanges = descriptorRange.get();
 			addParam.DescriptorTable.NumDescriptorRanges = 1;
+
+			descriptorRanges_.push_back(std::move(descriptorRange));
 		}
 		break;
 	default:
@@ -91,8 +93,6 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 	{
 		addParam.Descriptor.ShaderRegister = useRegister;
 	}
-
-	descriptorRanges_.push_back(std::move(descriptorRange));
 	rootParameters_.push_back(addParam);
 	rootParamSemantics_.emplace(semanticType, static_cast<UINT>(rootParameters_.size() - 1));
 }

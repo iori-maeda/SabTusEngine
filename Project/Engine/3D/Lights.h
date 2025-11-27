@@ -60,6 +60,9 @@ public:
 public:
 	uint32_t GetLightsNum() const { return useLightsNum_; }
 
+	// 絶対にあとで消す
+	void SetParamindex(UINT useIndex) { useIndex_ = useIndex; }
+	UINT useIndex_ = 0;
 private:
 
 	void CreateResourceAndSRV();

@@ -32,7 +32,7 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 void Object3dCommon::DebugWindow()
 {
 #ifdef USE_IMGUI
-
+	lights_->DebugWindow();
 #endif 
 }
 
@@ -45,10 +45,12 @@ void Object3dCommon::PreDraw()
 
 	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
-	/*commandList->SetGraphicsRootConstantBufferView(
+	commandList->SetGraphicsRootConstantBufferView(
 		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Essential),
 		essentialResource_->GetGPUVirtualAddress()
-	);*/
+	);
+	lights_->SetParamindex(dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Lights));
+	lights_->DrawCommandSet();
 }
 
 void Object3dCommon::CreateRootSignature()
@@ -68,7 +70,7 @@ void Object3dCommon::CreateRootSignature()
 		DxRootSignature::ShaderVisibility::Vertex,
 		0
 	);
-	
+
 	dxRootSignature_->AddRootParamSemantic(
 		DxRootSignature::ParamSemanticType::Texture,
 		DxRootSignature::ParamType::DescriptorTable,
@@ -91,14 +93,14 @@ void Object3dCommon::CreateRootSignature()
 		2
 	);
 
-	/*dxRootSignature_->AddRootParamSemantic(
+	dxRootSignature_->AddRootParamSemantic(
 		DxRootSignature::ParamSemanticType::Lights,
 		DxRootSignature::ParamType::DescriptorTable,
 		DxRootSignature::ShaderVisibility::Pixel,
 		1,
 		1
-	);*/
-	
+	);
+
 	dxRootSignature_->AddRootParamSemantic(
 		DxRootSignature::ParamSemanticType::ObjectMaterial,
 		DxRootSignature::ParamType::CBV,

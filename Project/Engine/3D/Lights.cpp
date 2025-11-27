@@ -55,7 +55,7 @@ void Lights::DrawCommandSet()
 	// 描画コマンドリストの取得
 	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
 	// ライト情報SRV設定
-	commandList->SetGraphicsRootDescriptorTable(5, lightsSrvGPUHandle_);
+	commandList->SetGraphicsRootDescriptorTable(useIndex_, lightsSrvGPUHandle_);
 }
 
 Lights::Light *Lights::AddLight(Lights::LightType type)
