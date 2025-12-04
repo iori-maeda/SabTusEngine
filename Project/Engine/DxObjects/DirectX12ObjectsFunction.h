@@ -4,6 +4,23 @@
 
 #include "ComPtr.h"
 
+enum class CullingMode
+{
+	None,
+	Back,
+	Front
+};
+
+enum class DepthMode
+{
+	None,
+	Less,
+	LessEqual,
+	Equal,
+	GreaterEqual,
+	Greater
+};
+
 enum class BlendMode
 {
 	NONE,				// ブレンドしない
@@ -20,4 +37,8 @@ namespace DirectX12ObjectsFunction
 	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>&, size_t);
 
 	D3D12_BLEND_DESC InitializeBlendMode(BlendMode blendMode);
+
+	D3D12_RASTERIZER_DESC InitializeRasterizerState(CullingMode cullingMode = CullingMode::Back, bool isFillModeSolid = true);
+
+	D3D12_DEPTH_STENCIL_DESC InitializeDepthStencilState(DepthMode depthMode = DepthMode::LessEqual, bool isDepthTestEnable = true, bool isDepthWriteEnable = true);
 };

@@ -146,18 +146,11 @@ void Object3dCommon::CreatePipelineStateObject()
 	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::NONE);
 
 #pragma region RasterizerState Settings
-	D3D12_RASTERIZER_DESC rasterizerDesc{};
-	// カリングモード設定
-	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
-	// 塗りつぶし
-	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	D3D12_RASTERIZER_DESC rasterizerDesc = DirectX12ObjectsFunction::InitializeRasterizerState();
 #pragma endregion
 
 #pragma region DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-	depthStencilDesc.DepthEnable = true;							// 深度機能有効化
-	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;	// 書き込みする
-	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;	// Depthの値が小さい方が描画される
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DirectX12ObjectsFunction::InitializeDepthStencilState(DepthMode::None);
 #pragma endregion
 
 #pragma region PSO Create

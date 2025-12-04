@@ -28,8 +28,8 @@ void Lights::Initialize(DirectXCommon *dxCommon, Camera *camera)
 
 	// デフォルトライト追加
 	Lights::Light *newLight = AddLight(Lights::LightType::DIRECTIONAL);
-	newLight->direction = Normalize(Vector3(1.0f, 1.0, 1.0f));
-	newLight->intensity = 3.0f;
+	newLight->direction = Normalize(Vector3(1.0f, -1.0, 1.0f));
+	newLight->intensity = 2.0f;
 }
 
 void Lights::Update()
