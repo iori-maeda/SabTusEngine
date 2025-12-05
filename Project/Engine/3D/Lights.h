@@ -16,7 +16,7 @@ class Camera;
 class Lights
 {
 public:
-	static const int32_t sMaxLights = 3000;
+	static const int32_t sMaxLights = 128;
 
 	enum class LightType
 	{
@@ -49,6 +49,7 @@ public:
 public:
 
 	void Initialize(DirectXCommon* dxCommon, Camera* camera);
+	void Update();
 	void DrawCommandSet();
 	Lights::Light* AddLight(Lights::LightType type);
 	void DeleteLight(uint64_t lightId);
@@ -59,6 +60,9 @@ public:
 public:
 	uint32_t GetLightsNum() const { return useLightsNum_; }
 
+	// 絶対にあとで消す
+	void SetParamindex(UINT useIndex) { useIndex_ = useIndex; }
+	UINT useIndex_ = 0;
 private:
 
 	void CreateResourceAndSRV();

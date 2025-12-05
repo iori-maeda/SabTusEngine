@@ -104,6 +104,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DxPipelineStateObject.cpp" />
     <ClCompile Include="Engine\2D\Sprite.cpp" />
     <ClCompile Include="Engine\2D\SpriteCommon.cpp" />
     <ClCompile Include="Engine\3D\Lights.cpp" />
@@ -119,6 +120,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\DxObjects\DxCommand.cpp" />
     <ClCompile Include="Engine\DxObjects\DxDevice.cpp" />
     <ClCompile Include="Engine\DxObjects\DxFence.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxRootSignature.cpp" />
     <ClCompile Include="Engine\DxObjects\DxShader.cpp" />
     <ClCompile Include="Engine\DxObjects\DxSwapChain.cpp" />
     <ClCompile Include="Engine\GameClass\BaseGame.cpp" />
@@ -148,6 +150,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\ParticleSystem\ParticleEmitter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DxPipelineStateObject.h" />
     <ClInclude Include="Engine\2D\Sprite.h" />
     <ClInclude Include="Engine\2D\SpriteCommon.h" />
     <ClInclude Include="Engine\3D\Lights.h" />
@@ -158,6 +161,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\BasicShapes\Plane.h" />
     <ClInclude Include="Engine\BasicShapes\Triangle.h" />
     <ClInclude Include="Engine\Camera\Camera.h" />
+    <ClInclude Include="Engine\DxObjects\DxRootSignature.h" />
     <ClInclude Include="Engine\IO\Input.h" />
     <ClInclude Include="Engine\Utility\ComPtr.h" />
     <ClInclude Include="Engine\Base\DirectXCommon.h" />

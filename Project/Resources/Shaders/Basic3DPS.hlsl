@@ -7,18 +7,23 @@ enum LightType
     SPOT = 2
 };
 
-struct Material
+struct MeshMaterial
 {
     float4 Ka;
     float4 Kd;
     float4 Ks;
     float shininess;
-    int32_t enableLighting;
 };
 
 struct Essential
 {
     uint numLights;
+};
+
+struct ObjectMaterial
+{
+    float4 color;
+    uint32_t enableLighting;
 };
 
 struct LightStatus
@@ -39,9 +44,11 @@ struct Camera
     float3 worldPosition;
 };
 
-ConstantBuffer<Material> gMaterial : register(b0);
-ConstantBuffer<Camera> gCamera : register(b2);
+ConstantBuffer<MeshMaterial> gMeshMaterial : register(b0);
 ConstantBuffer<Essential> gEssential : register(b1);
+ConstantBuffer<Camera> gCamera : register(b2);
+ConstantBuffer<ObjectMaterial> gObjectMaterial : register(b3);
+
 StructuredBuffer<LightStatus> gLights : register(t1);
 
 Texture2D<float4> gTexture : register(t0);
@@ -65,11 +72,11 @@ Output main(VertexOutput input)
     }
     
     // Base Color
-    const float4 kObjectAmbientColor = gMaterial.Ka * texColor;
-    const float4 kObjectDiffuseColor = gMaterial.Kd * texColor;
-    const float4 kObjectSpecularColor = gMaterial.Ks;
+    const float4 kObjectAmbientColor = gMeshMaterial.Ka * texColor * gObjectMaterial.color;
+    const float4 kObjectDiffuseColor = gMeshMaterial.Kd * texColor * gObjectMaterial.color;
+    const float4 kObjectSpecularColor = gMeshMaterial.Ks * gObjectMaterial.color;
     
-    if (gMaterial.enableLighting == 0)
+    if (gObjectMaterial.enableLighting == 0)
     {
         output.color = kObjectAmbientColor + kObjectDiffuseColor + kObjectSpecularColor;
         output.color.a = texColor.a;
@@ -97,7 +104,7 @@ Output main(VertexOutput input)
                     const float3 kHalfVector = normalize(kLightDirectionNormal + kToEyeDir);
                     const float kNdotH = saturate(dot(kNormal, kHalfVector));
                     
-                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMeshMaterial.shininess);
                     const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL;
                     const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity;
                 
@@ -118,7 +125,7 @@ Output main(VertexOutput input)
                     const float kNdotL = saturate(dot(kNormal, kToLightNormal));
                     const float3 kHalfVector = normalize(kToLightNormal + kToEyeDir);
                     const float kNdotH = saturate(dot(kNormal, kHalfVector));
-                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMeshMaterial.shininess);
                     // 距離減衰
                     const float kRange = max(gLights[i].range, 0.0001f);
                     const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), gLights[i].decay);
@@ -144,7 +151,7 @@ Output main(VertexOutput input)
                     const float kNdotL = saturate(dot(kNormal, kToLightNormal));
                     const float3 kHalfVector = normalize(kToLightNormal + kToEyeDir);
                     const float kNdotH = saturate(dot(kNormal, kHalfVector));
-                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMaterial.shininess);
+                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMeshMaterial.shininess);
                     // 距離減衰
                     const float kRange = max(gLights[i].range, 0.0001f);
                     const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), gLights[i].decay);

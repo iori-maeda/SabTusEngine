@@ -54,8 +54,6 @@ void BaseGame::Initialize()
 	spriteTransform_.scale = Vector3(0.5f, 0.5f, 0.5f);
 	spriteWorldMatrix_ = MakeIdentityMatrix();
 
-	ModelManager::GetInstace().Load("PointLightSphere.obj");
-
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon_.get(), "smoothSphere.obj");
 	object3d_->SetCamera(mainCamera_.get());
@@ -174,6 +172,8 @@ void BaseGame::Upate()
 
 	mainCamera_->SetTransform(cameraTransform_);
 	mainCamera_->Update();
+
+	lights_->Update();
 
 	object3d_->Upadate();
 	object3d2_->Upadate();

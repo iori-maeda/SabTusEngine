@@ -73,8 +73,11 @@ public:
 
 	std::string GetName() { return modelData_->modelName; }
 	size_t GetNumMeshies() { return modelData_->meshes.size(); }
-	Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
-	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetData().materialData->shininess; }
+	Mesh *GetMesh(size_t index) { return index < modelData_->meshes.size() ? modelData_->meshes[index]->meshPtr.get() : nullptr; }
+	//Vector4 GetColor() { return modelData_->meshes[0]->meshPtr->GetData().materialData->Kd; }
+	float GetShininess() { return modelData_->meshes[0]->meshPtr->GetCpuData()->materialData->shininess; }
+	const Model::ModelData &GetModelData() const { return *modelData_; }
+	const Matrix4x4 GetWorldMatrix() const { return modelMatrix_; }
 
 	void SetCamera(Camera *camera) { camera_ = camera; }
 	void SetTransform(const Model::Transform &transform) { transform_ = transform; }
@@ -84,14 +87,6 @@ public:
 		{
 			mesh->meshPtr->SetDiffuse(color);
 			mesh->meshPtr->SetAmbient(color / 2);
-		}
-	}
-
-	void SetEnableLighting(bool enableLighting)
-	{
-		for (auto &mesh : modelData_->meshes)
-		{
-			mesh->meshPtr->SetEnableLighting(enableLighting);
 		}
 	}
 
@@ -105,7 +100,7 @@ public:
 
 private:
 	Model::Node ReadNode(aiNode *node, const Matrix4x4 &parentMatrix);
-	void DrawNode(const Node& node);
+	void DrawNode(const Node &node);
 
 private:
 	DirectXCommon *dxCommon_ = nullptr;

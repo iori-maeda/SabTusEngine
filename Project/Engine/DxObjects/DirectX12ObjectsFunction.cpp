@@ -102,4 +102,67 @@ namespace DirectX12ObjectsFunction
 
 		return blendDesc;
 	}
+	D3D12_RASTERIZER_DESC InitializeRasterizerState(CullingMode cullingMode, bool isFillModeSolid)
+	{
+		D3D12_RASTERIZER_DESC rasterizerDesc{};
+		switch (cullingMode)
+		{
+		case CullingMode::None:
+			rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+			break;
+		case CullingMode::Back:
+			rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+			break;
+		case CullingMode::Front:
+			rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
+			break;
+		default:
+			break;
+		}
+
+
+		if (isFillModeSolid)
+		{
+			rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+		}
+		else
+		{
+			rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+		}
+		
+		return rasterizerDesc;
+	}
+	D3D12_DEPTH_STENCIL_DESC InitializeDepthStencilState(DepthMode depthMode, bool isDepthTestEnable, bool isDepthWriteEnable)
+	{
+		D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+
+		depthStencilDesc.DepthEnable = isDepthTestEnable;
+		depthStencilDesc.DepthWriteMask = isDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+
+		switch (depthMode)
+		{
+		case DepthMode::None:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NONE;
+			break;
+		case DepthMode::Less:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+			break;
+		case DepthMode::LessEqual:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+			break;
+		case DepthMode::Equal:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+			break;
+		case DepthMode::GreaterEqual:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+			break;
+		case DepthMode::Greater:
+			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
+			break;
+		default:
+			break;
+		}
+
+		return depthStencilDesc;
+	}
 }

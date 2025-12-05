@@ -112,6 +112,12 @@ bool Mesh::ReadMtl(aiMaterial *material)
 	{
 		meshCPU.mtlData.material.Ks = Vector4(specular.r, specular.g, specular.b, specular.a);
 	}
+	float shininess = 0.0f;
+	if (material->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
+	{
+		meshCPU.mtlData.material.shininess = shininess;
+	}
+	
 
 	if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0)
 	{
@@ -125,7 +131,6 @@ bool Mesh::ReadMtl(aiMaterial *material)
 bool Mesh::InitializeGpuData()
 {
 	if (dxCommon_ == nullptr) { return false; }
-	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePath);
 
 	meshGPU.vertexResource = dxCommon_->CreateBufferResource(sizeof(VertexData) * meshCPU.vertices.size());
 	if (meshGPU.vertexResource == nullptr) { return false; }
@@ -143,7 +148,6 @@ bool Mesh::InitializeGpuData()
 
 	meshGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&meshCPU.materialData));
 	*meshCPU.materialData = meshCPU.mtlData.material;
-	meshCPU.materialData->enableLighting = true;
 
 	if (!textureDirectoryPath_.empty() && !meshCPU.mtlData.textureFilePath.empty())
 	{
