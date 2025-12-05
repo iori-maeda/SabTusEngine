@@ -1,11 +1,11 @@
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 
 #include <cassert>
 #include <format>
 
 #include "Logger.h"
 
-namespace DirectX12ObjectsFunction
+namespace DxObjFunctions
 {
 	/// <summary>
 	/// リソース作成関数

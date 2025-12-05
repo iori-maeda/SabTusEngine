@@ -7,7 +7,7 @@
 #include "DxCommand.h"
 #include "DxDevice.h"
 #include "DxShader.h"
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 #include "TextureManager.h"
 #include "Logger.h"
 #include "Random.h"
@@ -244,7 +244,7 @@ void ParticleSystem::CreatePipelineStateObject()
 #pragma endregion
 
 	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::ADD);
+	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ADD);
 
 #pragma region RasterizerState Settings
 	D3D12_RASTERIZER_DESC rasterizerDesc{};

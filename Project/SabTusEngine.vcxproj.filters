@@ -135,7 +135,7 @@
     <ClCompile Include="Engine\Base\ModelManager.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\DxObjects\DirectX12ObjectsFunction.cpp">
+    <ClCompile Include="Engine\DxObjects\DxObjFunctions.cpp">
       <Filter>ソース ファイル\Engine\DxObjects</Filter>
     </ClCompile>
     <ClCompile Include="Engine\DxObjects\DxCommand.cpp">
@@ -275,7 +275,7 @@
     <ClInclude Include="Engine\Base\ModelManager.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DxObjects\DirectX12ObjectsFunction.h">
+    <ClInclude Include="Engine\DxObjects\DxObjFunctions.h">
       <Filter>ヘッダー ファイル\Engine\DxObjects</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DxObjects\DxCommand.h">

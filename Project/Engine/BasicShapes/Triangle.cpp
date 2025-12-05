@@ -6,7 +6,7 @@
 #include "DxCommand.h"
 #include "DxDevice.h"
 #include "DxShader.h"
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 #include "TextureManager.h"
 #include "Logger.h"
 

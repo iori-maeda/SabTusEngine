@@ -7,7 +7,7 @@
 #include "DxShader.h"
 #include "DxRootSignature.h"
 #include "Logger.h" 
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 #include "ImGuiManager.h"
 #include "ModelManager.h"
 #include "Lights.h"
@@ -143,14 +143,14 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma endregion
 
 	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::NONE);
+	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::NONE);
 
 #pragma region RasterizerState Settings
-	D3D12_RASTERIZER_DESC rasterizerDesc = DirectX12ObjectsFunction::InitializeRasterizerState();
+	D3D12_RASTERIZER_DESC rasterizerDesc = DxObjFunctions::InitializeRasterizerState();
 #pragma endregion
 
 #pragma region DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DirectX12ObjectsFunction::InitializeDepthStencilState(DepthMode::LessEqual);
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DxObjFunctions::InitializeDepthStencilState(DepthMode::LessEqual);
 #pragma endregion
 
 #pragma region PSO Create

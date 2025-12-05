@@ -3,7 +3,7 @@
 #include "DxCommand.h"
 #include "DxShader.h"
 #include "Logger.h" 
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 
 
 void SpriteCommon::Initialize(DirectXCommon *dxCommon)
@@ -104,21 +104,14 @@ void SpriteCommon::CreatePipelineStateObject()
 #pragma endregion
 
 	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DirectX12ObjectsFunction::InitializeBlendMode(BlendMode::ALPHA);
+	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ALPHA);
 
 #pragma region RasterizerState Settings
-	D3D12_RASTERIZER_DESC rasterizerDesc{};
-	// カリングモード設定
-	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
-	// 塗りつぶし
-	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	D3D12_RASTERIZER_DESC rasterizerDesc = DxObjFunctions::InitializeRasterizerState();
 #pragma endregion
 
 #pragma region DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-	depthStencilDesc.DepthEnable = true;							// 深度機能有効化
-	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;	// 書き込みする
-	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;	// Depthの値が小さい方が描画される
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DxObjFunctions::InitializeDepthStencilState();
 #pragma endregion
 
 #pragma region PSO Create

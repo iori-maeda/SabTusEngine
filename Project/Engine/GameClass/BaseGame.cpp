@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "DirectX12ObjectsFunction.h"
+#include "DxObjFunctions.h"
 #include "ImGuiManager.h"
 #include "ParticleSystem/ParticleSystem.h"
 

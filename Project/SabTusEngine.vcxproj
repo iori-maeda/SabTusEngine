@@ -116,7 +116,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\BasicShapes\Triangle.cpp" />
     <ClCompile Include="Engine\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
-    <ClCompile Include="Engine\DxObjects\DirectX12ObjectsFunction.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxObjFunctions.cpp" />
     <ClCompile Include="Engine\DxObjects\DxCommand.cpp" />
     <ClCompile Include="Engine\DxObjects\DxDevice.cpp" />
     <ClCompile Include="Engine\DxObjects\DxFence.cpp" />
@@ -165,7 +165,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\IO\Input.h" />
     <ClInclude Include="Engine\Utility\ComPtr.h" />
     <ClInclude Include="Engine\Base\DirectXCommon.h" />
-    <ClInclude Include="Engine\DxObjects\DirectX12ObjectsFunction.h" />
+    <ClInclude Include="Engine\DxObjects\DxObjFunctions.h" />
     <ClInclude Include="Engine\DxObjects\DxCommand.h" />
     <ClInclude Include="Engine\DxObjects\DxDevice.h" />
     <ClInclude Include="Engine\DxObjects\DxFence.h" />

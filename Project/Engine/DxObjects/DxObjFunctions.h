@@ -32,7 +32,7 @@ enum class BlendMode
 	BLEND_MODE_COUNT	// ブレンド種類数
 };
 
-namespace DirectX12ObjectsFunction
+namespace DxObjFunctions
 {
 	ComPtr<ID3D12Resource> CreataeBufferResource(const ComPtr<ID3D12Device>&, size_t);
 
