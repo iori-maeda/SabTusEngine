@@ -5,6 +5,7 @@
 #include "DirectXCommon.h"
 
 class DirectXCommon;
+class DxRootSignature;
 
 class SpriteCommon
 {
@@ -25,7 +26,7 @@ private:
 
 	DirectXCommon* dxCommon_ = nullptr;
 
-	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
+	ComPtr<DxRootSignature> dxRootSignature_ = nullptr;
 	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
 };
 

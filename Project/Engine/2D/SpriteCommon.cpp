@@ -2,6 +2,7 @@
 #include "DxDevice.h"
 #include "DxCommand.h"
 #include "DxShader.h"
+#include "DxRootSignature.h"
 #include "Logger.h" 
 #include "DxObjFunctions.h"
 
@@ -21,6 +22,30 @@ void SpriteCommon::PreDraw()
 
 void SpriteCommon::CreateRootSignature()
 {
+	dxRootSignature_ = std::make_unique<DxRootSignature>();
+
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Pixel,
+		0
+	);
+
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::TransformationMatrix,
+		DxRootSignature::ParamType::CBV,
+		DxRootSignature::ShaderVisibility::Vertex,
+		0
+	);
+
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Texture,
+		DxRootSignature::ParamType::DescriptorTable,
+		DxRootSignature::ShaderVisibility::Pixel,
+		0,
+		1
+	);
+
 #pragma region RootParameter Create
 	D3D12_ROOT_PARAMETER rootParameters[3] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -61,18 +86,7 @@ void SpriteCommon::CreateRootSignature()
 	descriptorRootSignature.NumParameters = _countof(rootParameters);
 	descriptorRootSignature.pStaticSamplers = staticSamplers;
 	descriptorRootSignature.NumStaticSamplers = _countof(staticSamplers);
-	// シリアライズしてバイナリ化
-	ComPtr<ID3DBlob> signatureBlob = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
-	if (FAILED(hr))
-	{
-		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
-		assert(false);
-	}
-	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
-	assert(SUCCEEDED(hr));
-	Logger::Log("Created RootSignature\n");
+	
 #pragma endregion
 }
 
