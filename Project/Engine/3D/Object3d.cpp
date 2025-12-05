@@ -32,6 +32,7 @@ void Object3d::Initialize(Object3dCommon *obj3dCommon, Model *model)
 
 void Object3d::Upadate()
 {
+	model_->SetTransform(transform_);
 	if (camera_ == nullptr)
 	{
 

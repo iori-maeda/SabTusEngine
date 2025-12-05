@@ -150,7 +150,7 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma endregion
 
 #pragma region DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DirectX12ObjectsFunction::InitializeDepthStencilState(DepthMode::None);
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DirectX12ObjectsFunction::InitializeDepthStencilState(DepthMode::LessEqual);
 #pragma endregion
 
 #pragma region PSO Create
