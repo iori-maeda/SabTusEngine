@@ -16,7 +16,7 @@ void SpriteCommon::Initialize(DirectXCommon *dxCommon)
 
 void SpriteCommon::PreDraw()
 {
-	dxCommon_->GetCommand()->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
+	dxCommon_->GetCommand()->GetCommandList()->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	dxCommon_->GetCommand()->GetCommandList()->SetPipelineState(pipelineStateObject_.Get());
 }
 
@@ -25,7 +25,7 @@ void SpriteCommon::CreateRootSignature()
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::,
+		DxRootSignature::ParamSemanticType::TextureMaterial,
 		DxRootSignature::ParamType::CBV,
 		DxRootSignature::ShaderVisibility::Pixel,
 		0
@@ -45,6 +45,8 @@ void SpriteCommon::CreateRootSignature()
 		0,
 		1
 	);
+
+	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
 
 #pragma region RootParameter Create
 	D3D12_ROOT_PARAMETER rootParameters[3] = {};
@@ -130,7 +132,7 @@ void SpriteCommon::CreatePipelineStateObject()
 
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
-	graphicsPipelineStateDec.pRootSignature = rootSignature_.Get();
+	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
 	graphicsPipelineStateDec.InputLayout = inputLayoutDesc;
 	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };

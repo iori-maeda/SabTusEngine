@@ -19,7 +19,8 @@ public:
 		ObjectMaterial,
 		MeshMaterial,
 		Particle,
-		Essential
+		ObjectEssential,
+		TextureMaterial
 	};
 
 	enum class ParamType

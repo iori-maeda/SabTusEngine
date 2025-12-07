@@ -7,21 +7,22 @@
 #include "DxCommand.h"
 #include "DxDevice.h"
 #include "DxShader.h"
+#include "DxRootSignature.h"
 #include "DxObjFunctions.h"
 #include "TextureManager.h"
 #include "Logger.h"
 #include "Random.h"
 #include "BasicShapes/Triangle.h"
 
-ParticleSystem *ParticleSystem::instance_ = nullptr;
+ParticleSystem* ParticleSystem::instance_ = nullptr;
 
-ParticleSystem *ParticleSystem::GetInstance()
+ParticleSystem* ParticleSystem::GetInstance()
 {
 	if (instance_ == nullptr) { instance_ = new ParticleSystem; }
 	return instance_;
 }
 
-void ParticleSystem::Initialize(DirectXCommon *dxCommon)
+void ParticleSystem::Initialize(DirectXCommon* dxCommon)
 {
 	assert(dxCommon);
 	dxCommon_ = dxCommon;
@@ -30,9 +31,9 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	triangle_->Initialize(dxCommon);
 
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
+	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
-	materialResource_->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
+	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 	materialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int i = 0; i < kMaxParticles; i++)
 	{
@@ -112,19 +113,25 @@ void ParticleSystem::Update()
 
 void ParticleSystem::Draw()
 {
-	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* cmdList = dxCommon_->GetCommand()->GetCommandList();
 
-	commandList->SetGraphicsRootSignature(rootSignature_.Get());
-	commandList->SetPipelineState(pipelineStateObject_.Get());
+	cmdList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
+	cmdList->SetPipelineState(pipelineStateObject_.Get());
 	//triangle_->GetVertexbufferView();
 	triangle_->Draw();
-	commandList->SetGraphicsRootDescriptorTable(0, particleForGPUSrvGpuHandle_);
-	commandList->SetGraphicsRootDescriptorTable(1, texHandleGPU_);
+	cmdList->SetGraphicsRootDescriptorTable(
+		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Particle),
+		particleForGPUSrvGpuHandle_
+	);
 
-	commandList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
+	cmdList->SetGraphicsRootDescriptorTable(
+		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+		texHandleGPU_
+	);
+	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
 }
 
-void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
+void ParticleSystem::Emit(const Vector3& position, uint32_t emitCount)
 {
 	for (uint32_t i = 0; i < emitCount; i++)
 	{
@@ -155,65 +162,26 @@ ParticleSystem::Particle ParticleSystem::MakeParticle()
 
 void ParticleSystem::CreateRootSignature()
 {
-#pragma region RootParameter Create
-	D3D12_ROOT_PARAMETER rootParameters[2] = {};
+	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
 
-	D3D12_DESCRIPTOR_RANGE desctiptorRangeForInstancing[1]{};
-	desctiptorRangeForInstancing[0].BaseShaderRegister = 0;
-	desctiptorRangeForInstancing[0].NumDescriptors = 1;
-	desctiptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	desctiptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Particle,
+		DxRootSignature::ParamType::DescriptorTable,
+		DxRootSignature::ShaderVisibility::Vertex,
+		0,
+		1
+	);
 
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	rootParameters[0].DescriptorTable.pDescriptorRanges = desctiptorRangeForInstancing;
-	rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(desctiptorRangeForInstancing);
+	dxRootSignature_->AddRootParamSemantic(
+		DxRootSignature::ParamSemanticType::Texture,
+		DxRootSignature::ParamType::DescriptorTable,
+		DxRootSignature::ShaderVisibility::Pixel,
+		0,
+		1
+	);
 
-
-	// Texture用
-	D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
-	descriptorRange[0].BaseShaderRegister = 0;
-	descriptorRange[0].NumDescriptors = 1;
-	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[1].DescriptorTable.pDescriptorRanges = descriptorRange;
-	rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
-#pragma endregion
-#pragma region Smapler Settings
-	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
-	staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;			// バイナリフィルタ
-	staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 0~1リピート
-	staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
-	staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;		// 
-	staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;		// 比較しない
-	staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;						// 最大まで使用
-	staticSamplers[0].ShaderRegister = 0;
-	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-#pragma endregion
-#pragma region RootSignature Create
-	D3D12_ROOT_SIGNATURE_DESC descriptorRootSignature{};
-	descriptorRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	descriptorRootSignature.pParameters = rootParameters;
-	descriptorRootSignature.NumParameters = _countof(rootParameters);
-	descriptorRootSignature.pStaticSamplers = staticSamplers;
-	descriptorRootSignature.NumStaticSamplers = _countof(staticSamplers);
-	// シリアライズしてバイナリ化
-	ComPtr<ID3DBlob> signatureBlob = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&descriptorRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
-	if (FAILED(hr))
-	{
-		Logger::Log(reinterpret_cast<char *>(errorBlob->GetBufferPointer()));
-		assert(false);
-	}
-	hr = dxCommon_->GetDxDevice()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature_));
-	assert(SUCCEEDED(hr));
-	Logger::Log("Created RootSignature\n");
-#pragma endregion
+	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void ParticleSystem::CreatePipelineStateObject()
@@ -256,7 +224,7 @@ void ParticleSystem::CreatePipelineStateObject()
 
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
-	graphicsPipelineStateDec.pRootSignature = rootSignature_.Get();
+	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
 	graphicsPipelineStateDec.InputLayout = inputLayoutDesc;
 	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };

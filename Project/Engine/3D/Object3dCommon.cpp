@@ -46,7 +46,7 @@ void Object3dCommon::PreDraw()
 	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
 	commandList->SetGraphicsRootConstantBufferView(
-		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Essential),
+		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::ObjectEssential),
 		essentialResource_->GetGPUVirtualAddress()
 	);
 	lights_->SetParamindex(dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Lights));
@@ -80,7 +80,7 @@ void Object3dCommon::CreateRootSignature()
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Essential,
+		DxRootSignature::ParamSemanticType::ObjectEssential,
 		DxRootSignature::ParamType::CBV,
 		DxRootSignature::ShaderVisibility::Pixel,
 		1

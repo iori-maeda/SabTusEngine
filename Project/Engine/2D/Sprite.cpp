@@ -3,6 +3,7 @@
 #include "TextureManager.h"
 #include "WIndow/WinApp.h"
 #include "DxCommand.h"
+#include "DxRootSignature.h"
 
 Sprite::~Sprite()
 {
@@ -93,12 +94,25 @@ void Sprite::Upadate()
 
 void Sprite::Draw()
 {
-	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
-	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->IASetIndexBuffer(&indexBufferView_);
-	// CBuffer Set
-	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
-	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->SetGraphicsRootDescriptorTable(2, texHandle_);
+	ID3D12GraphicsCommandList* cmdList = spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList();
+	DxRootSignature* dxRootSignature = spriteCommon_->GetDxRootSignature();
+
+	cmdList->IASetVertexBuffers(0, 1, &vertexBufferView_);
+	cmdList->IASetIndexBuffer(&indexBufferView_);
+
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TextureMaterial),
+		materialResource_->GetGPUVirtualAddress()
+	);
+
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TransformationMatrix),
+		transformationMatrixResource_->GetGPUVirtualAddress()
+	);
+	cmdList->SetGraphicsRootDescriptorTable(
+		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+		texHandle_
+	);
 	// いざ描画
 	spriteCommon_->GetDirectXCommon()->GetCommand()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }

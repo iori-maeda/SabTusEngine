@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <list>
+#include <memory>
 
 #include "ComPtr.h"
 #include "Math/Vector2.h"
@@ -10,6 +11,7 @@
 #include "Camera/Camera.h"
 
 class DirectXCommon;
+class DxRootSignature;
 class Triangle;
 
 class ParticleSystem
@@ -88,7 +90,7 @@ private:
 	DirectXCommon *dxCommon_ = nullptr;
 	Camera *camera_ = nullptr;
 
-	ComPtr<ID3D12RootSignature> rootSignature_ = nullptr;
+	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
 	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
