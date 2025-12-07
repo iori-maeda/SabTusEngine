@@ -46,10 +46,10 @@ void Object3dCommon::PreDraw()
 	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
 	commandList->SetGraphicsRootConstantBufferView(
-		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::ObjectEssential),
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::ObjectEssential),
 		essentialResource_->GetGPUVirtualAddress()
 	);
-	lights_->SetParamindex(dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Lights));
+	lights_->SetParamindex(dxRootSignature_->GetRootParamIndex(ParamSemanticType::Lights));
 	lights_->DrawCommandSet();
 }
 
@@ -58,53 +58,53 @@ void Object3dCommon::CreateRootSignature()
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::MeshMaterial,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::MeshMaterial,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
 		0
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::TransformationMatrix,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Vertex,
+		ParamSemanticType::TransformationMatrix,
+		ParamType::CBV,
+		ShaderVisibility::Vertex,
 		0
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Texture,
-		DxRootSignature::ParamType::DescriptorTable,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::Texture,
+		ParamType::DescriptorTable,
+		ShaderVisibility::Pixel,
 		0,
 		1
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::ObjectEssential,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::ObjectEssential,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
 		1
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::CameraTransform,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::CameraTransform,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
 		2
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Lights,
-		DxRootSignature::ParamType::DescriptorTable,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::Lights,
+		ParamType::DescriptorTable,
+		ShaderVisibility::Pixel,
 		1,
 		1
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::ObjectMaterial,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::ObjectMaterial,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
 		3
 	);
 

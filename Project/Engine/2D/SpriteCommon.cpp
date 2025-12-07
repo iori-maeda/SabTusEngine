@@ -25,23 +25,23 @@ void SpriteCommon::CreateRootSignature()
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::TextureMaterial,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::TextureMaterial,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
 		0
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::TransformationMatrix,
-		DxRootSignature::ParamType::CBV,
-		DxRootSignature::ShaderVisibility::Vertex,
+		ParamSemanticType::TransformationMatrix,
+		ParamType::CBV,
+		ShaderVisibility::Vertex,
 		0
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Texture,
-		DxRootSignature::ParamType::DescriptorTable,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::Texture,
+		ParamType::DescriptorTable,
+		ShaderVisibility::Pixel,
 		0,
 		1
 	);

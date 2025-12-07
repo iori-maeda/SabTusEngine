@@ -124,6 +124,7 @@ bool Mesh::ReadMtl(aiMaterial *material)
 		aiString texFilePath{};
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texFilePath);
 		meshCPU.mtlData.textureFilePath = texFilePath.C_Str();
+		//meshCPU.mtlData.textureFilePath.push_back(texFilePath.C_Str());
 	}
 	return true;
 }

@@ -7,48 +7,53 @@
 
 #include "ComPtr.h"
 
+enum class ParamSemanticType
+{
+	NONE,
+	TransformationMatrix,
+	CameraTransform,
+	Texture,
+	Lights,
+	ObjectMaterial,
+	MeshMaterial,
+	Particle,
+	ObjectEssential,
+	TextureMaterial
+};
+
+enum class ParamType
+{
+	NONE,
+	CBV,
+	SRV,
+	UAV,
+	DescriptorTable
+};
+
+enum class ShaderVisibility
+{
+	Vertex,
+	Pixel,
+	All
+};
+
+struct RootParamInfo
+{
+	ParamSemanticType semanticType = ParamSemanticType::NONE;
+	ParamType type = ParamType::NONE;
+	ShaderVisibility shaderVisibility = ShaderVisibility::All;
+	UINT registerIndex = 0;
+	UINT numDescriptors = 0;
+};
+
 class DxRootSignature
 {
-public:
-	enum class ParamSemanticType
-	{
-		TransformationMatrix,
-		CameraTransform,
-		Texture,
-		Lights,
-		ObjectMaterial,
-		MeshMaterial,
-		Particle,
-		ObjectEssential,
-		TextureMaterial
-	};
-
-	enum class ParamType
-	{
-		CBV,
-		SRV,
-		UAV,
-		DescriptorTable
-	};
-
-	enum class ShaderVisibility
-	{
-		Vertex,
-		Pixel,
-		All
-	};
-
-	struct RootParamSemantic
-	{
-		ParamSemanticType semanticType;
-		D3D12_GPU_VIRTUAL_ADDRESS* gpuAddressPtr = nullptr;
-		D3D12_GPU_DESCRIPTOR_HANDLE* gpuDescriptorHandlePtr = nullptr;
-	};
-
 public:
 	DxRootSignature() = default;
 
 	void Initialize(ID3D12Device* device);
+	void Initialize(ID3D12Device* device, RootParamInfo* rootParams, UINT numRootParams);
+
 	/// <summary>
 	/// ルートパラメータの追加とセマンティクスの登録
 	/// </summary>

@@ -38,22 +38,38 @@ void DxRootSignature::Initialize(ID3D12Device *device)
 #pragma endregion
 }
 
+void DxRootSignature::Initialize(ID3D12Device* device, RootParamInfo* rootParams, UINT numRootParams)
+{
+	for (UINT i = 0; i < numRootParams; ++i)
+	{
+		rootParameters_.reserve(numRootParams);
+		AddRootParamSemantic(
+			rootParams[i].semanticType,
+			rootParams[i].type,
+			rootParams[i].shaderVisibility,
+			rootParams[i].registerIndex,
+			rootParams[i].numDescriptors
+		);
+	}
+	Initialize(device);
+}
+
 void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
 {
 	D3D12_ROOT_PARAMETER addParam{};
 	
 	switch (paramType)
 	{
-	case DxRootSignature::ParamType::CBV:
+	case ParamType::CBV:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		break;
-	case DxRootSignature::ParamType::SRV:
+	case ParamType::SRV:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 		break;
-	case DxRootSignature::ParamType::UAV:
+	case ParamType::UAV:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
 		break;
-	case DxRootSignature::ParamType::DescriptorTable:
+	case ParamType::DescriptorTable:
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		{
 			std::unique_ptr<D3D12_DESCRIPTOR_RANGE> descriptorRange = std::make_unique<D3D12_DESCRIPTOR_RANGE>();
@@ -76,13 +92,13 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 
 	switch (shaderVisiblity)
 	{
-	case DxRootSignature::ShaderVisibility::Vertex:
+	case ShaderVisibility::Vertex:
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 		break;
-	case DxRootSignature::ShaderVisibility::Pixel:
+	case ShaderVisibility::Pixel:
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		break;
-	case DxRootSignature::ShaderVisibility::All:
+	case ShaderVisibility::All:
 		addParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 		break;
 	default:

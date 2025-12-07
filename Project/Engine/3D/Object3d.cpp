@@ -62,11 +62,11 @@ void Object3d::Draw()
 	DxRootSignature *dxRootSignature = obj3dCommon_->GetDxRootSignature();
 
 	cmdList->SetGraphicsRootConstantBufferView(
-		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::CameraTransform),
+		dxRootSignature->GetRootParamIndex(ParamSemanticType::CameraTransform),
 		cameraForGPUResource_->GetGPUVirtualAddress()
 	);
 	cmdList->SetGraphicsRootConstantBufferView(
-		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::ObjectMaterial),
+		dxRootSignature->GetRootParamIndex(ParamSemanticType::ObjectMaterial),
 		objectMaterialResources_->GetGPUVirtualAddress()
 	);
 
@@ -138,15 +138,15 @@ void Object3d::DrawNode(const Model::Node &node)
 			const DxRootSignature *dxRootSignature = obj3dCommon_->GetDxRootSignature();
 			cmdList->IASetVertexBuffers(0, 1, &mesh->meshPtr->GetGpuData()->vertexBufferViews_);
 			cmdList->SetGraphicsRootConstantBufferView(
-				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TransformationMatrix),
+				dxRootSignature->GetRootParamIndex(ParamSemanticType::TransformationMatrix),
 				mesh->transformationMatrixResource_->GetGPUVirtualAddress()
 			);
 			cmdList->SetGraphicsRootConstantBufferView(
-				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::MeshMaterial),
+				dxRootSignature->GetRootParamIndex(ParamSemanticType::MeshMaterial),
 				mesh->meshPtr->GetGpuData()->materialResource->GetGPUVirtualAddress()
 			);
 			cmdList->SetGraphicsRootDescriptorTable(
-				dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+				dxRootSignature->GetRootParamIndex(ParamSemanticType::Texture),
 				mesh->meshPtr->GetGpuData()->texHandle_
 			);
 			cmdList->DrawInstanced(static_cast<int>(mesh->meshPtr->GetCpuData()->vertices.size()), 1, 0, 0);

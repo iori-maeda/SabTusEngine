@@ -120,12 +120,12 @@ void ParticleSystem::Draw()
 	//triangle_->GetVertexbufferView();
 	triangle_->Draw();
 	cmdList->SetGraphicsRootDescriptorTable(
-		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Particle),
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::Particle),
 		particleForGPUSrvGpuHandle_
 	);
 
 	cmdList->SetGraphicsRootDescriptorTable(
-		dxRootSignature_->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::Texture),
 		texHandleGPU_
 	);
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
@@ -166,17 +166,17 @@ void ParticleSystem::CreateRootSignature()
 
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Particle,
-		DxRootSignature::ParamType::DescriptorTable,
-		DxRootSignature::ShaderVisibility::Vertex,
+		ParamSemanticType::Particle,
+		ParamType::DescriptorTable,
+		ShaderVisibility::Vertex,
 		0,
 		1
 	);
 
 	dxRootSignature_->AddRootParamSemantic(
-		DxRootSignature::ParamSemanticType::Texture,
-		DxRootSignature::ParamType::DescriptorTable,
-		DxRootSignature::ShaderVisibility::Pixel,
+		ParamSemanticType::Texture,
+		ParamType::DescriptorTable,
+		ShaderVisibility::Pixel,
 		0,
 		1
 	);

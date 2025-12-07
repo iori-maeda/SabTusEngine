@@ -101,16 +101,16 @@ void Sprite::Draw()
 	cmdList->IASetIndexBuffer(&indexBufferView_);
 
 	cmdList->SetGraphicsRootConstantBufferView(
-		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TextureMaterial),
+		dxRootSignature->GetRootParamIndex(ParamSemanticType::TextureMaterial),
 		materialResource_->GetGPUVirtualAddress()
 	);
 
 	cmdList->SetGraphicsRootConstantBufferView(
-		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::TransformationMatrix),
+		dxRootSignature->GetRootParamIndex(ParamSemanticType::TransformationMatrix),
 		transformationMatrixResource_->GetGPUVirtualAddress()
 	);
 	cmdList->SetGraphicsRootDescriptorTable(
-		dxRootSignature->GetRootParamIndex(DxRootSignature::ParamSemanticType::Texture),
+		dxRootSignature->GetRootParamIndex(ParamSemanticType::Texture),
 		texHandle_
 	);
 	// いざ描画
