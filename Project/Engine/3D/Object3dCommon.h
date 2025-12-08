@@ -20,21 +20,29 @@ public:
 		uint32_t numLights = 0;
 	};
 
+	struct FogStatus
+	{
+		float density = 0.05f;;
+		float power = 2.0f;
+		float thresholdStart = 0.3f;
+		float thresholdEnd = 0.1f;
+	};
+
 public:
 
 	Object3dCommon() = default;
 	~Object3dCommon();
 
-	void Initialize(DirectXCommon* dxCommon);
+	void Initialize(DirectXCommon *dxCommon);
 	void PreDraw();
 
 	void DebugWindow();
 
 public:
-	DirectXCommon* GetDirectXCommon() const { return dxCommon_; }
-	DxRootSignature* GetDxRootSignature() const { return dxRootSignature_.get(); }
+	DirectXCommon *GetDirectXCommon() const { return dxCommon_; }
+	DxRootSignature *GetDxRootSignature() const { return dxRootSignature_.get(); }
 
-	void SetLights(Lights* lights) { lights_ = lights; }
+	void SetLights(Lights *lights) { lights_ = lights; }
 
 private:
 
@@ -43,13 +51,16 @@ private:
 
 private:
 
-	DirectXCommon* dxCommon_ = nullptr;
-	Lights* lights_ = nullptr;
+	DirectXCommon *dxCommon_ = nullptr;
+	Lights *lights_ = nullptr;
 
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
 	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
 
 	ComPtr<ID3D12Resource> essentialResource_ = nullptr;
-	Essential* essentialForGPUData_ = nullptr;
+	Essential *essentialForGPUData_ = nullptr;
+
+	ComPtr<ID3D12Resource> fogResource_ = nullptr;
+	FogStatus *fogData_ = nullptr;
 };
 

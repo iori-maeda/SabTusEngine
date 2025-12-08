@@ -13,10 +13,9 @@
 #include "Lights.h"
 
 Object3dCommon::~Object3dCommon()
-{
-}
+{}
 
-void Object3dCommon::Initialize(DirectXCommon* dxCommon)
+void Object3dCommon::Initialize(DirectXCommon *dxCommon)
 {
 	dxCommon_ = dxCommon;
 
@@ -26,13 +25,24 @@ void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 	CreatePipelineStateObject();
 
 	essentialResource_ = dxCommon_->CreateBufferResource(sizeof(Essential));
-	essentialResource_->Map(0, nullptr, reinterpret_cast<void**>(&essentialForGPUData_));
+	essentialResource_->Map(0, nullptr, reinterpret_cast<void **>(&essentialForGPUData_));
+
+	fogResource_ = dxCommon_->CreateBufferResource(sizeof(FogStatus));
+	fogResource_->Map(0, nullptr, reinterpret_cast<void **>(&fogData_));
+	*fogData_ = FogStatus();
 }
 
 void Object3dCommon::DebugWindow()
 {
 #ifdef USE_IMGUI
 	lights_->DebugWindow();
+
+	ImGui::Begin("Fog Debug Windo");
+	ImGui::DragFloat("Density", &fogData_->density, 0.0001f, 0.0f, 1.0f);
+	ImGui::DragFloat("Power", &fogData_->power, 0.0001f, 0.0f, 100.0f);
+	ImGui::DragFloat("Threshold Start", &fogData_->thresholdStart, 0.0001f, 0.0f, 1.0f);
+	ImGui::DragFloat("Threshold End", &fogData_->thresholdEnd, 0.0001f, 0.0f, 1.0f);
+	ImGui::End();
 #endif 
 }
 
@@ -41,7 +51,7 @@ void Object3dCommon::PreDraw()
 	essentialForGPUData_->numLights = lights_->GetLightsNum();
 
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
 
 	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(pipelineStateObject_.Get());
@@ -51,6 +61,10 @@ void Object3dCommon::PreDraw()
 	);
 	lights_->SetParamindex(dxRootSignature_->GetRootParamIndex(ParamSemanticType::Lights));
 	lights_->DrawCommandSet();
+	commandList->SetGraphicsRootConstantBufferView(
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::Fog),
+		fogResource_->GetGPUVirtualAddress()
+	);
 }
 
 void Object3dCommon::CreateRootSignature()
@@ -108,6 +122,13 @@ void Object3dCommon::CreateRootSignature()
 		3
 	);
 
+	dxRootSignature_->AddRootParamSemantic(
+		ParamSemanticType::Fog,
+		ParamType::CBV,
+		ShaderVisibility::Pixel,
+		4
+	);
+
 	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
 }
 
@@ -143,7 +164,7 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma endregion
 
 	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::NONE);
+	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ALPHA);
 
 #pragma region RasterizerState Settings
 	D3D12_RASTERIZER_DESC rasterizerDesc = DxObjFunctions::InitializeRasterizerState();

@@ -37,17 +37,19 @@ void Object3d::Upadate()
 	{
 
 		Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
-		Vector3 translate = Vector3(0.0f, 0.0f, -1.0f);
+		Vector3 translate = Vector3(0.0f, 0.0f, -10.0f);
 
 		Matrix4x4 mainCameraMatrix = MakeAffineMatrix(scale, Vector3(), translate);
 		Matrix4x4 mainCameraViewMatrix = MakeInVerse(mainCameraMatrix);
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(WinApp::sWindoWidth) / static_cast<float>(WinApp::sWindoHeight), 0.1f, 100.0f);
 
-		cameraForGPUData_->worldPosition = Vector3(0.0f, 0.0f, -10.0f);
+		cameraForGPUData_->worldPosition = translate;
+		cameraForGPUData_->viewMat = MakeInVerse(mainCameraMatrix);
 	}
 	else
 	{
 		cameraForGPUData_->worldPosition = camera_->GetPosition();
+		cameraForGPUData_->viewMat = camera_->GetViewMatrix();
 
 		model_->SetCamera(camera_);
 	}

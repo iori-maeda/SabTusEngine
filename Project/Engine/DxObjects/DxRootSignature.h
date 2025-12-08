@@ -18,7 +18,8 @@ enum class ParamSemanticType
 	MeshMaterial,
 	Particle,
 	ObjectEssential,
-	TextureMaterial
+	TextureMaterial,
+	Fog
 };
 
 enum class ParamType

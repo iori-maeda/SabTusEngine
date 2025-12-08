@@ -42,12 +42,22 @@ struct LightStatus
 struct Camera
 {
     float3 worldPosition;
+    float4x4 viewMatrix;
+};
+
+struct FogStatus
+{
+    float density;
+    float power;
+    float thresholdStart;
+    float thresholdEnd;
 };
 
 ConstantBuffer<MeshMaterial> gMeshMaterial : register(b0);
 ConstantBuffer<Essential> gEssential : register(b1);
 ConstantBuffer<Camera> gCamera : register(b2);
 ConstantBuffer<ObjectMaterial> gObjectMaterial : register(b3);
+ConstantBuffer<FogStatus> gFogSattus : register(b4);
 
 StructuredBuffer<LightStatus> gLights : register(t1);
 
@@ -172,8 +182,31 @@ Output main(VertexOutput input)
         }
     }
     
+    // 彩度の取得
+    float3 lumiVec = float3(0.299f, 0.587f, 0.114f);
+    float luminance = dot(finaleColor.rgb, lumiVec);
+    float3 grayScale = float3(luminance, luminance, luminance);
+    
+    //　あとでCbufferへ
+    float3 toCamera = mul(float4(input.worldPosition, 1.0f), gCamera.viewMatrix).xyz;
+    float toCameraLen = length(toCamera);
+    
+    float fogFactor = exp(-pow(toCameraLen * gFogSattus.density, gFogSattus.power));
+    
+    float thresholdMax = gFogSattus.thresholdEnd > gFogSattus.thresholdStart ? gFogSattus.thresholdEnd : gFogSattus.thresholdStart;
+    float fogRatio = smoothstep(gFogSattus.thresholdEnd, thresholdMax, fogFactor);
+    fogFactor = saturate(fogFactor);
+    if (fogRatio <= 0.0f)
+    {
+        discard;
+    }
+    float3 fogColor = float3(0.3f, 0.3f, 0.3f);
+    float3 desaturateColor = lerp(grayScale, finaleColor.rgb, fogRatio);
+    finaleColor.rgb = lerp(fogColor, desaturateColor, fogRatio);
+    finaleColor.a = fogRatio;
+    
     output.color = finaleColor;
-    output.color.a = texColor.a;
+    //output.color.a = texColor.a;
     return output;
 }
 

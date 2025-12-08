@@ -36,6 +36,8 @@ public:
 	struct CameraForGPU
 	{
 		Vector3 worldPosition;
+		float pad1;
+		Matrix4x4 viewMat{};
 	};
 
 	struct ObjectMaterial

@@ -38,11 +38,11 @@ void DxRootSignature::Initialize(ID3D12Device *device)
 #pragma endregion
 }
 
-void DxRootSignature::Initialize(ID3D12Device* device, RootParamInfo* rootParams, UINT numRootParams)
+void DxRootSignature::Initialize(ID3D12Device *device, RootParamInfo *rootParams, UINT numRootParams)
 {
+	rootParameters_.reserve(numRootParams);
 	for (UINT i = 0; i < numRootParams; ++i)
 	{
-		rootParameters_.reserve(numRootParams);
 		AddRootParamSemantic(
 			rootParams[i].semanticType,
 			rootParams[i].type,
@@ -57,7 +57,7 @@ void DxRootSignature::Initialize(ID3D12Device* device, RootParamInfo* rootParams
 void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
 {
 	D3D12_ROOT_PARAMETER addParam{};
-	
+
 	switch (paramType)
 	{
 	case ParamType::CBV:
@@ -73,7 +73,7 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 		addParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		{
 			std::unique_ptr<D3D12_DESCRIPTOR_RANGE> descriptorRange = std::make_unique<D3D12_DESCRIPTOR_RANGE>();
-			
+
 			descriptorRange->BaseShaderRegister = useRegister;
 			descriptorRange->NumDescriptors = numDescriptors;
 			descriptorRange->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
