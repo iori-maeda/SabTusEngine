@@ -22,8 +22,8 @@ public:
 
 	struct FogStatus
 	{
-		float density = 0.05f;;
-		float power = 2.0f;
+		float density = 0.05f;
+		float power = 1.5f;
 		float thresholdStart = 0.3f;
 		float thresholdEnd = 0.1f;
 	};

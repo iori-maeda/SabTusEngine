@@ -39,7 +39,7 @@ void Object3dCommon::DebugWindow()
 
 	ImGui::Begin("Fog Debug Windo");
 	ImGui::DragFloat("Density", &fogData_->density, 0.0001f, 0.0f, 1.0f);
-	ImGui::DragFloat("Power", &fogData_->power, 0.0001f, 0.0f, 100.0f);
+	ImGui::DragFloat("Power", &fogData_->power, 0.01f, 0.0f, 100.0f);
 	ImGui::DragFloat("Threshold Start", &fogData_->thresholdStart, 0.0001f, 0.0f, 1.0f);
 	ImGui::DragFloat("Threshold End", &fogData_->thresholdEnd, 0.0001f, 0.0f, 1.0f);
 	ImGui::End();
