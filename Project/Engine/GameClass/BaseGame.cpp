@@ -211,7 +211,7 @@ void BaseGame::Draw()
 
 	spriteCommon_->PreDraw();
 
-	//sprite_->Draw();
+	sprite_->Draw();
 
 	ImGuiManager::Draw(dxCommon_.get());
 

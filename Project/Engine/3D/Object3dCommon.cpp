@@ -6,6 +6,7 @@
 #include "DxCommand.h"
 #include "DxShader.h"
 #include "DxRootSignature.h"
+#include "DxInputLayout.h"
 #include "Logger.h" 
 #include "DxObjFunctions.h"
 #include "ImGuiManager.h"
@@ -144,23 +145,10 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma endregion
 
 #pragma region InputLayout Settings
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
-	inputElementDescs[0].SemanticName = "POSITION";
-	inputElementDescs[0].SemanticIndex = 0;
-	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[1].SemanticName = "TEXCOORD";
-	inputElementDescs[1].SemanticIndex = 0;
-	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[2].SemanticName = "NORMAL";
-	inputElementDescs[2].SemanticIndex = 0;
-	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
-	inputLayoutDesc.pInputElementDescs = inputElementDescs;
-	inputLayoutDesc.NumElements = _countof(inputElementDescs);
+	DxInputLayout inputLayoutDesc;
+	inputLayoutDesc.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
+		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0)
+		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0);
 #pragma endregion
 
 	// BlendState Settings
@@ -177,7 +165,7 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
 	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
-	graphicsPipelineStateDec.InputLayout = inputLayoutDesc;
+	graphicsPipelineStateDec.InputLayout = inputLayoutDesc.GetLayoutDesc();
 	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.BlendState = blendDesc;

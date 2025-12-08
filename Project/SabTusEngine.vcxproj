@@ -116,6 +116,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\BasicShapes\Triangle.cpp" />
     <ClCompile Include="Engine\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Base\DirectXCommon.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxInputLayout.cpp" />
     <ClCompile Include="Engine\DxObjects\DxObjFunctions.cpp" />
     <ClCompile Include="Engine\DxObjects\DxCommand.cpp" />
     <ClCompile Include="Engine\DxObjects\DxDevice.cpp" />
@@ -161,6 +162,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\BasicShapes\Plane.h" />
     <ClInclude Include="Engine\BasicShapes\Triangle.h" />
     <ClInclude Include="Engine\Camera\Camera.h" />
+    <ClInclude Include="Engine\DxObjects\DxInputLayout.h" />
     <ClInclude Include="Engine\DxObjects\DxRootSignature.h" />
     <ClInclude Include="Engine\IO\Input.h" />
     <ClInclude Include="Engine\Utility\ComPtr.h" />
