@@ -104,7 +104,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DxPipelineStateObject.cpp" />
+    <ClCompile Include="Engine\DxObjects\DxPipelineStateObject.cpp" />
     <ClCompile Include="Engine\2D\Sprite.cpp" />
     <ClCompile Include="Engine\2D\SpriteCommon.cpp" />
     <ClCompile Include="Engine\3D\Lights.cpp" />
@@ -151,7 +151,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\ParticleSystem\ParticleEmitter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DxPipelineStateObject.h" />
+    <ClInclude Include="Engine\DxObjects\DxPipelineStateObject.h" />
     <ClInclude Include="Engine\2D\Sprite.h" />
     <ClInclude Include="Engine\2D\SpriteCommon.h" />
     <ClInclude Include="Engine\3D\Lights.h" />

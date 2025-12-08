@@ -195,7 +195,7 @@
     <ClCompile Include="Engine\DxObjects\DxRootSignature.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DxPipelineStateObject.cpp">
+    <ClCompile Include="Engine\DxObjects\DxPipelineStateObject.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Engine\DxObjects\DxInputLayout.cpp">
@@ -335,7 +335,7 @@
     <ClInclude Include="Engine\DxObjects\DxRootSignature.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="DxPipelineStateObject.h">
+    <ClInclude Include="Engine\DxObjects\DxPipelineStateObject.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DxObjects\DxInputLayout.h">
