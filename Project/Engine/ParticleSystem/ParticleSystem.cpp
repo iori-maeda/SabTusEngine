@@ -8,21 +8,22 @@
 #include "DxDevice.h"
 #include "DxShader.h"
 #include "DxRootSignature.h"
+#include "DxInputLayout.h"
 #include "DxObjFunctions.h"
 #include "TextureManager.h"
 #include "Logger.h"
 #include "Random.h"
 #include "BasicShapes/Triangle.h"
 
-ParticleSystem* ParticleSystem::instance_ = nullptr;
+ParticleSystem *ParticleSystem::instance_ = nullptr;
 
-ParticleSystem* ParticleSystem::GetInstance()
+ParticleSystem *ParticleSystem::GetInstance()
 {
 	if (instance_ == nullptr) { instance_ = new ParticleSystem; }
 	return instance_;
 }
 
-void ParticleSystem::Initialize(DirectXCommon* dxCommon)
+void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 {
 	assert(dxCommon);
 	dxCommon_ = dxCommon;
@@ -31,9 +32,9 @@ void ParticleSystem::Initialize(DirectXCommon* dxCommon)
 	triangle_->Initialize(dxCommon);
 
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleForGPUData_));
+	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
-	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
+	materialResource_->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
 	materialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int i = 0; i < kMaxParticles; i++)
 	{
@@ -113,7 +114,7 @@ void ParticleSystem::Update()
 
 void ParticleSystem::Draw()
 {
-	ID3D12GraphicsCommandList* cmdList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
 
 	cmdList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	cmdList->SetPipelineState(pipelineStateObject_.Get());
@@ -131,7 +132,7 @@ void ParticleSystem::Draw()
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
 }
 
-void ParticleSystem::Emit(const Vector3& position, uint32_t emitCount)
+void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
 {
 	for (uint32_t i = 0; i < emitCount; i++)
 	{
@@ -165,23 +166,10 @@ void ParticleSystem::CreateRootSignature()
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Particle,
-		ParamType::DescriptorTable,
-		ShaderVisibility::Vertex,
-		0,
-		1
-	);
+	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::Particle, ParamType::DescriptorTable, ShaderVisibility::Vertex, 0, 1)
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1);
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Texture,
-		ParamType::DescriptorTable,
-		ShaderVisibility::Pixel,
-		0,
-		1
-	);
-
-	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
+	dxRootSignature_->Create(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void ParticleSystem::CreatePipelineStateObject()
@@ -195,22 +183,11 @@ void ParticleSystem::CreatePipelineStateObject()
 	assert(pixelShaderBlob != nullptr);
 #pragma endregion
 
-#pragma region InputLayout Settings
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
-	inputElementDescs[0].SemanticName = "POSITION";
-	inputElementDescs[0].SemanticIndex = 0;
-	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[1].SemanticName = "TEXCOORD";
-	inputElementDescs[1].SemanticIndex = 0;
-	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
-	inputLayoutDesc.pInputElementDescs = inputElementDescs;
-	inputLayoutDesc.NumElements = _countof(inputElementDescs);
-#pragma endregion
+	DxInputLayout dxInputLayout;
 
+	dxInputLayout.AddLayout(LayoutSemanthicType::Position,LayoutFormat::FLOAT4,0)
+		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0);
 	// BlendState Settings
 	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ADD);
 
@@ -225,7 +202,7 @@ void ParticleSystem::CreatePipelineStateObject()
 #pragma region PSO Create
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
 	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
-	graphicsPipelineStateDec.InputLayout = inputLayoutDesc;
+	graphicsPipelineStateDec.InputLayout = dxInputLayout.GetLayoutDesc();
 	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };
 	graphicsPipelineStateDec.BlendState = blendDesc;

@@ -4,7 +4,7 @@
 #include "Logger.h"
 
 
-void DxRootSignature::Initialize(ID3D12Device *device)
+void DxRootSignature::Create(ID3D12Device *device)
 {
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
 	staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;			// バイナリフィルタ
@@ -51,10 +51,10 @@ void DxRootSignature::Initialize(ID3D12Device *device, RootParamInfo *rootParams
 			rootParams[i].numDescriptors
 		);
 	}
-	Initialize(device);
+	Create(device);
 }
 
-void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
+DxRootSignature& DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT useRegister, UINT numDescriptors)
 {
 	D3D12_ROOT_PARAMETER addParam{};
 
@@ -111,5 +111,7 @@ void DxRootSignature::AddRootParamSemantic(ParamSemanticType semanticType, Param
 	}
 	rootParameters_.push_back(addParam);
 	rootParamSemantics_.emplace(semanticType, static_cast<UINT>(rootParameters_.size() - 1));
+
+	return *this;
 }
 

@@ -25,29 +25,11 @@ void SpriteCommon::CreateRootSignature()
 {
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::TextureMaterial,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		0
-	);
+	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::TextureMaterial, ParamType::CBV, ShaderVisibility::Pixel, 0)
+		.AddRootParamSemantic(ParamSemanticType::TransformationMatrix, ParamType::CBV, ShaderVisibility::Vertex, 0)
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1);
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::TransformationMatrix,
-		ParamType::CBV,
-		ShaderVisibility::Vertex,
-		0
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Texture,
-		ParamType::DescriptorTable,
-		ShaderVisibility::Pixel,
-		0,
-		1
-	);
-
-	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
+	dxRootSignature_->Create(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void SpriteCommon::CreatePipelineStateObject()

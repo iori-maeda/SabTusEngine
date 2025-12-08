@@ -52,7 +52,7 @@ class DxRootSignature
 public:
 	DxRootSignature() = default;
 
-	void Initialize(ID3D12Device* device);
+	void Create(ID3D12Device* device);
 	void Initialize(ID3D12Device* device, RootParamInfo* rootParams, UINT numRootParams);
 
 	/// <summary>
@@ -64,7 +64,7 @@ public:
 	/// <param name="regster">使用レジスタ</param>
 	/// <param name="numDescriptors">確保数</param>
 	/// DescriptorTableを選択時はregsterをBaseShaderRegister、numDescriptorsをNumDescriptorsとして使用される
-	void AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT regster = 0, UINT numDescriptors = 0);
+	DxRootSignature& AddRootParamSemantic(ParamSemanticType semanticType, ParamType paramType, ShaderVisibility shaderVisiblity, UINT regster = 0, UINT numDescriptors = 0);
 
 public:
 	UINT GetRootParamIndex(ParamSemanticType type) const { return rootParamSemantics_.at(type); }

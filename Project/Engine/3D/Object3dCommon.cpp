@@ -72,70 +72,20 @@ void Object3dCommon::CreateRootSignature()
 {
 	dxRootSignature_ = std::make_unique<DxRootSignature>();
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::MeshMaterial,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		0
-	);
+	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::MeshMaterial, ParamType::CBV, ShaderVisibility::Pixel, 0)
+		.AddRootParamSemantic(ParamSemanticType::TransformationMatrix, ParamType::CBV, ShaderVisibility::Vertex, 0)
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1)
+		.AddRootParamSemantic(ParamSemanticType::ObjectEssential, ParamType::CBV, ShaderVisibility::Pixel, 1)
+		.AddRootParamSemantic(ParamSemanticType::CameraTransform, ParamType::CBV, ShaderVisibility::Pixel, 2)
+		.AddRootParamSemantic(ParamSemanticType::Lights, ParamType::DescriptorTable, ShaderVisibility::Pixel, 1, 1)
+		.AddRootParamSemantic(ParamSemanticType::ObjectMaterial, ParamType::CBV, ShaderVisibility::Pixel, 3)
+		.AddRootParamSemantic(ParamSemanticType::Fog, ParamType::CBV, ShaderVisibility::Pixel, 4);
 
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::TransformationMatrix,
-		ParamType::CBV,
-		ShaderVisibility::Vertex,
-		0
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Texture,
-		ParamType::DescriptorTable,
-		ShaderVisibility::Pixel,
-		0,
-		1
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::ObjectEssential,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		1
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::CameraTransform,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		2
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Lights,
-		ParamType::DescriptorTable,
-		ShaderVisibility::Pixel,
-		1,
-		1
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::ObjectMaterial,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		3
-	);
-
-	dxRootSignature_->AddRootParamSemantic(
-		ParamSemanticType::Fog,
-		ParamType::CBV,
-		ShaderVisibility::Pixel,
-		4
-	);
-
-	dxRootSignature_->Initialize(dxCommon_->GetDxDevice()->GetDevice());
+	dxRootSignature_->Create(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void Object3dCommon::CreatePipelineStateObject()
 {
-
 #pragma region Shader Compile
 	const std::string shaderDirectoryPath = "Resources/Shaders/";
 	ComPtr<IDxcBlob> vertexShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic3DVS.hlsl", L"vs_6_0");
@@ -147,7 +97,7 @@ void Object3dCommon::CreatePipelineStateObject()
 #pragma region InputLayout Settings
 	DxInputLayout inputLayoutDesc;
 	inputLayoutDesc.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
-		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0)
+		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0)
 		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0);
 #pragma endregion
 
