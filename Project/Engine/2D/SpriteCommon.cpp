@@ -36,11 +36,7 @@ void SpriteCommon::CreatePipelineStateObject()
 {
 
 #pragma region Shader Compile
-	const std::string shaderDirectoryPath = "Resources/Shaders/";
-	ComPtr<IDxcBlob> vertexShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic2DVS.hlsl", L"vs_6_0");
-	assert(vertexShaderBlob != nullptr);
-	ComPtr<IDxcBlob> pixelShaderBlob = DxShaderCompiler::GetInstancxe().CompileShader(shaderDirectoryPath + "Basic2DPS.hlsl", L"ps_6_0");
-	assert(pixelShaderBlob != nullptr);
+	DxShaderCompiler::ShaderGroup shaders = DxShaderCompiler::CompileShaderGroup("Basic2d");
 #pragma endregion
 
 #pragma region InputLayout Settings
@@ -64,8 +60,8 @@ void SpriteCommon::CreatePipelineStateObject()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDec{};
 	graphicsPipelineStateDec.pRootSignature = dxRootSignature_->GetRootSignature();
 	graphicsPipelineStateDec.InputLayout = inputLayout.GetLayoutDesc();
-	graphicsPipelineStateDec.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
-	graphicsPipelineStateDec.PS = { pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize() };
+	graphicsPipelineStateDec.VS = { shaders.vs->GetBufferPointer(), shaders.vs->GetBufferSize() };
+	graphicsPipelineStateDec.PS = { shaders.ps->GetBufferPointer(), shaders.ps->GetBufferSize() };
 	graphicsPipelineStateDec.BlendState = blendDesc;
 	graphicsPipelineStateDec.RasterizerState = rasterizerDesc;
 	// 書き込むRTVの情報

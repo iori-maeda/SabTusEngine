@@ -20,7 +20,6 @@ void BaseGame::Initialize()
 	ImGuiManager::Initialize(winApp_.get(), dxCommon_.get());
 
 	TextureManager::GetInstace().Initialize(dxCommon_.get());
-	DxShaderCompiler::GetInstancxe().Initialize();
 
 	ModelManager::GetInstace().Initialize(dxCommon_.get());
 

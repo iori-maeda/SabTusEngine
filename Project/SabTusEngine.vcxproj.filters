@@ -64,6 +64,9 @@
     <Filter Include="ヘッダー ファイル\Engine\GameClass">
       <UniqueIdentifier>{44f5fe83-c523-4882-a920-5ecdfe917bc3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{f075e29c-250c-42e9-8dcd-8dfc6b30a349}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -341,18 +344,21 @@
     <ClInclude Include="Engine\DxObjects\DxInputLayout.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="externals\nlohmann\json.hpp">
+      <Filter>json</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resources\Shaders\Basic2DPS.hlsl">
+    <FxCompile Include="Resources\Shaders\Basic2D.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Resources\Shaders\Basic2DVS.hlsl">
+    <FxCompile Include="Resources\Shaders\Basic2D.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Resources\Shaders\Basic3DPS.hlsl">
+    <FxCompile Include="Resources\Shaders\Basic3D.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Resources\Shaders\Basic3DVS.hlsl">
+    <FxCompile Include="Resources\Shaders\Basic3D.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Resources\Shaders\BasicParticle.VS.hlsl" />

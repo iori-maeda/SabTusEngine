@@ -10,11 +10,11 @@ class DxInputlayout;
 class DxPipelineStateObject
 {
 public:
-	DxPipelineStateObject(
+	/*DxPipelineStateObject(
 		ID3D12Device* device,
 		ID3D12RootSignature* rootSignature,
 		const D3D12_INPUT_LAYOUT_DESC& inputLayout, );
-	
+	*/
 
 private:
 

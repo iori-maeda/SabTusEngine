@@ -1,0 +1,17 @@
+{
+    "Basic3d" : {
+        "GroupName" : "Basic3d",
+        "VS" : { "FileName": "Basic3d.VS.hlsl", "Profile":"vs_6_0" },
+        "PS" : { "FileName": "Basic3d.PS.hlsl", "Profile":"ps_6_0" }
+    },
+    "Basic2d" : {
+        "GroupName" : "Basic2d",
+        "VS" : { "FileName": "Basic2d.VS.hlsl", "Profile":"vs_6_0" },
+        "PS" : { "FileName": "Basic2d.PS.hlsl", "Profile":"ps_6_0" }
+    },
+    "BasicParticle" : {
+        "GroupName" : "BasicParticle",
+        "VS" : { "FileName": "BasicParticle.VS.hlsl", "Profile":"vs_6_0" },
+        "PS" : { "FileName": "BasicParticle.PS.hlsl", "Profile":"ps_6_0" }
+    }
+}

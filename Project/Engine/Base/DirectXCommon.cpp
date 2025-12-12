@@ -18,6 +18,11 @@
 
 using namespace std;
 
+DirectXCommon::~DirectXCommon()
+{
+	DxShaderCompiler::Finalize();
+}
+
 void DirectXCommon::Initialize(const WinApp& winApp)
 {
 	device = make_unique<DxDevice>();
@@ -40,7 +45,8 @@ void DirectXCommon::Initialize(const WinApp& winApp)
 	CreateViewPortAndSiccorRect();
 
 	// いろいろなところで使われるので一緒に初期化
-	DxShaderCompiler::GetInstancxe().Initialize();
+	DxShaderCompiler::Initialize();
+	DxShaderCompiler::CompileShaderGroup("Basic3d");
 }
 
 void DirectXCommon::BeginRendering()
