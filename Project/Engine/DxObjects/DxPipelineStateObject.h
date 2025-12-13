@@ -1,23 +1,24 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 
 #include "ComPtr.h"
-
-class DirectXCommon;
-class DxRootSignature;
-class DxInputlayout;
 
 class DxPipelineStateObject
 {
 public:
-	/*DxPipelineStateObject(
-		ID3D12Device* device,
-		ID3D12RootSignature* rootSignature,
-		const D3D12_INPUT_LAYOUT_DESC& inputLayout, );
-	*/
+	DxPipelineStateObject() = delete;
+	DxPipelineStateObject(
+		ID3D12Device4 *device,
+		ID3D12RootSignature *rootSignature,
+		const D3D12_INPUT_LAYOUT_DESC &inputLayout,
+		const std::string &shaderGroupName
+	);
+
+public:
+	ID3D12PipelineState *GetPipelineStateObject() const { return mPipelineStateObject_.Get(); }
 
 private:
-
-	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc_{};
+	ComPtr<ID3D12PipelineState> mPipelineStateObject_ = nullptr;
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC mPsoDesc_{};
 };

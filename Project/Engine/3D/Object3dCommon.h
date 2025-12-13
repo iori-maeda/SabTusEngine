@@ -5,11 +5,11 @@
 #include "ComPtr.h"
 #include "DirectXCommon.h"
 #include "DxRootSignature.h"
+#include "DxPipelineStateObject.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
 class DirectXCommon;
-//class DxRootSignature;
 class Lights;
 
 class Object3dCommon
@@ -55,12 +55,15 @@ private:
 	Lights *lights_ = nullptr;
 
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
-	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
+	//ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
+	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
 
 	ComPtr<ID3D12Resource> essentialResource_ = nullptr;
 	Essential *essentialForGPUData_ = nullptr;
 
 	ComPtr<ID3D12Resource> fogResource_ = nullptr;
 	FogStatus *fogData_ = nullptr;
+
+	
 };
 

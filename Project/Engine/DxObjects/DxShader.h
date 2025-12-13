@@ -30,7 +30,7 @@ public:
 	static void Finalize();
 
 	static ComPtr<IDxcBlob> CompileShader(const std::string &, const wchar_t *);
-	static DxShaderCompiler::ShaderGroup &CompileShaderGroup(const std::string &fileName);
+	static DxShaderCompiler::ShaderGroup &CompileShaderGroup(const std::string &groupName);
 
 private:
 	DxShaderCompiler() = default;
