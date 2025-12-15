@@ -4,6 +4,7 @@
 
 #include "ComPtr.h"
 #include "DirectXCommon.h"
+#include "DxPipelineStateObject.h"
 
 class DirectXCommon;
 class DxRootSignature;
@@ -32,6 +33,7 @@ private:
 	DirectXCommon* dxCommon_ = nullptr;
 
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
-	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
+	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
+
 };
 

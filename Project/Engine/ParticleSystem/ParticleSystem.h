@@ -9,6 +9,7 @@
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
 #include "Camera/Camera.h"
+#include "DxPipelineStateObject.h"
 
 class DirectXCommon;
 class DxRootSignature;
@@ -91,7 +92,7 @@ private:
 	Camera *camera_ = nullptr;
 
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
-	ComPtr<ID3D12PipelineState> pipelineStateObject_ = nullptr;
+	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	ParticleForGPU *particleForGPUData_ = nullptr;
