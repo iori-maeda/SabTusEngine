@@ -204,6 +204,9 @@
     <ClCompile Include="Engine\DxObjects\DxInputLayout.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\DxObjects\DxBlendMode.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Math\Matrix3x3.h">
@@ -346,6 +349,9 @@
     </ClInclude>
     <ClInclude Include="externals\nlohmann\json.hpp">
       <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DxObjects\DxBlendMode.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

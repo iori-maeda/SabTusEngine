@@ -7,6 +7,7 @@
 #include "DxShader.h"
 #include "DxRootSignature.h"
 #include "DxInputLayout.h"
+#include "DxBlendMode.h"
 #include "Logger.h" 
 #include "DxObjFunctions.h"
 #include "ImGuiManager.h"
@@ -91,6 +92,10 @@ void Object3dCommon::CreatePipelineStateObject()
 	inputLayoutDesc.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
 		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0)
 		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0);
+
+	DxBlendMode dxBlendModes;
+	dxBlendModes.AddUseMode(BlendMode::ALPHA);
+
 
 	// PSO Create
 	dxPipelineStateObject_ = std::make_unique<DxPipelineStateObject>(

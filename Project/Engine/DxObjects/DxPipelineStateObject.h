@@ -4,6 +4,8 @@
 
 #include "ComPtr.h"
 
+class DxBlendMode;
+
 class DxPipelineStateObject
 {
 public:
@@ -12,6 +14,7 @@ public:
 		ID3D12Device4 *device,
 		ID3D12RootSignature *rootSignature,
 		const D3D12_INPUT_LAYOUT_DESC &inputLayout,
+		const DxBlendMode& dxBlendMode,
 		const std::string &shaderGroupName
 	);
 
