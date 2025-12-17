@@ -1,7 +1,7 @@
 #include "DxPipelineStateObject.h"
 #include "DxShader.h"
 #include "DxInputLayout.h"
-#include "DxBlendMode.h"
+//#include "DxBlendMode.h"
 #include "DxObjFunctions.h"
 #include "Logger.h"
 
@@ -11,7 +11,6 @@ DxPipelineStateObject::DxPipelineStateObject(
 	ID3D12Device4 *device,
 	ID3D12RootSignature *rootSignature,
 	const D3D12_INPUT_LAYOUT_DESC &inputLayout,
-	const DxBlendMode& dxBlendMode,
 	const std::string &shaderGroupName)
 {
 	// Shaders Compile

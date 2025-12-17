@@ -21,22 +21,23 @@ void FrameRateController::Update()
 	// 1/n秒の時間
 	const std::chrono::microseconds kMinTime(static_cast<uint64_t>(1000000.0f / sTargetFrame));
 	// 1/nの猶予時間
-	const std::chrono::microseconds kMinCheckTime(static_cast<uint64_t>(1000000.0f / (sTargetFrame + 5.0f)));
+	//const std::chrono::microseconds kMinCheckTime(static_cast<uint64_t>(1000000.0f / (sTargetFrame + 5.0f)));
+	const std::chrono::microseconds kSleepThreshold(static_cast<uint64_t>(1500));
 
 	// 現在時刻の記録
 	std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 	// 経過時間
 	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastTime_);
 
-	// 1/n秒の経過待ち
-	if (elapsed < kMinCheckTime)
+	while (kSleepThreshold + elapsed < kMinTime)
 	{
-		while (elapsed < kMinTime)
-		{
-			// スリープして待機
-			std::this_thread::sleep_for(std::chrono::microseconds(1));
-			elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - lastTime_);
-		}
+		std::this_thread::sleep_for(std::chrono::microseconds(500));
+		elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - lastTime_);
+	}
+
+	while (elapsed < kMinTime)
+	{
+		elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - lastTime_);
 	}
 
 	// 経過時間を収集
@@ -48,23 +49,6 @@ void FrameRateController::Update()
 	lastTime_ = std::chrono::steady_clock::now();
 
 	FPSCounter();
-
-	//const auto target = 1.0f / sTargetFrame;
-
-	//auto current = steady_clock::now();
-	//auto elapsed = duration<float>(current - lastTime_).count();
-	//// スリープを使わず「経過時間 >= 目標フレーム時間」になるまで待機
-	//while (elapsed < target)
-	//{
-	//	current = steady_clock::now();
-	//	elapsed = duration<float>(current - lastTime_).count();
-	//}
-
-	//deltaTimes_.push_back(elapsed);
-	//if (deltaTimes_.size() > static_cast<size_t>(sTargetFrame)) deltaTimes_.pop_front();
-
-	//lastTime_ = steady_clock::now();
-	//FPSCounter();
 }
 
 void FrameRateController::DebugWindow()
