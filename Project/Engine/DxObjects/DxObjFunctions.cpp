@@ -142,7 +142,8 @@ namespace DxObjFunctions
 		switch (depthMode)
 		{
 		case DepthMode::None:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NONE;
+			depthStencilDesc = {};
+			depthStencilDesc.DepthEnable = false;
 			break;
 		case DepthMode::Less:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;

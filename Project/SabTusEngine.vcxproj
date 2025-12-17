@@ -104,6 +104,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\DxObjects\DxPipelineStateObjectBuilder.cpp" />
     <ClCompile Include="Engine\DxObjects\DxBlendMode.cpp" />
     <ClCompile Include="Engine\DxObjects\DxPipelineStateObject.cpp" />
     <ClCompile Include="Engine\2D\Sprite.cpp" />
@@ -165,6 +166,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\BasicShapes\Triangle.h" />
     <ClInclude Include="Engine\Camera\Camera.h" />
     <ClInclude Include="Engine\DxObjects\DxInputLayout.h" />
+    <ClInclude Include="Engine\DxObjects\DxPipelineStateObjectBuilder.h" />
     <ClInclude Include="Engine\DxObjects\DxRootSignature.h" />
     <ClInclude Include="Engine\IO\Input.h" />
     <ClInclude Include="Engine\Utility\ComPtr.h" />
@@ -256,6 +258,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Engine\JsonFiles\PipeLineStateObjectGroups.json">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="Resources\Shaders\Basic2D.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

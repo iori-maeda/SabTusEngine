@@ -8,10 +8,10 @@
 #include <cassert>
 
 DxPipelineStateObject::DxPipelineStateObject(
-	ID3D12Device4 *device,
-	ID3D12RootSignature *rootSignature,
-	const D3D12_INPUT_LAYOUT_DESC &inputLayout,
-	const std::string &shaderGroupName)
+	ID3D12Device4* device,
+	ID3D12RootSignature* rootSignature,
+	const D3D12_INPUT_LAYOUT_DESC& inputLayout,
+	const std::string& shaderGroupName)
 {
 	// Shaders Compile
 	DxShaderCompiler::ShaderGroup shaders = DxShaderCompiler::CompileShaderGroup(shaderGroupName);
@@ -45,6 +45,13 @@ DxPipelineStateObject::DxPipelineStateObject(
 	mPsoDesc_.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 生成
 	HRESULT hr = device->CreateGraphicsPipelineState(&mPsoDesc_, IID_PPV_ARGS(&mPipelineStateObject_));
+	assert(SUCCEEDED(hr));
+	Logger::Log("Created PSO\n");
+}
+
+DxPipelineStateObject::DxPipelineStateObject(ID3D12Device4* device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
+{
+	HRESULT hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&mPipelineStateObject_));
 	assert(SUCCEEDED(hr));
 	Logger::Log("Created PSO\n");
 }

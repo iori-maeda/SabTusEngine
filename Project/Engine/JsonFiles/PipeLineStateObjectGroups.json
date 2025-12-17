@@ -1,0 +1,25 @@
+{
+  // template
+  //"Key": {
+  //  "name": "",
+  //  "ShaderGroup": "useShaderGroupName",
+  //  "BlendMode": "",
+  //  "CullingMode": "",
+  //  "DepthEnable": false,
+  //  "DepthWrite": false,
+  //  "DepthFunc": "",
+  //  "DrawMode": "TriangleList"
+  //},
+
+  "Basic3d": {
+    "name": "Basic3d",
+    "ShaderGroup": "Basic3d",
+    "BlendMode": "Normal",
+    "CullingMode": "Back",
+    "DepthEnable": true,
+    "DepthWrite": true,
+    "DepthFunc": "LessEqual",
+    "DrawMode": "TriangleList"
+
+  }
+}

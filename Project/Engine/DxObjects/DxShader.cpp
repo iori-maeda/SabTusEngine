@@ -11,7 +11,7 @@
 #include "Logger.h"
 #include "StringUtility.h"
 
-static const std::string sLoadJsonFileName = "Resources/Shaders/test.json";
+static const std::string sLoadJsonFileName = "Engine/JsonFiles/ShaderGroups.json";
 static const std::string sLoadDirectory = "Resources/Shaders/";
 
 ComPtr<IDxcUtils> DxShaderCompiler::dxcUtils_ = nullptr;

@@ -7,7 +7,7 @@
 #include "DxShader.h"
 #include "DxRootSignature.h"
 #include "DxInputLayout.h"
-//#include "DxBlendMode.h"
+#include "DxPipelineStateObjectBuilder.h"
 #include "Logger.h" 
 #include "DxObjFunctions.h"
 #include "ImGuiManager.h"
@@ -15,9 +15,10 @@
 #include "Lights.h"
 
 Object3dCommon::~Object3dCommon()
-{}
+{
+}
 
-void Object3dCommon::Initialize(DirectXCommon *dxCommon)
+void Object3dCommon::Initialize(DirectXCommon* dxCommon)
 {
 	dxCommon_ = dxCommon;
 
@@ -27,10 +28,10 @@ void Object3dCommon::Initialize(DirectXCommon *dxCommon)
 	CreatePipelineStateObject();
 
 	essentialResource_ = dxCommon_->CreateBufferResource(sizeof(Essential));
-	essentialResource_->Map(0, nullptr, reinterpret_cast<void **>(&essentialForGPUData_));
+	essentialResource_->Map(0, nullptr, reinterpret_cast<void**>(&essentialForGPUData_));
 
 	fogResource_ = dxCommon_->CreateBufferResource(sizeof(FogStatus));
-	fogResource_->Map(0, nullptr, reinterpret_cast<void **>(&fogData_));
+	fogResource_->Map(0, nullptr, reinterpret_cast<void**>(&fogData_));
 	*fogData_ = FogStatus();
 }
 
@@ -53,7 +54,7 @@ void Object3dCommon::PreDraw()
 	essentialForGPUData_->numLights = lights_->GetLightsNum();
 
 	// 描画コマンドリストの取得
-	ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommand()->GetCommandList();
 
 	commandList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	commandList->SetPipelineState(dxPipelineStateObject_->GetPipelineStateObject());
@@ -96,12 +97,15 @@ void Object3dCommon::CreatePipelineStateObject()
 	/*DxBlendMode dxBlendModes;
 	dxBlendModes.AddUseMode(BlendMode::ALPHA);*/
 
+	DxPipelineStateObjectBuilder psoBuilder;
 
 	// PSO Create
-	dxPipelineStateObject_ = std::make_unique<DxPipelineStateObject>(
-		dxCommon_->GetDxDevice()->GetDevice(),
-		dxRootSignature_->GetRootSignature(),
-		inputLayoutDesc.GetLayoutDesc(),
-		"Basic3d"
-	);
+	dxPipelineStateObject_ = psoBuilder
+		.SetRootSignature(dxRootSignature_->GetRootSignature())
+		.SetInputLayout(inputLayoutDesc.GetLayoutDesc())
+		.SetShaderGroup("Basic3d")
+		.SetBlendMode(BlendMode::ALPHA)
+		.SetRasterizerState(CullingMode::Back)
+		.SetDepthStencilState(DepthMode::LessEqual)
+		.Build(dxCommon_->GetDxDevice()->GetDevice());
 }

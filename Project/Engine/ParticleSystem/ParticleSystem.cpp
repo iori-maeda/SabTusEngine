@@ -14,6 +14,8 @@
 #include "Logger.h"
 #include "Random.h"
 #include "BasicShapes/Triangle.h"
+#include "DxPipelineStateObjectBuilder.h"
+
 
 ParticleSystem *ParticleSystem::instance_ = nullptr;
 
@@ -183,22 +185,17 @@ void ParticleSystem::CreatePipelineStateObject()
 	dxInputLayout.AddLayout(LayoutSemanthicType::Position,LayoutFormat::FLOAT4,0)
 		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0);
 
-	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ADD);
-
-	// RasterizerState Settings
-	D3D12_RASTERIZER_DESC rasterizerDesc = DxObjFunctions::InitializeRasterizerState();
-
-	// DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DxObjFunctions::InitializeDepthStencilState();
+	DxPipelineStateObjectBuilder psoBuilder;
 
 	// PSO Create
-	dxPipelineStateObject_ = std::make_unique<DxPipelineStateObject>(
-		dxCommon_->GetDxDevice()->GetDevice(),
-		dxRootSignature_->GetRootSignature(),
-		dxInputLayout.GetLayoutDesc(),
-		"BasicParticle"
-	);
+	dxPipelineStateObject_ = psoBuilder
+		.SetRootSignature(dxRootSignature_->GetRootSignature())
+		.SetInputLayout(dxInputLayout.GetLayoutDesc())
+		.SetShaderGroup("BasicParticle")
+		.SetBlendMode(BlendMode::ADD)
+		.SetDepthStencilState(DepthMode::LessEqual,true,false)
+		.SetRasterizerState(CullingMode::Back)
+		.Build(dxCommon_->GetDxDevice()->GetDevice());
 }
 
 void ParticleSystem::CreateSRV()

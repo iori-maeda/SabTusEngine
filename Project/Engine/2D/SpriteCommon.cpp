@@ -6,7 +6,7 @@
 #include "Logger.h" 
 #include "DxObjFunctions.h"
 #include "DxInputLayout.h"
-
+#include "DxPipelineStateObjectBuilder.h"
 
 void SpriteCommon::Initialize(DirectXCommon *dxCommon)
 {
@@ -43,20 +43,15 @@ void SpriteCommon::CreatePipelineStateObject()
 	inputLayout.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
 		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0);
 
-	// BlendState Settings
-	D3D12_BLEND_DESC blendDesc = DxObjFunctions::InitializeBlendMode(BlendMode::ALPHA);
-
-	// RasterizerState Settings
-	D3D12_RASTERIZER_DESC rasterizerDesc = DxObjFunctions::InitializeRasterizerState();
-
-	// DepthStencilState Settings
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc = DxObjFunctions::InitializeDepthStencilState();
+	DxPipelineStateObjectBuilder psoBuilder;
 
 	// PSO Create
-	dxPipelineStateObject_ = std::make_unique<DxPipelineStateObject>(
-		dxCommon_->GetDxDevice()->GetDevice(),
-		dxRootSignature_->GetRootSignature(),
-		inputLayout.GetLayoutDesc(),
-		"Basic2d"
-	);
+	dxPipelineStateObject_ = psoBuilder
+		.SetRootSignature(dxRootSignature_->GetRootSignature())
+		.SetInputLayout(inputLayout.GetLayoutDesc())
+		.SetShaderGroup("Basic2d")
+		.SetBlendMode(BlendMode::ALPHA)
+		.SetRasterizerState(CullingMode::Back)
+		.SetDepthStencilState(DepthMode::None)
+		.Build(dxCommon_->GetDxDevice()->GetDevice());
 }
