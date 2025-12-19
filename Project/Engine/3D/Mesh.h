@@ -46,7 +46,7 @@ public:
 	struct MtlData
 	{
 		MaterialData material{};
-		std::string textureFilePath;
+		std::vector<std::string> textureFilePaths;
 	};
 
 	struct MeshDataCPU

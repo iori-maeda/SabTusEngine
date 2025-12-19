@@ -117,14 +117,68 @@ bool Mesh::ReadMtl(aiMaterial *material)
 	{
 		meshCPU.mtlData.material.shininess = shininess;
 	}
-	
+
+
+	if (material->GetTextureCount(aiTextureType_AMBIENT) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_AMBIENT, 0, &texFilePath);
+		//meshCPU.mtlData.textureFilePaths = texFilePath.C_Str();
+		meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+	}
 
 	if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0)
 	{
 		aiString texFilePath{};
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texFilePath);
-		meshCPU.mtlData.textureFilePath = texFilePath.C_Str();
-		//meshCPU.mtlData.textureFilePath.push_back(texFilePath.C_Str());
+		meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+	}
+
+	if (material->GetTextureCount(aiTextureType_SPECULAR) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_SPECULAR, 0, &texFilePath);
+		meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+	}
+
+	if (material->GetTextureCount(aiTextureType_NORMALS) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_NORMALS, 0, &texFilePath);
+		meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+	}
+
+	if (material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &texFilePath);
+		auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
+		if (iterator == meshCPU.mtlData.textureFilePaths.end())
+		{
+			meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+		}
+	}
+
+	if (material->GetTextureCount(aiTextureType_METALNESS) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_METALNESS, 0, &texFilePath);
+		auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
+		if (iterator == meshCPU.mtlData.textureFilePaths.end())
+		{
+			meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+		}
+	}
+
+	if (material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) != 0)
+	{
+		aiString texFilePath{};
+		material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texFilePath);
+		auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
+		if (iterator == meshCPU.mtlData.textureFilePaths.end())
+		{
+			meshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
+		}
 	}
 	return true;
 }
@@ -150,20 +204,27 @@ bool Mesh::InitializeGpuData()
 	meshGPU.materialResource->Map(0, nullptr, reinterpret_cast<void **>(&meshCPU.materialData));
 	*meshCPU.materialData = meshCPU.mtlData.material;
 
-	if (!textureDirectoryPath_.empty() && !meshCPU.mtlData.textureFilePath.empty())
+	for (std::string &texPath : meshCPU.mtlData.textureFilePaths)
 	{
-		TextureManager::GetInstace().Load(textureDirectoryPath_, meshCPU.mtlData.textureFilePath);
-	}
-	else
-	{
-		if (meshCPU.mtlData.textureFilePath.empty())
+		if (!textureDirectoryPath_.empty() && !meshCPU.mtlData.textureFilePaths.empty())
 		{
-			meshCPU.mtlData.textureFilePath = "whiteTest.png";
+			TextureManager::GetInstace().Load(textureDirectoryPath_, texPath);
 		}
-		TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
+		else
+		{
+			TextureManager::GetInstace().Load(texPath);
+		}
+		TextureDataCPU dataCpu = TextureManager::GetInstace().Load(texPath);
+		meshGPU.texSize_ = Vector2(static_cast<float>(dataCpu.metaData.width), static_cast<float>(dataCpu.metaData.height));
 	}
-	TextureDataCPU dataCpu = TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePath);
-	meshGPU.texSize_ = Vector2(static_cast<float>(dataCpu.metaData.width), static_cast<float>(dataCpu.metaData.height));
-	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePath);
+
+	if (meshCPU.mtlData.textureFilePaths.empty())
+	{
+		meshCPU.mtlData.textureFilePaths.push_back("whiteTest.png");
+		TextureDataCPU dataCpu = TextureManager::GetInstace().Load(meshCPU.mtlData.textureFilePaths[0]);
+		meshGPU.texSize_ = Vector2(static_cast<float>(dataCpu.metaData.width), static_cast<float>(dataCpu.metaData.height));
+	}
+
+	meshGPU.texHandle_ = TextureManager::GetInstace().GetSRVDescriptorGPUHandle(meshCPU.mtlData.textureFilePaths[0]);
 	return true;
 }
