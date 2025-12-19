@@ -14,6 +14,8 @@ void FrameRateController::Initialize()
 {
 	// 現在時刻の記録
 	lastTime_ = std::chrono::steady_clock::now();
+
+	deltaTimes_.resize(static_cast<size_t>(sTargetFrame));
 }
 
 void FrameRateController::Update()

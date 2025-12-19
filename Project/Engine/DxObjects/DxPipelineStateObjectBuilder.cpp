@@ -1,5 +1,4 @@
 #include "DxPipelineStateObjectBuilder.h"
-#include "DxShader.h"
 
 
 DxPipelineStateObjectBuilder& DxPipelineStateObjectBuilder::SetBlendMode(BlendMode blendMode)

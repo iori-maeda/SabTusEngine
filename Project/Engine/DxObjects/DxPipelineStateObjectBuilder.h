@@ -6,6 +6,7 @@
 
 #include "DxPipelineStateObject.h"
 #include "DxObjFunctions.h"
+#include "DxShader.h"
 
 class DxPipelineStateObjectBuilder
 {
