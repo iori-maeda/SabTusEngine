@@ -201,16 +201,16 @@ void BaseGame::Draw()
 
 	object3dCommon_->PreDraw();
 
-	for (auto &obj : drawObjects_)
+	/*for (auto &obj : drawObjects_)
 	{
 		obj.second->Draw();
-	}
+	}*/
 
 	ParticleSystem::GetInstance()->Draw();
 
 	spriteCommon_->PreDraw();
 
-	sprite_->Draw();
+	//sprite_->Draw();
 
 	ImGuiManager::Draw(dxCommon_.get());
 

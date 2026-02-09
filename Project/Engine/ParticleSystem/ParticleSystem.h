@@ -27,6 +27,14 @@ public:
 		Vector3 translate{};
 	};
 
+	struct CameraForGPU
+	{
+		Vector3 position{};
+		float pad;
+		Matrix4x4 viewMat{};
+		Matrix4x4 projeMat{};
+	};
+
 	struct Particle
 	{
 		Transform transform{};
@@ -49,9 +57,10 @@ public:
 
 	struct ParticleForGPU
 	{
-		Matrix4x4 wvp{};
-		Matrix4x4 world{};
+		Transform transfotm{};
 		Vector4 color{};
+		
+		int useBillboard = 0;
 	};
 
 	struct AABB
@@ -93,6 +102,9 @@ private:
 
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
 	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
+
+	ComPtr<ID3D12Resource> cameraForGpuResorce_ = nullptr;
+	CameraForGPU *cameraForGpuData_ = nullptr;
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	ParticleForGPU *particleForGPUData_ = nullptr;

@@ -33,6 +33,8 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	triangle_ = new Triangle();
 	triangle_->Initialize(dxCommon);
 
+	cameraForGpuResorce_ = dxCommon_->CreateBufferResource(sizeof(CameraForGPU));
+	cameraForGpuResorce_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGpuData_));
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
 	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
@@ -95,19 +97,26 @@ void ParticleSystem::Update()
 
 		particleIterator->currentTime += deltaTIme;
 		particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
-		particleIterator->color.w = 1.0f - (particleIterator->currentTime / particleIterator->lifeTIme);
+		particleIterator->color.w = 1.0f;// - (particleIterator->currentTime / particleIterator->lifeTIme);
 
-		particleForGPUData_[currentInstanceNum_].world = MakeAffineMatrix(particleIterator->transform.scale, particleIterator->transform.rotate, particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].wvp = MakeIdentityMatrix();
+		particleForGPUData_[currentInstanceNum_].transfotm = particleIterator->transform;//. MakeAffineMatrix(particleIterator->transform.scale, particleIterator->transform.rotate, particleIterator->transform.translate);
 		particleForGPUData_[currentInstanceNum_].color = particleIterator->color;
+
+		/*cameraForGpuData_->position = Vector3();
+		cameraForGpuData_->viewMat = MakeIdentityMatrix();
+		cameraForGpuData_->projeMat = MakeIdentityMatrix();*/
+
 		if (camera_ == nullptr) { return; }
+		cameraForGpuData_->position = camera_->GetPosition();
+		cameraForGpuData_->viewMat = camera_->GetViewMatrix();
+		cameraForGpuData_->projeMat = camera_->GetProjectionMatrix();
 
 		Matrix4x4 billboardMatrix = /*MakeRotateY(std::numbers::pi_v<float>) **/ camera_->GetWorldMatrix();
 		billboardMatrix.m[3][0] = 0.0f;
 		billboardMatrix.m[3][1] = 0.0f;
 		billboardMatrix.m[3][2] = 0.0f;
-		particleForGPUData_[currentInstanceNum_].world = MakeScaleMatrix(particleIterator->transform.scale) * billboardMatrix * MakeTranslateMatrix(particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].wvp = particleForGPUData_[currentInstanceNum_].world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();;
+		/*particleForGPUData_[currentInstanceNum_].world = MakeScaleMatrix(particleIterator->transform.scale) * billboardMatrix * MakeTranslateMatrix(particleIterator->transform.translate);
+		particleForGPUData_[currentInstanceNum_].wvp = particleForGPUData_[currentInstanceNum_].world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();;*/
 
 		currentInstanceNum_++;
 		particleIterator++;
@@ -131,6 +140,12 @@ void ParticleSystem::Draw()
 		dxRootSignature_->GetRootParamIndex(ParamSemanticType::Texture),
 		texHandleGPU_
 	);
+
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::CameraTransform),
+		cameraForGpuResorce_->GetGPUVirtualAddress()
+	);
+
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
 }
 
@@ -169,7 +184,8 @@ void ParticleSystem::CreateRootSignature()
 
 
 	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::Particle, ParamType::DescriptorTable, ShaderVisibility::Vertex, 0, 1)
-		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1);
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1)
+		.AddRootParamSemantic(ParamSemanticType::CameraTransform, ParamType::CBV, ShaderVisibility::Vertex, 0, 1);
 
 	dxRootSignature_->Create(dxCommon_->GetDxDevice()->GetDevice());
 }
@@ -182,8 +198,8 @@ void ParticleSystem::CreatePipelineStateObject()
 
 	// InputLayout Settings
 	DxInputLayout dxInputLayout;
-	dxInputLayout.AddLayout(LayoutSemanthicType::Position,LayoutFormat::FLOAT4,0)
-		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0);
+	dxInputLayout.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
+		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0);
 
 	DxPipelineStateObjectBuilder psoBuilder;
 
@@ -193,7 +209,7 @@ void ParticleSystem::CreatePipelineStateObject()
 		.SetInputLayout(dxInputLayout.GetLayoutDesc())
 		.SetShaderGroup("BasicParticle")
 		.SetBlendMode(BlendMode::ADD)
-		.SetDepthStencilState(DepthMode::LessEqual,true,false)
+		.SetDepthStencilState(DepthMode::LessEqual, true, false)
 		.SetRasterizerState(CullingMode::Back)
 		.Build(dxCommon_->GetDxDevice()->GetDevice());
 }
