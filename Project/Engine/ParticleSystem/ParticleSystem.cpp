@@ -96,8 +96,8 @@ void ParticleSystem::Update()
 		}
 
 		particleIterator->currentTime += deltaTIme;
-		particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
-		particleIterator->color.w = 1.0f;// - (particleIterator->currentTime / particleIterator->lifeTIme);
+		//particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
+		particleIterator->color.w = 1.0f - (particleIterator->currentTime / particleIterator->lifeTIme);
 
 		particleForGPUData_[currentInstanceNum_].transfotm = particleIterator->transform;//. MakeAffineMatrix(particleIterator->transform.scale, particleIterator->transform.rotate, particleIterator->transform.translate);
 		particleForGPUData_[currentInstanceNum_].color = particleIterator->color;

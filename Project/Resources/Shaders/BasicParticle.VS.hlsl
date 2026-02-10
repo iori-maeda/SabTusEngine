@@ -1,5 +1,8 @@
 #include "BasicParticle.hlsli"
 
+// 全ての行列を行優先として扱う指定
+#pragma pack_matrix(row_major)
+
 struct Transform
 {
     float3 scale;
@@ -98,12 +101,12 @@ VertexOutput main(Input input, uint insatanceId : SV_InstanceID)
 {
     VertexOutput output;
     
-    float4x4 worldMat = 
-    ScaleMatrix(gParticle[insatanceId].transform.scale)
-    * RotateMatrix(gParticle[insatanceId].transform.rotation)
-    * TranslateMat(gParticle[insatanceId].transform.potision);
+    float4x4 worldMat =
+    mul(ScaleMatrix(gParticle[insatanceId].transform.scale),
+    mul(RotateMatrix(gParticle[insatanceId].transform.rotation),
+    TranslateMat(gParticle[insatanceId].transform.potision)));
     
-    float4x4 WVP = worldMat * gCameraData.viewMat * gCameraData.projMat;
+    float4x4 WVP = mul(worldMat, mul(gCameraData.viewMat, gCameraData.projMat));
     
     output.position = mul(input.position, WVP);
     output.uv = input.uv;

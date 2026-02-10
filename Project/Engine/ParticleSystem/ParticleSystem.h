@@ -18,7 +18,7 @@ class Triangle;
 class ParticleSystem
 {
 public:
-	static const int kMaxParticles = 4096;
+	static const int kMaxParticles = 8192;
 
 	struct  Transform
 	{
@@ -86,6 +86,8 @@ public:
 	ParticleSystem::Particle MakeParticle();
 
 public:
+	uint32_t GetActiveParticleCount()const { return currentInstanceNum_; }
+
 	void SetCamera(Camera *camera) { camera_ = camera; }
 
 private:

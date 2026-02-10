@@ -18,7 +18,7 @@ Output main(VertexOutput input)
     output.color = texColor * input.color;
 	
     // 半透明オブジェクトが消えるので注意
-    if (output.color.a == 0.0f)
+    if (output.color.a <= 0.0f)
     {
         discard;
     }

@@ -77,7 +77,7 @@ void BaseGame::Initialize()
 	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
 
 	particleEmitter_ = std::make_unique<ParticleEmitter>();
-	particleEmitter_->Initialize(emitPosition_, emitCount_);
+	particleEmitter_->Initialize(emitPosition_, emitCount_,0.0f);
 }
 
 void BaseGame::Finalize()
@@ -117,6 +117,7 @@ void BaseGame::Upate()
 
 	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
 	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
+	ImGui::Text("particle count %d", ParticleSystem::GetInstance()->GetActiveParticleCount());
 	ImGui::End();
 	ImGuiManager::End();
 #endif
@@ -201,10 +202,10 @@ void BaseGame::Draw()
 
 	object3dCommon_->PreDraw();
 
-	/*for (auto &obj : drawObjects_)
+	for (auto &obj : drawObjects_)
 	{
 		obj.second->Draw();
-	}*/
+	}
 
 	ParticleSystem::GetInstance()->Draw();
 
