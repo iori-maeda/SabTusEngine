@@ -391,5 +391,6 @@
     <None Include="Resources\Shaders\BasicParticle.hlsli" />
     <None Include="Engine\JsonFiles\PipeLineStateObjectGroups.json" />
     <None Include="Resources\Shaders\Math.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
