@@ -24,8 +24,14 @@ struct CameraData
     float4x4 projMat;
 };
 
+struct ParticleEssential
+{
+    CameraData camera;
+    int useBillboard;
+};
+
 StructuredBuffer<ParticleForGPU> gParticle : register(t0);
-ConstantBuffer<CameraData> gCameraData : register(b0);
+ConstantBuffer<ParticleEssential> gParticleEssential : register(b0);
 
 struct Input
 {
@@ -100,13 +106,16 @@ float4x4 RotateMatrix(float3 rotation)
 VertexOutput main(Input input, uint insatanceId : SV_InstanceID)
 {
     VertexOutput output;
+    CameraData camera = gParticleEssential.camera;
     
-    float4x4 worldMat =
-    mul(ScaleMatrix(gParticle[insatanceId].transform.scale),
-    mul(RotateMatrix(gParticle[insatanceId].transform.rotation),
-    TranslateMat(gParticle[insatanceId].transform.potision)));
+    float4x4 scaleMat = ScaleMatrix(gParticle[insatanceId].transform.scale);
+    float4x4 rotateMat = RotateMatrix(gParticle[insatanceId].transform.rotation);
+    float4x4 translateMat = TranslateMat(gParticle[insatanceId].transform.potision);
+    //float4x4 billboardMat
     
-    float4x4 WVP = mul(worldMat, mul(gCameraData.viewMat, gCameraData.projMat));
+    float4x4 worldMat = mul(scaleMat, mul(rotateMat, translateMat));
+    
+    float4x4 WVP = mul(worldMat, mul(camera.viewMat, camera.projMat));
     
     output.position = mul(input.position, WVP);
     output.uv = input.uv;

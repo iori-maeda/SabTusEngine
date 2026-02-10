@@ -33,8 +33,8 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	triangle_ = new Triangle();
 	triangle_->Initialize(dxCommon);
 
-	cameraForGpuResorce_ = dxCommon_->CreateBufferResource(sizeof(CameraForGPU));
-	cameraForGpuResorce_->Map(0, nullptr, reinterpret_cast<void **>(&cameraForGpuData_));
+	particleEssentialResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleEssential));
+	particleEssentialResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleEssentialData_));
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
 	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
@@ -107,9 +107,9 @@ void ParticleSystem::Update()
 		cameraForGpuData_->projeMat = MakeIdentityMatrix();*/
 
 		if (camera_ == nullptr) { return; }
-		cameraForGpuData_->position = camera_->GetPosition();
-		cameraForGpuData_->viewMat = camera_->GetViewMatrix();
-		cameraForGpuData_->projeMat = camera_->GetProjectionMatrix();
+		particleEssentialData_->camera.position = camera_->GetPosition();
+		particleEssentialData_->camera.viewMat = camera_->GetViewMatrix();
+		particleEssentialData_->camera.projeMat = camera_->GetProjectionMatrix();
 
 		Matrix4x4 billboardMatrix = /*MakeRotateY(std::numbers::pi_v<float>) **/ camera_->GetWorldMatrix();
 		billboardMatrix.m[3][0] = 0.0f;
@@ -143,7 +143,7 @@ void ParticleSystem::Draw()
 
 	cmdList->SetGraphicsRootConstantBufferView(
 		dxRootSignature_->GetRootParamIndex(ParamSemanticType::CameraTransform),
-		cameraForGpuResorce_->GetGPUVirtualAddress()
+		particleEssentialResource_->GetGPUVirtualAddress()
 	);
 
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);

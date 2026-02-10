@@ -35,6 +35,13 @@ public:
 		Matrix4x4 projeMat{};
 	};
 
+	struct ParticleEssential
+	{
+		CameraForGPU camera{};
+		int useBillboard = 0;
+		float pads[3]{};
+	};
+
 	struct Particle
 	{
 		Transform transform{};
@@ -59,7 +66,7 @@ public:
 	{
 		Transform transfotm{};
 		Vector4 color{};
-		
+
 		int useBillboard = 0;
 	};
 
@@ -87,8 +94,10 @@ public:
 
 public:
 	uint32_t GetActiveParticleCount()const { return currentInstanceNum_; }
+	bool GetUseBillboard()const { particleEssentialData_->useBillboard; }
 
 	void SetCamera(Camera *camera) { camera_ = camera; }
+	void UseBillboard(bool use) { particleEssentialData_->useBillboard = use; }
 
 private:
 	ParticleSystem() = default;
@@ -105,8 +114,8 @@ private:
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
 	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
 
-	ComPtr<ID3D12Resource> cameraForGpuResorce_ = nullptr;
-	CameraForGPU *cameraForGpuData_ = nullptr;
+	ComPtr<ID3D12Resource> particleEssentialResource_ = nullptr;
+	ParticleEssential *particleEssentialData_ = nullptr;
 
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	ParticleForGPU *particleForGPUData_ = nullptr;
