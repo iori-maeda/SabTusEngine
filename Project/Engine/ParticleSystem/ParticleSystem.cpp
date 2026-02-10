@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <numbers>
+#include <format>
 
 #include "DirectXCommon.h"
 #include "DxCommand.h"
@@ -73,54 +74,46 @@ ParticleSystem::~ParticleSystem()
 void ParticleSystem::Update()
 {
 	//if (camera_) { triangle_->SetCamera(camera_); }
-
+	//Logger::Log(std::format("max count {}\n", kMaxParticles));
 	currentInstanceNum_ = 0;
-	for (std::list<Particle>::iterator particleIterator = particles_.begin(); particleIterator != particles_.end();)
+	for (Particle &particle : particles_)
 	{
 		float deltaTIme = 1.0f / 60.0f;
 
 		// 生存時間を過ぎていたらスキップ
-		if (particleIterator->currentTime > particleIterator->lifeTIme)
+		if (particle.currentTime > particle.lifeTIme)
 		{
 			// 削除して次のiteratorへ
-			particleIterator = particles_.erase(particleIterator);
+			//particleIterator = particles_.erase(particleIterator);
+			particle = particles_.back();
+			particles_.pop_back();
 			continue;
 		}
 
-		if (particleIterator->transform.translate.x >= accelerationField_.area.min.x && particleIterator->transform.translate.x <= accelerationField_.area.max.x
-			&& particleIterator->transform.translate.y >= accelerationField_.area.min.y && particleIterator->transform.translate.y <= accelerationField_.area.max.y
-			&& particleIterator->transform.translate.z >= accelerationField_.area.min.z && particleIterator->transform.translate.z <= accelerationField_.area.max.z
+		// 加速範囲内であれば加速
+		if (particle.transform.translate.x >= accelerationField_.area.min.x && particle.transform.translate.x <= accelerationField_.area.max.x
+			&& particle.transform.translate.y >= accelerationField_.area.min.y && particle.transform.translate.y <= accelerationField_.area.max.y
+			&& particle.transform.translate.z >= accelerationField_.area.min.z && particle.transform.translate.z <= accelerationField_.area.max.z
 			)
 		{
-			particleIterator->velocity += accelerationField_.acceleration * deltaTIme;
+			particle.velocity += accelerationField_.acceleration * deltaTIme;
 		}
 
-		particleIterator->currentTime += deltaTIme;
-		//particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
-		particleIterator->color.w = 1.0f - (particleIterator->currentTime / particleIterator->lifeTIme);
+		particle.currentTime += deltaTIme;
 
-		particleForGPUData_[currentInstanceNum_].transfotm = particleIterator->transform;//. MakeAffineMatrix(particleIterator->transform.scale, particleIterator->transform.rotate, particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].color = particleIterator->color;
 
-		/*cameraForGpuData_->position = Vector3();
-		cameraForGpuData_->viewMat = MakeIdentityMatrix();
-		cameraForGpuData_->projeMat = MakeIdentityMatrix();*/
+		particle.transform.translate += particle.velocity * deltaTIme;
+		particle.color.w = 1.0f - (particle.currentTime / particle.lifeTIme);
 
-		if (camera_ == nullptr) { return; }
-		particleEssentialData_->camera.position = camera_->GetPosition();
-		particleEssentialData_->camera.viewMat = camera_->GetViewMatrix();
-		particleEssentialData_->camera.projeMat = camera_->GetProjectionMatrix();
-
-		Matrix4x4 billboardMatrix = /*MakeRotateY(std::numbers::pi_v<float>) **/ camera_->GetWorldMatrix();
-		billboardMatrix.m[3][0] = 0.0f;
-		billboardMatrix.m[3][1] = 0.0f;
-		billboardMatrix.m[3][2] = 0.0f;
-		/*particleForGPUData_[currentInstanceNum_].world = MakeScaleMatrix(particleIterator->transform.scale) * billboardMatrix * MakeTranslateMatrix(particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].wvp = particleForGPUData_[currentInstanceNum_].world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();;*/
+		particleForGPUData_[currentInstanceNum_].transfotm = particle.transform;
+		particleForGPUData_[currentInstanceNum_].color = particle.color;
 
 		currentInstanceNum_++;
-		particleIterator++;
 	}
+	if (camera_ == nullptr) { return; }
+	particleEssentialData_->camera.position = camera_->GetPosition();
+	particleEssentialData_->camera.viewMat = camera_->GetViewMatrix();
+	particleEssentialData_->camera.projeMat = camera_->GetProjectionMatrix();
 }
 
 void ParticleSystem::Draw()
@@ -151,6 +144,8 @@ void ParticleSystem::Draw()
 
 void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
 {
+	//if (particles_.size() >= kMaxParticles - 1) { return; }
+
 	for (uint32_t i = 0; i < emitCount; i++)
 	{
 		Particle newParticle = MakeParticle();
@@ -159,7 +154,7 @@ void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
 
 		if (particles_.size() >= kMaxParticles)
 		{
-			particles_.pop_front();
+			break;
 		}
 	}
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <d3d12.h>
-#include <list>
+#include <vector>
 #include <memory>
 
 #include "ComPtr.h"
@@ -18,7 +18,7 @@ class Triangle;
 class ParticleSystem
 {
 public:
-	static const int kMaxParticles = 8192;
+	static const int kMaxParticles = 1 << 17;
 
 	struct  Transform
 	{
@@ -94,7 +94,7 @@ public:
 
 public:
 	uint32_t GetActiveParticleCount()const { return currentInstanceNum_; }
-	bool GetUseBillboard()const { particleEssentialData_->useBillboard; }
+	bool GetUseBillboard()const { return particleEssentialData_->useBillboard; }
 
 	void SetCamera(Camera *camera) { camera_ = camera; }
 	void UseBillboard(bool use) { particleEssentialData_->useBillboard = use; }
@@ -127,7 +127,7 @@ private:
 	//D3D12_GPU_DESCRIPTOR_HANDLE materialSrvGpuHandle_{};
 
 	Triangle *triangle_ = nullptr;
-	std::list<ParticleSystem::Particle> particles_;
+	std::vector<ParticleSystem::Particle> particles_;
 	D3D12_GPU_DESCRIPTOR_HANDLE texHandleGPU_{};
 
 	uint32_t currentInstanceNum_ = 0;

@@ -118,6 +118,10 @@ void BaseGame::Upate()
 	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
 	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
 	ImGui::Text("particle count %d", ParticleSystem::GetInstance()->GetActiveParticleCount());
+	bool useBillBorad = ParticleSystem::GetInstance()->GetUseBillboard();
+	ImGui::Checkbox("use billboard", &useBillBorad);
+	ParticleSystem::GetInstance()->UseBillboard(useBillBorad);
+
 	ImGui::End();
 	ImGuiManager::End();
 #endif
