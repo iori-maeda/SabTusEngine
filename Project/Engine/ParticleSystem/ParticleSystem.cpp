@@ -18,15 +18,15 @@
 #include "DxPipelineStateObjectBuilder.h"
 
 
-ParticleSystem *ParticleSystem::instance_ = nullptr;
+ParticleSystem* ParticleSystem::instance_ = nullptr;
 
-ParticleSystem *ParticleSystem::GetInstance()
+ParticleSystem* ParticleSystem::GetInstance()
 {
 	if (instance_ == nullptr) { instance_ = new ParticleSystem; }
 	return instance_;
 }
 
-void ParticleSystem::Initialize(DirectXCommon *dxCommon)
+void ParticleSystem::Initialize(DirectXCommon* dxCommon)
 {
 	assert(dxCommon);
 	dxCommon_ = dxCommon;
@@ -35,11 +35,11 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	triangle_->Initialize(dxCommon);
 
 	particleEssentialResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleEssential));
-	particleEssentialResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleEssentialData_));
+	particleEssentialResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleEssentialData_));
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
+	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
-	materialResource_->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
+	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 	materialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int i = 0; i < kMaxParticles; i++)
 	{
@@ -76,7 +76,7 @@ void ParticleSystem::Update()
 	//if (camera_) { triangle_->SetCamera(camera_); }
 	//Logger::Log(std::format("max count {}\n", kMaxParticles));
 	currentInstanceNum_ = 0;
-	for (Particle &particle : particles_)
+	for (Particle& particle : particles_)
 	{
 		float deltaTIme = 1.0f / 60.0f;
 
@@ -118,7 +118,7 @@ void ParticleSystem::Update()
 
 void ParticleSystem::Draw()
 {
-	ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* cmdList = dxCommon_->GetCommand()->GetCommandList();
 
 	cmdList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	cmdList->SetPipelineState(dxPipelineStateObject_->GetPipelineStateObject());
@@ -142,7 +142,7 @@ void ParticleSystem::Draw()
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
 }
 
-void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
+void ParticleSystem::Emit(const Vector3& position, uint32_t emitCount)
 {
 	//if (particles_.size() >= kMaxParticles - 1) { return; }
 
@@ -150,12 +150,12 @@ void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
 	{
 		Particle newParticle = MakeParticle();
 		newParticle.transform.translate += position;
-		particles_.push_back(newParticle);
 
 		if (particles_.size() >= kMaxParticles)
 		{
 			break;
 		}
+		particles_.push_back(newParticle);
 	}
 }
 

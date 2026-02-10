@@ -18,7 +18,7 @@ class Triangle;
 class ParticleSystem
 {
 public:
-	static const int kMaxParticles = 1 << 17;
+	static const uint32_t kMaxParticles = 1 << 16;
 
 	struct  Transform
 	{
