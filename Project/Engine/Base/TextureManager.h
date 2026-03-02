@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "../externals/DirectXTex/DirectXTex.h"
 #include "../externals/DirectXTex/d3dx12.h"
@@ -52,22 +53,30 @@ private:
 
 private:
 
+	TextureDataCPU CreateTextureData(const std::string directoryPath, const std::string& filePath);
 	DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
 
 private:
-	DirectXCommon* renderContext_ = nullptr;
+	DirectXCommon* dxCommon_ = nullptr;
 
 
 	struct TextureDataGPU {
-		std::string fileName;
 		ComPtr<ID3D12Resource> resource = nullptr;
 		D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle;
 		D3D12_GPU_DESCRIPTOR_HANDLE srvGpuHandle;
 	};
 
+	struct TextureData
+	{
+		std::string directoryPath;
+		std::string fileName;
+		TextureDataCPU cpuData{};
+		TextureDataGPU gpuData{};
+	};
+
 	static uint32_t textureIndex;
 
-	std::unordered_map<std::string, std::pair<TextureDataCPU, TextureDataGPU>> textures_;
+	std::vector<TextureData> textures_;
 };
 

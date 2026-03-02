@@ -18,6 +18,9 @@ class DxFence;
 class DirectXCommon
 {
 public:
+	static const uint32_t kMaxDescriptorCountSRV = 256;
+
+public:
 
 	DirectXCommon() = default;
 	~DirectXCommon();

@@ -18,6 +18,7 @@ struct MeshMaterial
 struct Essential
 {
     uint numLights;
+    int usePBR;
 };
 
 struct ObjectMaterial
@@ -59,9 +60,11 @@ ConstantBuffer<Camera> gCamera : register(b2);
 ConstantBuffer<ObjectMaterial> gObjectMaterial : register(b3);
 ConstantBuffer<FogStatus> gFogSattus : register(b4);
 
-StructuredBuffer<LightStatus> gLights : register(t1);
+StructuredBuffer<LightStatus> gLights : register(t0);
 
-Texture2D<float4> gTexture : register(t0);
+Texture2D<float4> gTexture : register(t1);
+Texture2D<float4> gNormalTexture : register(t2);
+Texture2D<float4> gRoughnessTexture : register(t3);
 SamplerState gSampler : register(s0);
 
 struct Output
@@ -75,6 +78,18 @@ Output main(VertexOutput input)
     output.color = float4(0.0f, 0.0f, 0.0f, 1.0f); // Initialize output color
 
     float4 texColor = gTexture.Sample(gSampler, input.uv);
+    float4 normalTexColor = gNormalTexture.Sample(gSampler, input.uv);
+    float4 roughnessTexColor = gRoughnessTexture.Sample(gSampler, input.uv);
+    
+    float3 normal = normalize(input.normal);
+    float3 tangent = normalize(input.tangent);
+    float3 binormal = cross(tangent, normal);
+    float3x3 tangentBinormalMat = float3x3(tangent, binormal, normal);
+    
+    float3 newNormal = (normalTexColor * 2.0f - 1.0f).rgb;
+    
+    newNormal = normalize(mul(newNormal, tangentBinormalMat));
+    
 	
     if (texColor.a <= 0.0f)
     {
@@ -96,7 +111,7 @@ Output main(VertexOutput input)
     // View Direction
     const float3 kToEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
     
-    const float3 kNormal = normalize(input.normal);
+    const float3 kNormal = gEssential.usePBR ? newNormal : normalize(input.normal);
     float4 finaleColor = kObjectAmbientColor;
     
     for (uint i = 0; i < gEssential.numLights; i++)

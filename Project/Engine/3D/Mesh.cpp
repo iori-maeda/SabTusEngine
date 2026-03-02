@@ -81,11 +81,13 @@ bool Mesh::ReadVertecies(aiMesh *mesh)
 			aiVector3D &position = mesh->mVertices[vertexIndex];
 			aiVector3D &normal = mesh->mNormals[vertexIndex];
 			aiVector3D &texcoord = mesh->mTextureCoords[0][vertexIndex];
+			aiVector3D &tangent = mesh->mTangents[vertexIndex];
 
 			VertexData vertex{};
 			vertex.position = Vector4(position.x, position.y, position.z, 1.0f);
 			vertex.normal = Vector3(normal.x, normal.y, normal.z);
 			vertex.uv = Vector2(texcoord.x, texcoord.y);
+			vertex.tangent = Vector3(tangent.x, tangent.y, tangent.z);
 
 			meshCPU.vertices.push_back(vertex);
 		}
@@ -206,15 +208,16 @@ bool Mesh::InitializeGpuData()
 
 	for (std::string &texPath : meshCPU.mtlData.textureFilePaths)
 	{
+		TextureDataCPU dataCpu{};
 		if (!textureDirectoryPath_.empty() && !meshCPU.mtlData.textureFilePaths.empty())
 		{
-			TextureManager::GetInstace().Load(textureDirectoryPath_, texPath);
+			dataCpu = TextureManager::GetInstace().Load(textureDirectoryPath_, texPath);
 		}
 		else
 		{
-			TextureManager::GetInstace().Load(texPath);
+			dataCpu = TextureManager::GetInstace().Load(texPath);
 		}
-		TextureDataCPU dataCpu = TextureManager::GetInstace().Load(texPath);
+		dataCpu = TextureManager::GetInstace().Load(texPath);
 		meshGPU.texSize_ = Vector2(static_cast<float>(dataCpu.metaData.width), static_cast<float>(dataCpu.metaData.height));
 	}
 

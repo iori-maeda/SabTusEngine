@@ -18,6 +18,7 @@ public:
 	struct Essential
 	{
 		uint32_t numLights = 0;
+		int drawPBR = 0;
 	};
 
 	struct FogStatus
