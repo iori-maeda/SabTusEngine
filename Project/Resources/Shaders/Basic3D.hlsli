@@ -5,5 +5,6 @@ struct VertexOutput
 	float2 uv : TEXCOORD0;
 	float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
+    float3 binormal : BINORMAL0;
     float3 worldPosition : POSITION0;
 };

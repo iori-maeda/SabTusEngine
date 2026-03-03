@@ -32,14 +32,14 @@ public:
 	/// </summary>
 	/// <param name="fileName">画像名.拡張子</param>
 	/// <returns></returns>
-	TextureDataCPU Load(const std::string& fileName);
+	TextureDataCPU Load(const std::string& fileName, bool isSRGB = true);
 	/// <summary>
 	/// ディレクトリ指定で画像読み込み
 	/// </summary>
 	/// <param name="directoryPath">保存先ディレクトリパス</param>
 	/// <param name="fileName">画像名.拡張子</param>
 	/// <returns></returns>
-	TextureDataCPU Load(const std::string& directoryPath, const std::string& fileName);
+	TextureDataCPU Load(const std::string& directoryPath, const std::string& fileName, bool isSRGB = true);
 
 public:
 
@@ -53,8 +53,8 @@ private:
 
 private:
 
-	TextureDataCPU CreateTextureData(const std::string directoryPath, const std::string& filePath);
-	DirectX::ScratchImage LoadTexture(const std::string& filePath);
+	TextureDataCPU CreateTextureData(const std::string directoryPath, const std::string& filePath, bool isSRGB = true);
+	DirectX::ScratchImage LoadTexture(const std::string& filePath, bool isSRGB = true);
 
 
 private:

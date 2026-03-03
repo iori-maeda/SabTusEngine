@@ -25,6 +25,7 @@ VertexOutput main(Input input)
 	output.uv = input.uv;
     output.normal = normalize(mul(input.normal, (float3x3) (gTransformationMatrix.worldInvederseTranspose))); //normalize(mul(input.normal, (float3x3)gTransformationMatrix.world));
     output.tangent = normalize(mul(input.tangenet, (float3x3) (gTransformationMatrix.worldInvederseTranspose)));
+    output.binormal = normalize(cross(output.normal, output.tangent));
 	output.worldPosition = mul(input.position, gTransformationMatrix.world).xyz;
 	return output;
 }

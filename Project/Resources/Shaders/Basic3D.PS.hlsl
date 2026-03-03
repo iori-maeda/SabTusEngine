@@ -1,4 +1,5 @@
 #include "Basic3D.hlsli"
+#include "LightFunction.hlsli"
 
 enum LightType
 {
@@ -25,19 +26,6 @@ struct ObjectMaterial
 {
     float4 color;
     uint32_t enableLighting;
-};
-
-struct LightStatus
-{
-    float4 color;
-    float3 direction;
-    float intensity;
-    float3 position;
-    float range;
-    float decay;
-    float cosFallOffStart;
-    float cosAngle;
-    uint type;
 };
 
 struct Camera
@@ -78,18 +66,20 @@ Output main(VertexOutput input)
     output.color = float4(0.0f, 0.0f, 0.0f, 1.0f); // Initialize output color
 
     float4 texColor = gTexture.Sample(gSampler, input.uv);
-    float4 normalTexColor = gNormalTexture.Sample(gSampler, input.uv);
     float4 roughnessTexColor = gRoughnessTexture.Sample(gSampler, input.uv);
     
+    float4 normalTexColor = gNormalTexture.Sample(gSampler, input.uv);
     float3 normal = normalize(input.normal);
     float3 tangent = normalize(input.tangent);
-    float3 binormal = cross(tangent, normal);
+    float3 binormal = normalize(input.binormal);
     float3x3 tangentBinormalMat = float3x3(tangent, binormal, normal);
     
     float3 newNormal = (normalTexColor * 2.0f - 1.0f).rgb;
     
     newNormal = normalize(mul(newNormal, tangentBinormalMat));
     
+    //output.color = normalTexColor;
+    //return output;
 	
     if (texColor.a <= 0.0f)
     {

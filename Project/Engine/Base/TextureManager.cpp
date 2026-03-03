@@ -30,14 +30,14 @@ void TextureManager::Finalize()
 	textures_.clear();
 }
 
-TextureDataCPU TextureManager::Load(const std::string &fileName)
+TextureDataCPU TextureManager::Load(const std::string &fileName, bool isSRGB)
 {
-	return CreateTextureData(defaultDirectoryPath, fileName);
+	return CreateTextureData(defaultDirectoryPath, fileName, isSRGB);
 }
 
-TextureDataCPU TextureManager::Load(const std::string &directoryPath, const std::string &fileName)
+TextureDataCPU TextureManager::Load(const std::string &directoryPath, const std::string &fileName, bool isSRGB)
 {
-	return CreateTextureData(directoryPath, fileName);
+	return CreateTextureData(directoryPath, fileName, isSRGB);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSRVDescriptorGPUHandle(const std::string &key)
@@ -55,7 +55,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSRVDescriptorGPUHandle(const std:
 	return D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
-TextureDataCPU TextureManager::CreateTextureData(const std::string directoryPath, const std::string &filePath)
+TextureDataCPU TextureManager::CreateTextureData(const std::string directoryPath, const std::string &filePath, bool isSRGB)
 {
 	TextureData newTextureData{};
 	//TextureDataCPU textureDataCPU{};
@@ -75,7 +75,7 @@ TextureDataCPU TextureManager::CreateTextureData(const std::string directoryPath
 	newTextureData.fileName = filePath;
 	newTextureData.cpuData.fileName = filePath;
 
-	DirectX::ScratchImage mipImage = LoadTexture(newTextureData.directoryPath + newTextureData.fileName);
+	DirectX::ScratchImage mipImage = LoadTexture(newTextureData.directoryPath + newTextureData.fileName, isSRGB);
 
 	newTextureData.cpuData.metaData = mipImage.GetMetadata();
 
@@ -107,21 +107,38 @@ TextureDataCPU TextureManager::CreateTextureData(const std::string directoryPath
 	return newTextureData.cpuData;
 }
 
-DirectX::ScratchImage TextureManager::LoadTexture(const std::string &filePath)
+DirectX::ScratchImage TextureManager::LoadTexture(const std::string &filePath, bool isSRGB)
 {
 	// TextureFileプログラム用に読み込む
 	DirectX::ScratchImage image{};
 	std::wstring filePathW = StringUtility::ConvertToWString(filePath);
-	HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
+
+	DirectX::WIC_FLAGS wicFlag = isSRGB ? DirectX::WIC_FLAGS_FORCE_SRGB : DirectX::WIC_FLAGS_NONE;
+	HRESULT hr = DirectX::LoadFromWICFile(
+		filePathW.c_str(),
+		wicFlag,
+		nullptr, image);
 	assert(SUCCEEDED(hr));
 	Logger::Log("Texture Load\n");
 
-	if (image.GetMetadata().mipLevels <= 1)
+
+	auto &metadata = const_cast<DirectX::TexMetadata &>(image.GetMetadata());
+	// 追加：sRGBとして読み込まれたくない場合、強制的にUNORMへ書き換える
+	if (!isSRGB)
 	{
+		// _SRGBが付いたフォーマットを、付いていないフォーマットに変換する
+		metadata.format = DirectX::MakeLinear(metadata.format);
+	}
+	if (metadata.width <= 1 && metadata.height <= 1)
+	{
+
 		return image;
 	}
 	DirectX::ScratchImage mipImage{};
-	hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImage);
+
+	DirectX::TEX_FILTER_FLAGS filterFlag = isSRGB ? DirectX::TEX_FILTER_SRGB : DirectX::TEX_FILTER_LINEAR;
+	hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), filterFlag, 0, mipImage);
+	assert(SUCCEEDED(hr));
 	Logger::Log("MipMap Create\n");
 	return mipImage;
 }

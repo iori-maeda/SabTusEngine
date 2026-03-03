@@ -44,10 +44,16 @@ public:
 		float shininess = 1.0f;
 	};
 
+	struct TextureInfo
+	{
+		std::string fileName;
+		bool isSRGB = true;
+	};
+
 	struct MtlData
 	{
 		MaterialData material{};
-		std::vector<std::string> textureFilePaths;
+		std::vector<TextureInfo> textureFilePaths;
 	};
 
 	struct MeshDataCPU
