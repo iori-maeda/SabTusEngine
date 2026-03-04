@@ -19,13 +19,13 @@ struct MeshMaterial
 struct Essential
 {
     uint numLights;
-    int usePBR;
 };
 
 struct ObjectMaterial
 {
     float4 color;
     uint32_t enableLighting;
+    uint32_t usePBR;
 };
 
 struct Camera
@@ -91,6 +91,8 @@ Output main(VertexOutput input)
     const float4 kObjectDiffuseColor = gMeshMaterial.Kd * texColor * gObjectMaterial.color;
     const float4 kObjectSpecularColor = gMeshMaterial.Ks * gObjectMaterial.color;
     
+    const float4 useAmbientColor = length(gMeshMaterial.Ka) >= length(gMeshMaterial.Kd) ? kObjectAmbientColor * 0.5f : kObjectAmbientColor;
+    
     if (gObjectMaterial.enableLighting == 0)
     {
         output.color = kObjectAmbientColor + kObjectDiffuseColor + kObjectSpecularColor;
@@ -101,8 +103,8 @@ Output main(VertexOutput input)
     // View Direction
     const float3 kToEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
     
-    const float3 kNormal = gEssential.usePBR ? newNormal : normalize(input.normal);
-    float4 finaleColor = kObjectAmbientColor;
+    const float3 kNormal = gObjectMaterial.usePBR ? newNormal : normalize(input.normal);
+    float4 finaleColor = useAmbientColor;
     
     for (uint i = 0; i < gEssential.numLights; i++)
     {

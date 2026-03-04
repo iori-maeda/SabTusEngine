@@ -28,7 +28,9 @@ public:
 	void BeginRendering();
 	void EndRendering();
 
+	void ExctureCommand();
 	void WaitForGPU();
+	void CoomandReset();
 
 	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptor, bool shaderVisible);
 	ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(int32_t width, int32_t height);

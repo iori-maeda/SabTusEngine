@@ -95,6 +95,10 @@ void Object3d::DebugWindow()
 	ImGui::DragFloat("shininess", &shininess, 0.1f, 1.0f, 100.0f);
 	model_->SetShininess(shininess);
 
+	bool usePBR = static_cast<bool>(objectMaterialData_->drawPBR);
+	ImGui::Checkbox("Use NormalTex", &usePBR);
+	objectMaterialData_->drawPBR = static_cast<int>(usePBR);
+
 	ImGui::End();
 #endif 
 }

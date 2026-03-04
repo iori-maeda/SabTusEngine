@@ -45,9 +45,6 @@ void Object3dCommon::DebugWindow()
 	ImGui::DragFloat("Power", &fogData_->power, 0.01f, 0.0f, 100.0f);
 	ImGui::DragFloat("Threshold Start", &fogData_->thresholdStart, 0.0001f, 0.0f, 1.0f);
 	ImGui::DragFloat("Threshold End", &fogData_->thresholdEnd, 0.0001f, 0.0f, 1.0f);
-	bool usePBR = static_cast<bool>(essentialForGPUData_->drawPBR);
-	ImGui::Checkbox("Use NormalTex", &usePBR);
-	essentialForGPUData_->drawPBR = static_cast<int>(usePBR);
 	ImGui::End();
 #endif 
 }

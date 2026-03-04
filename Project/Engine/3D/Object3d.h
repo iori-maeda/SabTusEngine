@@ -44,6 +44,8 @@ public:
 	{
 		Vector4 color{ 1.0f ,1.0f, 1.0f, 1.0f };
 		uint32_t enableLighting = true;
+		//float pad[3]{};
+		uint32_t drawPBR = false;
 	};
 
 

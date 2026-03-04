@@ -92,14 +92,23 @@ void DirectXCommon::EndRendering()
 	command->CommandListReset();
 }
 
-void DirectXCommon::WaitForGPU()
+void DirectXCommon::ExctureCommand()
 {
 	// CommandList Close & Kick
 	command->CommandListCloseAndExecute();
+}
+
+void DirectXCommon::WaitForGPU()
+{
+
 	// Fence Wait
 	fence->IncrementFenceValue();
 	command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
 	fence->WaitSignalToGPU();
+}
+
+void DirectXCommon::CoomandReset()
+{
 	// commandList Reset
 	command->CommandListReset();
 }
