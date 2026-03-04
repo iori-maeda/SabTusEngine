@@ -81,9 +81,6 @@ Output main(VertexOutput input)
     newNormal = normalize(mul(newNormal, tangentBinormalMat));
     
     
-    // ラフネスの取得
-    float roughness = gRoughnessTexture.Sample(gSampler, input.uv).r;
-    
     //output.color = normalTexColor;
     //return output;
 	
@@ -126,8 +123,14 @@ Output main(VertexOutput input)
                     const float kNdotL = saturate(dot(kNormal, kLightDirectionNormal));
                     const float3 kHalfVector = normalize(kLightDirectionNormal + kToEyeDir);
                     const float kNdotH = saturate(dot(kNormal, kHalfVector));
-                    
-                    const float kSpeclarIntensity = pow(saturate(kNdotH), gMeshMaterial.shininess);
+    
+                    // ラフネスの取得
+                    float roughness = 1.0f - gRoughnessTexture.Sample(gSampler, input.uv).r;
+                    // 移行のため近似値による実装
+                    float n = 2.0f / (roughness * roughness + 0.0001f) - 2.0f;
+                    float normalization = (n + 8.0f) / (8.0f * 3.1415926535f);
+                    float roughnessIntensity = pow(saturate(kNdotH), n) * normalization;
+                    const float kSpeclarIntensity = gObjectMaterial.useRoughness ? roughnessIntensity : pow(saturate(kNdotH), gMeshMaterial.shininess);
                     const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL;
                     const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity;
                 
