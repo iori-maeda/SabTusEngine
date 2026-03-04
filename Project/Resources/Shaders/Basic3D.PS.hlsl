@@ -25,7 +25,8 @@ struct ObjectMaterial
 {
     float4 color;
     uint32_t enableLighting;
-    uint32_t usePBR;
+    uint32_t useNormal;
+    uint32_t useRoughness;
 };
 
 struct Camera
@@ -53,6 +54,7 @@ StructuredBuffer<LightStatus> gLights : register(t0);
 Texture2D<float4> gTexture : register(t1);
 Texture2D<float4> gNormalTexture : register(t2);
 Texture2D<float4> gRoughnessTexture : register(t3);
+Texture2D<float4> gMetallicTexture : register(t4);
 SamplerState gSampler : register(s0);
 
 struct Output
@@ -77,6 +79,10 @@ Output main(VertexOutput input)
     float3 newNormal = (normalTexColor * 2.0f - 1.0f).rgb;
     
     newNormal = normalize(mul(newNormal, tangentBinormalMat));
+    
+    
+    // ラフネスの取得
+    float roughness = gRoughnessTexture.Sample(gSampler, input.uv).r;
     
     //output.color = normalTexColor;
     //return output;
@@ -103,7 +109,7 @@ Output main(VertexOutput input)
     // View Direction
     const float3 kToEyeDir = normalize(gCamera.worldPosition - input.worldPosition);
     
-    const float3 kNormal = gObjectMaterial.usePBR ? newNormal : normalize(input.normal);
+    const float3 kNormal = gObjectMaterial.useNormal ? newNormal : normalize(input.normal);
     float4 finaleColor = useAmbientColor;
     
     for (uint i = 0; i < gEssential.numLights; i++)

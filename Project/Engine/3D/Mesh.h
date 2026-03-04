@@ -41,7 +41,7 @@ public:
 		Vector4 Ka{};
 		Vector4 Kd{};
 		Vector4 Ks{};
-		float shininess = 1.0f;
+		float shininess = 1000.0f;
 	};
 
 	struct TextureInfo
