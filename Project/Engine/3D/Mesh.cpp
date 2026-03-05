@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <cassert>
 #include <format>
+#include <string.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -158,62 +159,82 @@ bool Mesh::ReadMtl(aiMaterial *material)
 		meshCPU.mtlData.textureFilePaths.push_back(info);
 	}
 
-	if (material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) != 0)
-	{
-		TextureInfo info{};
-		aiString texFilePath{};
-		material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &texFilePath);
-		info.fileName = texFilePath.C_Str();
-		meshCPU.mtlData.textureFilePaths.push_back(info);
-		//auto iterator = std::find_if(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
-		//if (iterator == meshCPU.mtlData.textureFilePaths.end())
-		//{
-		//	//SmeshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
-		//}
-	}
-
-	if (material->GetTextureCount(aiTextureType_METALNESS) != 0)
-	{
-		TextureInfo info{};
-		aiString texFilePath{};
-		material->GetTexture(aiTextureType_METALNESS, 0, &texFilePath);
-		info.fileName = texFilePath.C_Str();
-		info.isSRGB = false;
-		//auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
-		meshCPU.mtlData.textureFilePaths.push_back(info);
-		//if (iterator == meshCPU.mtlData.textureFilePaths.end())
-		//{
-		//	//SmeshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
-		//}
-	}
-
-	if (material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) != 0)
-	{
-		TextureInfo info{};
-		aiString texFilePath{};
-		material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texFilePath);
-		info.fileName = texFilePath.C_Str();
-		info.isSRGB = false;
-		//auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
-		meshCPU.mtlData.textureFilePaths.push_back(info);
-		//if (iterator == meshCPU.mtlData.textureFilePaths.end())
-		//{
-		//	//SmeshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
-		//}
-	}
-
 	if (material->GetTextureCount(aiTextureType_UNKNOWN) != 0)
 	{
 		TextureInfo info{};
 		aiString texFilePath{};
 		material->GetTexture(aiTextureType_UNKNOWN, 0, &texFilePath);
 		info.fileName = texFilePath.C_Str();
-		//auto iterator = std::find(meshCPU.mtlData.textureFilePaths.begin(), meshCPU.mtlData.textureFilePaths.end(), texFilePath.C_Str());
+		info.isSRGB = false;
 		meshCPU.mtlData.textureFilePaths.push_back(info);
-		//if (iterator == meshCPU.mtlData.textureFilePaths.end())
-		//{
-		//	//SmeshCPU.mtlData.textureFilePaths.push_back(texFilePath.C_Str());
-		//}
+
+		aiString checkAmbientOcclusionTex{};
+		material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &checkAmbientOcclusionTex);
+
+		aiString checkRoughnessTex{};
+		material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &checkRoughnessTex);
+
+		aiString checkMetalnessTex{};
+		material->GetTexture(aiTextureType_METALNESS, 0, &checkMetalnessTex);
+
+		if (material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) == 0
+			&& material->GetTextureCount(aiTextureType_METALNESS) == 0
+			&& material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) == 0)
+		{
+			meshCPU.mtlData.material.isUseArmTex = false;
+		}
+		else
+		{
+			bool checkTexNameAmbientOcclusion = !strcmp(texFilePath.C_Str(), checkAmbientOcclusionTex.C_Str());
+			bool checkTexNamRoughness = !strcmp(texFilePath.C_Str(), checkRoughnessTex.C_Str());
+			bool checkTexNameMetalness = !strcmp(texFilePath.C_Str(), checkMetalnessTex.C_Str());
+
+			bool isUseArmTex = checkTexNameAmbientOcclusion || checkTexNamRoughness || checkTexNameMetalness;
+			if (isUseArmTex)
+			{
+				meshCPU.mtlData.material.isUseArmTex = true;
+				return true;
+			}
+		}
+	}
+	else
+	{
+		if (material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) != 0)
+		{
+			TextureInfo info{};
+			aiString texFilePath{};
+			material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &texFilePath);
+			info.fileName = texFilePath.C_Str();
+			meshCPU.mtlData.textureFilePaths.push_back(info);
+
+			meshCPU.mtlData.material.ambientOclusionChannel = 0;
+
+		}
+
+		if (material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) != 0)
+		{
+			TextureInfo info{};
+			aiString texFilePath{};
+			material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texFilePath);
+			info.fileName = texFilePath.C_Str();
+			info.isSRGB = false;
+			meshCPU.mtlData.textureFilePaths.push_back(info);
+
+			meshCPU.mtlData.material.roughnessChannel = 0;
+		}
+
+		if (material->GetTextureCount(aiTextureType_METALNESS) != 0)
+		{
+			TextureInfo info{};
+			aiString texFilePath{};
+			material->GetTexture(aiTextureType_METALNESS, 0, &texFilePath);
+			info.fileName = texFilePath.C_Str();
+			info.isSRGB = false;
+			meshCPU.mtlData.textureFilePaths.push_back(info);
+
+			meshCPU.mtlData.material.metallicChannel = 0;
+		}
+
 	}
 	return true;
 }

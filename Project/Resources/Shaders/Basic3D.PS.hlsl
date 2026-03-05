@@ -14,6 +14,10 @@ struct MeshMaterial
     float4 Kd;
     float4 Ks;
     float shininess;
+    uint32_t isUseArmTex;
+    uint32_t ambientOclusionChannel;
+    uint32_t roughnessChannel;
+    uint32_t metallicChannel;
 };
 
 struct Essential
@@ -53,7 +57,7 @@ StructuredBuffer<LightStatus> gLights : register(t0);
 
 Texture2D<float4> gTexture : register(t1);
 Texture2D<float4> gNormalTexture : register(t2);
-Texture2D<float4> gRoughnessTexture : register(t3);
+Texture2D<float4> gRoughnessTextureOrARMTexture : register(t3);
 Texture2D<float4> gMetallicTexture : register(t4);
 SamplerState gSampler : register(s0);
 
@@ -67,8 +71,8 @@ Output main(VertexOutput input)
     Output output;
     output.color = float4(0.0f, 0.0f, 0.0f, 1.0f); // Initialize output color
 
-    float4 texColor = gTexture.Sample(gSampler, input.uv);
-    float4 roughnessTexColor = gRoughnessTexture.Sample(gSampler, input.uv);
+    float4 arbedColor = gTexture.Sample(gSampler, input.uv);
+    float4 texColor = gRoughnessTextureOrARMTexture.Sample(gSampler, input.uv);
     
     float4 normalTexColor = gNormalTexture.Sample(gSampler, input.uv);
     float3 normal = normalize(input.normal);
@@ -84,14 +88,14 @@ Output main(VertexOutput input)
     //output.color = normalTexColor;
     //return output;
 	
-    if (texColor.a <= 0.0f)
+    if (arbedColor.a <= 0.0f)
     {
         discard;
     }
     
     // Base Color
-    const float4 kObjectAmbientColor = gMeshMaterial.Ka * texColor * gObjectMaterial.color;
-    const float4 kObjectDiffuseColor = gMeshMaterial.Kd * texColor * gObjectMaterial.color;
+    const float4 kObjectAmbientColor = gMeshMaterial.Ka * arbedColor * gObjectMaterial.color;
+    const float4 kObjectDiffuseColor = gMeshMaterial.Kd * arbedColor * gObjectMaterial.color;
     const float4 kObjectSpecularColor = gMeshMaterial.Ks * gObjectMaterial.color;
     
     const float4 useAmbientColor = length(gMeshMaterial.Ka) >= length(gMeshMaterial.Kd) ? kObjectAmbientColor * 0.5f : kObjectAmbientColor;
@@ -99,7 +103,7 @@ Output main(VertexOutput input)
     if (gObjectMaterial.enableLighting == 0)
     {
         output.color = kObjectAmbientColor + kObjectDiffuseColor + kObjectSpecularColor;
-        output.color.a = texColor.a;
+        output.color.a = arbedColor.a;
         return output;
     }
     
@@ -125,14 +129,23 @@ Output main(VertexOutput input)
                     const float kNdotH = saturate(dot(kNormal, kHalfVector));
     
                     // ラフネスの取得
-                    float roughness = 1.0f - gRoughnessTexture.Sample(gSampler, input.uv).r;
+                    float roughness = texColor[gMeshMaterial.roughnessChannel];
+                    // メタリックの取得
+                    float metallic = gMeshMaterial.isUseArmTex ? texColor[gMeshMaterial.metallicChannel] : gMetallicTexture.Sample(gSampler, input.uv)[gMeshMaterial.metallicChannel];
+                    // アルベド
+                    float4 baseColor = arbedColor;
+                
+                    float3 diffuseColor = baseColor.rgb * (1.0f - metallic);
+                    
+                    float3 specColor = lerp(float3(0.04f, 0.04f, 0.04f), baseColor.rgb, metallic);
+                    
                     // 移行のため近似値による実装
                     float n = 2.0f / (roughness * roughness + 0.0001f) - 2.0f;
                     float normalization = (n + 8.0f) / (8.0f * 3.1415926535f);
                     float roughnessIntensity = pow(saturate(kNdotH), n) * normalization;
                     const float kSpeclarIntensity = gObjectMaterial.useRoughness ? roughnessIntensity : pow(saturate(kNdotH), gMeshMaterial.shininess);
-                    const float4 kLightDiffuse = kObjectDiffuseColor * kLightColor * kNdotL;
-                    const float4 kLightSpecular = kObjectSpecularColor * kLightColor * kSpeclarIntensity;
+                    const float4 kLightDiffuse = float4(diffuseColor, 1.0f) * kLightColor * kNdotL;
+                    const float4 kLightSpecular = float4(specColor, 1.0f) * kLightColor * kSpeclarIntensity;
                 
                     finaleColor += kLightDiffuse + kLightSpecular;
                 }

@@ -96,11 +96,11 @@ void Object3d::DebugWindow()
 	model_->SetShininess(shininess);
 
 	bool useNormal = static_cast<bool>(objectMaterialData_->useNormal);
-	ImGui::Checkbox("Use Normal #normal", &useNormal);
+	ImGui::Checkbox("Use Normal ##normal", &useNormal);
 	objectMaterialData_->useNormal = static_cast<int>(useNormal);
 
 	bool useRoughness = static_cast<bool>(objectMaterialData_->useRoughness);
-	ImGui::Checkbox("Use useRoughness #roughness", &useRoughness);
+	ImGui::Checkbox("Use useRoughness ##roughness", &useRoughness);
 	objectMaterialData_->useRoughness = static_cast<int>(useRoughness);
 
 	ImGui::End();

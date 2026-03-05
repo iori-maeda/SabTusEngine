@@ -42,6 +42,10 @@ public:
 		Vector4 Kd{};
 		Vector4 Ks{};
 		float shininess = 1000.0f;
+		uint32_t isUseArmTex = false;
+		uint32_t ambientOclusionChannel = 0;
+		uint32_t roughnessChannel = 1;
+		uint32_t metallicChannel = 2;
 	};
 
 	struct TextureInfo
