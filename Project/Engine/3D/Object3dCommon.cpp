@@ -93,7 +93,7 @@ void Object3dCommon::CreatePipelineStateObject()
 	inputLayoutDesc.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
 		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0)
 		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0)
-		.AddLayout(LayoutSemanthicType::Tangernt, LayoutFormat::FLOAT3, 0);
+		.AddLayout(LayoutSemanthicType::Tangernt, LayoutFormat::FLOAT4, 0);
 
 	/*DxBlendMode dxBlendModes;
 	dxBlendModes.AddUseMode(BlendMode::ALPHA);*/

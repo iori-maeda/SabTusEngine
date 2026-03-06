@@ -77,7 +77,10 @@ Output main(VertexOutput input)
     float4 normalTexColor = gNormalTexture.Sample(gSampler, input.uv);
     float3 normal = normalize(input.normal);
     float3 tangent = normalize(input.tangent);
-    float3 binormal = normalize(input.binormal);
+    
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    
+    float3 binormal = input.binormal; //normalize(cross(normal,tangent));
     float3x3 tangentBinormalMat = float3x3(tangent, binormal, normal);
     
     float3 newNormal = (normalTexColor * 2.0f - 1.0f).rgb;

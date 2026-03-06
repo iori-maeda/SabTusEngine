@@ -88,7 +88,11 @@ bool Mesh::ReadVertecies(aiMesh *mesh)
 			vertex.position = Vector4(position.x, position.y, position.z, 1.0f);
 			vertex.normal = Vector3(normal.x, normal.y, normal.z);
 			vertex.uv = Vector2(texcoord.x, texcoord.y);
-			vertex.tangent = Vector3(tangent.x, tangent.y, tangent.z);
+
+			aiVector3D calculatedB = normal ^ tangent;
+			float sign = calculatedB * mesh->mBitangents[vertexIndex] < 0.0f ? -1.0f : 1.0f;
+
+			vertex.tangent = Vector4(tangent.x, tangent.y, tangent.z, sign);
 
 			meshCPU.vertices.push_back(vertex);
 		}
