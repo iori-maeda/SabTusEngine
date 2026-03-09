@@ -393,5 +393,6 @@
     <None Include="Resources\Shaders\Math.hlsli" />
     <None Include="packages.config" />
     <None Include="Resources\Shaders\LightFunction.hlsli" />
+    <None Include="Resources\Shaders\Basic3DStructs.PS.hlsli" />
   </ItemGroup>
 </Project>
