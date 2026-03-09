@@ -89,8 +89,13 @@ bool Mesh::ReadVertecies(aiMesh *mesh)
 			vertex.normal = Vector3(normal.x, normal.y, normal.z);
 			vertex.uv = Vector2(texcoord.x, texcoord.y);
 
+			// aiVector3Dの論理演算子オーバーロード
+			// 中身は外積として定義されている
 			aiVector3D calculatedB = normal ^ tangent;
-			float sign = calculatedB * mesh->mBitangents[vertexIndex] < 0.0f ? -1.0f : 1.0f;
+			// assimpが読み込んだbitangentと再計算したbitangentによる内積
+			// 向きが反転していないかを確認している
+			// signはシェーダで利用するためw成分としてGPUへ送信
+			float sign = calculatedB * mesh->mBitangents[vertexIndex] > 0.0f ? 1.0f : -1.0f;
 
 			vertex.tangent = Vector4(tangent.x, tangent.y, tangent.z, sign);
 
