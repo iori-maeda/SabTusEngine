@@ -1,4 +1,4 @@
-
+#pragma once
 float4x4 TranslateMat(float3 position)
 {
     float4x4 translateMat =
