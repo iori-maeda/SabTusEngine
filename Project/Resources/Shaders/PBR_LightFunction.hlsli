@@ -13,7 +13,7 @@ struct PBR_SurfaceStatus
 // F0 VerticalInputVectorReflection
 float3 SchickFrenel(float3 F0, float HdotV)
 {
-    return F0 + (1.0f + F0) * pow(saturate(1.0f - HdotV), 5.0f);
+    return F0 + (1.0f - F0) * pow(saturate(1.0f - HdotV), 5.0f);
 }
 
 #define kPI 3.1415926535f
@@ -64,17 +64,32 @@ float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PB
     
     // 5. result
     return float4((diffuse + specular) * kLightColor.rgb * kNdotL, surface.albedo.a);
+}
 
-    //float3 diffuseColor = surface.albedo.rgb * (1.0f - surface.metallic);
+
+//float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
+//{
+//    // EyeVector
+//    const float3 kToEyeDir = normalize(cameraPosition - surface.worldPos);
+//    const float3 kLightDirectionNormal = -normalize(light.direction);
+    
+//    const float4 kLightColor = light.color * light.intensity;
+    
+//    const float kNdotL = saturate(dot(surface.normal, kLightDirectionNormal));
+//    const float3 kHalfVector = normalize(kLightDirectionNormal + kToEyeDir);
+//    const float kNdotH = saturate(dot(surface.normal, kHalfVector));
+
+//    float3 diffuseColor = surface.albedo.rgb * (1.0f - surface.metallic);
                     
-    //float3 specColor = lerp(float3(0.04f, 0.04f, 0.04f), surface.albedo.rgb, surface.metallic);
+//    float3 specColor = lerp(float3(0.04f, 0.04f, 0.04f), surface.albedo.rgb, surface.metallic);
                     
-    //// 移行のため近似値による実装
-    //float normalization = (n + 8.0f) / (8.0f * 3.1415926535f);
-    //float roughnessIntensity = pow(saturate(kNdotH), n) * normalization;
-    //const float4 kLightDiffuse = float4(diffuseColor, 1.0f) * kLightColor * kNdotL;
-    //const float4 kLightSpecular = float4(specColor, 1.0f) * kLightColor * roughnessIntensity;
+//    // 移行のため近似値による実装
+//    float n = 2.0f / (surface.roughness * surface.roughness + 0.0001f) - 2.0f;
+//    float normalization = (n + 8.0f) / (8.0f * 3.1415926535f);
+//    float roughnessIntensity = pow(saturate(kNdotH), n) * normalization;
+//    const float4 kLightDiffuse = float4(diffuseColor, 1.0f) * kLightColor * kNdotL;
+//    const float4 kLightSpecular = float4(specColor, 1.0f) * kLightColor * roughnessIntensity;
                 
     
-    //return kLightDiffuse + kLightSpecular;
-}
+//    return kLightDiffuse + kLightSpecular;
+//}
