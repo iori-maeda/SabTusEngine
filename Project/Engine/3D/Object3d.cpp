@@ -95,13 +95,17 @@ void Object3d::DebugWindow()
 	ImGui::DragFloat("shininess", &shininess, 0.1f, 1.0f, 100.0f);
 	model_->SetShininess(shininess);
 
+	bool useTexture = static_cast<bool>(objectMaterialData_->useTexture);
+	ImGui::Checkbox("Use Texture ##texture", &useTexture);
+	objectMaterialData_->useTexture = static_cast<int>(useTexture);
+
 	bool useNormal = static_cast<bool>(objectMaterialData_->useNormal);
 	ImGui::Checkbox("Use Normal ##normal", &useNormal);
 	objectMaterialData_->useNormal = static_cast<int>(useNormal);
 
-	bool useRoughness = static_cast<bool>(objectMaterialData_->useRoughness);
-	ImGui::Checkbox("Use useRoughness ##roughness", &useRoughness);
-	objectMaterialData_->useRoughness = static_cast<int>(useRoughness);
+	bool caluclatePBR = static_cast<bool>(objectMaterialData_->caluclatePBR);
+	ImGui::Checkbox("Use useRoughness ##pbr", &caluclatePBR);
+	objectMaterialData_->caluclatePBR = static_cast<int>(caluclatePBR);
 
 	ImGui::End();
 #endif 

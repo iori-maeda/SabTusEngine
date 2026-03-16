@@ -25,7 +25,6 @@ public:
 		Vector4 position{};
 		Vector2 uv{};
 		Vector3 normal{};
-		//Vector3 tangent{};
 		Vector4 tangent{};
 	};
 

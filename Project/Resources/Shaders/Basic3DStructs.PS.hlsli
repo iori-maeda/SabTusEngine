@@ -19,8 +19,9 @@ struct ObjectMaterial
 {
     float4 color;
     uint32_t enableLighting;
+    uint32_t useTexture;
+    uint32_t caluclatePBR;
     uint32_t useNormal;
-    uint32_t useRoughness;
 };
 
 struct Camera

@@ -29,7 +29,7 @@ float4 CaluclateDirectionalLightColor(const LightStatus light, float3 cameraPosi
     const float kSpeclarIntensity = pow(saturate(kNdotH), surface.shininess);
     const float4 kLightSpecular = surface.specular * kLightColor * kSpeclarIntensity;
                 
-    return kLightDiffuse; // + kLightSpecular;
+    return kLightDiffuse + kLightSpecular;
 }
 
 float4 CaluclatePointLightColor(const LightStatus light, float3 cameraPosition, Basic_SurfaceStatus surface)
