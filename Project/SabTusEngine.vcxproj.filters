@@ -391,10 +391,10 @@
     <None Include="Resources\Shaders\BasicParticle.hlsli" />
     <None Include="Engine\JsonFiles\PipeLineStateObjectGroups.json" />
     <None Include="Resources\Shaders\Math.hlsli" />
-    <None Include="packages.config" />
     <None Include="Resources\Shaders\BasicLightFunction.hlsli" />
     <None Include="Resources\Shaders\Basic3DStructs.PS.hlsli" />
     <None Include="Resources\Shaders\LightStatus.hlsli" />
     <None Include="Resources\Shaders\PBR_LightFunction.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
