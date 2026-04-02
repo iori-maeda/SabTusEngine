@@ -1,6 +1,8 @@
 #pragma onece
 #include "LightStatus.hlsli"
 
+#define kPI 3.1415926535f
+
 struct PBR_SurfaceStatus
 {
     float3 worldPos;
@@ -16,23 +18,10 @@ float3 SchickFrenel(float3 F0, float HdotV)
     return F0 + (1.0f - F0) * pow(saturate(1.0f - HdotV), 5.0f);
 }
 
-#define kPI 3.1415926535f
-
-
-float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
+float3 CaluclateBRDF(PBR_SurfaceStatus surface, float3 V, float3 L, float3 H)
 {
-    // Base Light Color
-    const float4 kLightColor = light.color * light.intensity;
-    
-    // EyeDirection
-    const float3 V = normalize(cameraPosition - surface.worldPos);
-    // LightDirection
-    const float3 L = -normalize(light.direction);
-    // HalfVector
-    const float3 H = normalize(L + V);
-    // Normal
     const float3 N = normalize(surface.normal);
-        
+    
     // Normal dot LightDir
     const float kNdotL = saturate(dot(N, L));
     // Normal dot EyeDir
@@ -63,33 +52,87 @@ float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PB
     float3 diffuse = kD * surface.albedo.rgb / kPI;
     
     // 5. result
-    return float4((diffuse + specular) * kLightColor.rgb * kNdotL, surface.albedo.a);
+    return diffuse + specular;
 }
 
 
-//float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
-//{
-//    // EyeVector
-//    const float3 kToEyeDir = normalize(cameraPosition - surface.worldPos);
-//    const float3 kLightDirectionNormal = -normalize(light.direction);
-    
-//    const float4 kLightColor = light.color * light.intensity;
-    
-//    const float kNdotL = saturate(dot(surface.normal, kLightDirectionNormal));
-//    const float3 kHalfVector = normalize(kLightDirectionNormal + kToEyeDir);
-//    const float kNdotH = saturate(dot(surface.normal, kHalfVector));
 
-//    float3 diffuseColor = surface.albedo.rgb * (1.0f - surface.metallic);
-                    
-//    float3 specColor = lerp(float3(0.04f, 0.04f, 0.04f), surface.albedo.rgb, surface.metallic);
-                    
-//    // 移行のため近似値による実装
-//    float n = 2.0f / (surface.roughness * surface.roughness + 0.0001f) - 2.0f;
-//    float normalization = (n + 8.0f) / (8.0f * 3.1415926535f);
-//    float roughnessIntensity = pow(saturate(kNdotH), n) * normalization;
-//    const float4 kLightDiffuse = float4(diffuseColor, 1.0f) * kLightColor * kNdotL;
-//    const float4 kLightSpecular = float4(specColor, 1.0f) * kLightColor * roughnessIntensity;
-                
+float4 CaluclateDirectionalLightPBR(LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
+{
+    // Base Light Color
+    const float4 kLightColor = light.color * light.intensity;
     
-//    return kLightDiffuse + kLightSpecular;
-//}
+    // EyeDirection
+    const float3 V = normalize(cameraPosition - surface.worldPos);
+    // LightDirection
+    const float3 L = -normalize(light.direction);
+    // HalfVector
+    const float3 H = normalize(L + V);
+    // Normal
+    const float3 N = normalize(surface.normal);
+    // Normal dot LightDir
+    const float kNdotL = saturate(dot(N, L));
+   
+    float3 BRDF = CaluclateBRDF(surface, V, L, H);
+    
+    // 5. result
+    return float4(BRDF * kLightColor.rgb * kNdotL, surface.albedo.a);
+}
+
+float4 CaluclatePointLightColorPBR(const LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
+{
+    const float4 kLightColor = light.color * light.intensity;
+    
+    // 入射ベクトルがないので相対位置から算出
+    const float3 kToLight = light.position - surface.worldPos;
+    const float kToLightLength = length(kToLight);
+    
+    // EyeVector
+    const float3 V = normalize(cameraPosition - surface.worldPos);
+    const float3 L = normalize(kToLight);
+    const float3 H = normalize(L + V);
+    const float3 N = normalize(surface.normal);
+    
+    const float kNdotL = saturate(dot(N, L));
+    
+    const float3 BRDF = CaluclateBRDF(surface, V, L, H);
+    
+    // 距離減衰
+    const float kRange = max(light.range, 0.0001f);
+    const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), light.decay);
+    
+    const float3 kEffectiveLightColor = kLightColor.rgb * kAttenuationFactor;
+    
+    
+    return float4(BRDF * kEffectiveLightColor * kNdotL, surface.albedo.a);
+}
+
+float4 CaluclateSpotLightColorPBR(const LightStatus light, float3 cameraPosition, PBR_SurfaceStatus surface)
+{
+    const float3 kToLight = light.position - surface.worldPos;
+    const float3 kLightDirectionNormal = -normalize(light.direction);
+    const float kToLightLength = length(kToLight);
+     
+    const float4 kLightColor = light.color * light.intensity;
+    
+    const float3 V = normalize(cameraPosition - surface.worldPos);
+    const float3 L = normalize(kToLight);
+    const float3 H = normalize(V + L);
+    const float3 N = normalize(surface.normal);
+    
+    const float kNdotL = saturate(dot(N, L));
+    
+    // 距離減衰
+    const float kRange = max(light.range, 0.0001f);
+    const float kAttenuationFactor = pow(saturate(1.0f - kToLightLength / kRange), light.decay);
+    // 範囲減衰
+    const float kCosAngle = dot(L, kLightDirectionNormal);
+    const float kCosAngleDiff = max(light.cosFallOffStart - light.cosAngle, 0.0001f);
+    const float kFalloffFactor = saturate((kCosAngle - light.cosAngle) / kCosAngleDiff);
+    
+    const float3 kEffectiveLightColor = kLightColor.rgb * kAttenuationFactor * kFalloffFactor;
+    
+    const float3 BRDF = CaluclateBRDF(surface, V, L, H);
+    
+    return float4(BRDF * kEffectiveLightColor * kNdotL, surface.albedo.a);
+}

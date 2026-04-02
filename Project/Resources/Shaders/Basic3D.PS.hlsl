@@ -165,14 +165,17 @@ Output main(VertexOutput input)
             
             case POINT:
                 {
-                    
-                    finaleColor += CaluclatePointLightColor(gLights[i], gCamera.worldPosition, basicSurface);
+                    float4 basicPointLightColor = CaluclatePointLightColor(gLights[i], gCamera.worldPosition, basicSurface);
+                    float4 pbrPointLightColor = CaluclatePointLightColorPBR(gLights[i], gCamera.worldPosition, pbrSurface);
+                    finaleColor += gObjectMaterial.caluclatePBR ? pbrPointLightColor : basicPointLightColor;
                 }
                 break;
             
             case SPOT:
                 {
-                    finaleColor += CaluclateSpotLightColor(gLights[i], gCamera.worldPosition, basicSurface);
+                    float4 basicSpotLightColor = CaluclateSpotLightColor(gLights[i], gCamera.worldPosition, basicSurface);
+                    float4 pbrSpotLightColor = CaluclateSpotLightColorPBR(gLights[i], gCamera.worldPosition, pbrSurface);
+                    finaleColor += gObjectMaterial.caluclatePBR ? pbrSpotLightColor : basicSpotLightColor;
                 }
                 break;
             
