@@ -175,6 +175,14 @@ void BaseGame::Upate()
 			cameraTransform_.rotate.x += dir.y * 0.005f;
 			cameraTransform_.rotate.y += dir.x * 0.005f;
 		}
+		if (input_->PushMouseButton(MouseButton::WHEEL))
+		{
+			input_->SetCursorVisible(false);
+			input_->SetMouseControll(false);
+			Vector2 dir = input_->GetDeltaMousePosition();
+			cameraTransform_.translate.x += -dir.x * 0.005f;
+			cameraTransform_.translate.y += dir.y * 0.005f;
+		}
 	}
 
 	mainCamera_->SetTransform(cameraTransform_);
