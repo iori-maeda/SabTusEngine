@@ -54,10 +54,10 @@ void BaseGame::Initialize()
 	spriteWorldMatrix_ = MakeIdentityMatrix();
 
 	object3d_ = std::make_unique<Object3d>();
-	object3d_->Initialize(object3dCommon_.get(), "smoothSphere.obj");
-	//object3d_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/TamuraFiles/monkey_smooth/", "monkey_smooth.obj"));
+	//object3d_->Initialize(object3dCommon_.get(), "smoothSphere.obj");
+	//object3d_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/TamuraFiles/monkey/", "monkey.obj"));
 	//object3d_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/TamuraFiles/base/", "base.gltf"));
-	//object3d_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/CheckSphere/", "CheckSphere.gltf"));
+	object3d_->Initialize(object3dCommon_.get(), ModelManager::GetInstace().Load("Resources/Models/CheckSphere/", "CheckSphere.gltf"));
 	object3d_->SetCamera(mainCamera_.get());
 	modelTransform_.scale = Vector3(1.0f, 1.0f, 1.0f);
 	modelTransform_.rotate.y = -1.7f;

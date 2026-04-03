@@ -43,6 +43,8 @@ public:
 	struct ObjectMaterial
 	{
 		Vector4 color{ 1.0f ,1.0f, 1.0f, 1.0f };
+		float metallic = 0.0f;
+		float roughness = 0.0f;
 		uint32_t enableLighting;
 		uint32_t useTexture;
 		uint32_t caluclatePBR;

@@ -18,6 +18,23 @@ float3 SchickFrenel(float3 F0, float HdotV)
     return F0 + (1.0f - F0) * pow(saturate(1.0f - HdotV), 5.0f);
 }
 
+// 単一方向に幾何遮蔽を計算するサブ関数 Shick-GGX
+float GeometrySchickGGX(float NdotV, float k)
+{
+    return NdotV / (NdotV * (1.0f - k) + k + 0.0001f);
+}
+
+float GeometrySmith(float NdotL, float NdotV, float roughness)
+{
+    float r = roughness + 1.0f;
+    float k = (r * r) / 8.0f;
+    
+    float g1v = GeometrySchickGGX(NdotV, k);
+    float g1l = GeometrySchickGGX(NdotL, k);
+    
+    return g1v * g1l;
+}
+
 float3 CaluclateBRDF(PBR_SurfaceStatus surface, float3 V, float3 L, float3 H)
 {
     const float3 N = normalize(surface.normal);
@@ -43,8 +60,9 @@ float3 CaluclateBRDF(PBR_SurfaceStatus surface, float3 V, float3 L, float3 H)
     float n = 2.0f / (alpha + 0.0001f) - 2.0f;
     float D = pow(kNdotH, max(n, 0.0f)) * ((n + 2.0f) / (2.0f * kPI));
     
+    float G = GeometrySmith(kNdotL, kNdotV, surface.roughness);
     // 3. Supecular BRDF (簡略化)
-    float3 specular = (F * D) / 4.0f;
+    float3 specular = (F * D * G) / max(4.0f * kNdotL * kNdotV, 0.0001f);
     
     // 4. Diffuse
     // 金属であるほど拡散しない

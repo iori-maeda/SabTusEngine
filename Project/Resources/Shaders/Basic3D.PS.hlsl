@@ -125,11 +125,13 @@ Output main(VertexOutput input)
     basicSurface.specular = kObjectSpecularColor;
     basicSurface.shininess = gMeshMaterial.shininess <= 0.0f ? 1.0f : gMeshMaterial.shininess;
     
+    const float kBaseMetallic = gMeshMaterial.isUseArmTex ? pbrTextureData[gMeshMaterial.metallicChannel] : gMetallicTexture.Sample(gSampler, input.uv)[gMeshMaterial.metallicChannel];
+    
     PBR_SurfaceStatus pbrSurface;
     pbrSurface.albedo = albedoColor;
     pbrSurface.normal = kNormal;
-    pbrSurface.roughness = pbrTextureData[gMeshMaterial.roughnessChannel];
-    pbrSurface.metallic = gMeshMaterial.isUseArmTex ? pbrTextureData[gMeshMaterial.metallicChannel] : gMetallicTexture.Sample(gSampler, input.uv)[gMeshMaterial.metallicChannel];
+    pbrSurface.roughness = saturate(pbrTextureData[gMeshMaterial.roughnessChannel] + gObjectMaterial.roughness);
+    pbrSurface.metallic = saturate(kBaseMetallic + gObjectMaterial.metallic);
     pbrSurface.worldPos = input.worldPosition;
     
     // View Direction

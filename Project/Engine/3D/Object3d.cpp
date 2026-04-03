@@ -107,6 +107,12 @@ void Object3d::DebugWindow()
 	ImGui::Checkbox("Use useRoughness ##pbr", &caluclatePBR);
 	objectMaterialData_->caluclatePBR = static_cast<int>(caluclatePBR);
 
+	if (objectMaterialData_->caluclatePBR)
+	{
+		ImGui::DragFloat("Roughness", &objectMaterialData_->roughness, 0.001f, -1.0f, 1.0f);
+		ImGui::DragFloat("Metallic", &objectMaterialData_->metallic, 0.001f, -1.0f, 1.0f);
+	}
+
 	ImGui::End();
 #endif 
 }

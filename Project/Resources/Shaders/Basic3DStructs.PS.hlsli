@@ -18,6 +18,8 @@ struct Essential
 struct ObjectMaterial
 {
     float4 color;
+    float metallic;
+    float roughness;
     uint32_t enableLighting;
     uint32_t useTexture;
     uint32_t caluclatePBR;
