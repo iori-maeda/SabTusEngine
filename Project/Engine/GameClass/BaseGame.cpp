@@ -8,45 +8,7 @@
 
 void BaseGame::Initialize()
 {
-#pragma region SystemVaiable
-	winApp_ = std::make_unique<WinApp>();
-	WinApp::sWindoWidth = 1280;
-	WinApp::sWindoHeight = 720;
-	winApp_->Initialize();
 
-	dxCommon_ = std::make_unique<DirectXCommon>();
-	dxCommon_->Initialize(*winApp_.get());
-
-	ImGuiManager::Initialize(winApp_.get(), dxCommon_.get());
-
-	TextureManager::GetInstace().Initialize(dxCommon_.get());
-
-	ModelManager::GetInstace().Initialize(dxCommon_.get());
-
-	spriteCommon_ = std::make_unique<SpriteCommon>();
-	spriteCommon_->Initialize(dxCommon_.get());
-
-	object3dCommon_ = std::make_unique<Object3dCommon>();
-	object3dCommon_->Initialize(dxCommon_.get());
-
-	mainCamera_ = std::make_unique<Camera>();
-	mainCamera_->Initialize();
-	mainCamera_->SetPosition(Vector3(0.0f, 5.0f, -15.0f));
-	mainCamera_->SetRotation(Vector3(0.26f, 0.0f, 0.0f));
-
-	input_ = std::make_unique<Input>();
-	input_->Initialize(winApp_.get());
-
-	ParticleSystem::GetInstance()->Initialize(dxCommon_.get());
-	ParticleSystem::GetInstance()->SetCamera(mainCamera_.get());
-
-	fpsController_ = std::make_unique<FrameRateController>();
-	fpsController_->Initialize();
-
-	lights_ = std::make_unique<Lights>();
-	lights_->Initialize(dxCommon_.get(), mainCamera_.get());
-	object3dCommon_->SetLights(lights_.get());
-#pragma endregion
 
 	sprite_ = std::make_unique<Sprite>();
 	sprite_->Initiazlize(spriteCommon_.get(), "uvChecker.png");
@@ -80,7 +42,7 @@ void BaseGame::Initialize()
 	drawObjects_[1] = std::make_pair(object3d2_->GetModelName(), object3d2_.get());
 
 	particleEmitter_ = std::make_unique<ParticleEmitter>();
-	particleEmitter_->Initialize(emitPosition_, emitCount_,0.0f);
+	particleEmitter_->Initialize(emitPosition_, emitCount_, 0.0f);
 }
 
 void BaseGame::Finalize()
@@ -97,98 +59,7 @@ void BaseGame::Finalize()
 void BaseGame::Upate()
 {
 
-	winApp_->Update();
-	fpsController_->Update();
-	input_->UpdateAllDevice();
-
-#ifdef USE_IMGUI
-	ImGuiManager::Begin();
-	fpsController_->DebugWindow();
-	mainCamera_->DebugWindow();
-	object3dCommon_->DebugWindow();
-	object3d_->DebugWindow();
-	object3d2_->DebugWindow();
-	ImGui::Begin("GameDebugWinDow");
-	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
-	int eCount = static_cast<int>(emitCount_);
-	ImGui::InputInt("Emit Count", &eCount, 0, 1000);
-	emitCount_ = static_cast<uint32_t>(eCount);
-	if (ImGui::Button("Add Particle"))
-	{
-		ParticleSystem::GetInstance()->Emit(emitPosition_, emitCount_);
-	}
-
-	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
-	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
-	ImGui::Text("particle count %d", ParticleSystem::GetInstance()->GetActiveParticleCount());
-	bool useBillBorad = ParticleSystem::GetInstance()->GetUseBillboard();
-	ImGui::Checkbox("use billboard", &useBillBorad);
-	ParticleSystem::GetInstance()->UseBillboard(useBillBorad);
-
-	ImGui::End();
-	ImGuiManager::End();
-#endif
-
-	cameraTransform_ = mainCamera_->GetTransform();
-	const float kCameraMoveSpeed = 0.1f;
-	if (input_->PushKey(DIK_W))
-	{
-		cameraTransform_.translate.x += mainCamera_->GetForward().x * kCameraMoveSpeed;
-		cameraTransform_.translate.z += mainCamera_->GetForward().z * kCameraMoveSpeed;
-	}
-	if (input_->PushKey(DIK_S))
-	{
-		cameraTransform_.translate.x += mainCamera_->GetForward().x * -kCameraMoveSpeed;
-		cameraTransform_.translate.z += mainCamera_->GetForward().z * -kCameraMoveSpeed;
-	}
-	if (input_->PushKey(DIK_A))
-	{
-		cameraTransform_.translate.x += mainCamera_->GetRight().x * -kCameraMoveSpeed;
-		cameraTransform_.translate.z += mainCamera_->GetRight().z * -kCameraMoveSpeed;
-	}
-	if (input_->PushKey(DIK_D))
-	{
-		cameraTransform_.translate.x += mainCamera_->GetRight().x * kCameraMoveSpeed;
-		cameraTransform_.translate.z += mainCamera_->GetRight().z * kCameraMoveSpeed;
-	}
-
-	if(!input_->OnDebugWindow())
-	{
-		Vector2 mousePosition = input_->GetMousePosition();
-		RECT winRect = winApp_->GetWindowRect();
-		if (winRect.left <= mousePosition.x && winRect.right >= mousePosition.x
-			&& winRect.top <= mousePosition.y && winRect.bottom >= mousePosition.y)
-		{
-			cameraTransform_.translate += mainCamera_->GetForward() * (input_->GetMouseWheel() / 100.0f);
-		}
-	}
-
-	input_->SetCursorVisible(true);
-	input_->SetMouseControll(true);
-	if (!input_->OnDebugWindow() || WinApp::sIsCursorOverTitleBar)
-	{
-		if (input_->PushMouseButton(MouseButton::LEFT))
-		{
-			input_->SetCursorVisible(false);
-			input_->SetMouseControll(false);
-			Vector2 dir = input_->GetDeltaMousePosition();
-			cameraTransform_.rotate.x += dir.y * 0.005f;
-			cameraTransform_.rotate.y += dir.x * 0.005f;
-		}
-		if (input_->PushMouseButton(MouseButton::WHEEL))
-		{
-			input_->SetCursorVisible(false);
-			input_->SetMouseControll(false);
-			Vector2 dir = input_->GetDeltaMousePosition();
-			cameraTransform_.translate.x += -dir.x * 0.005f;
-			cameraTransform_.translate.y += dir.y * 0.005f;
-		}
-	}
-
-	mainCamera_->SetTransform(cameraTransform_);
-	mainCamera_->Update();
-
-	lights_->Update();
+	
 
 	object3d_->Upadate();
 	object3d2_->Upadate();
@@ -202,7 +73,7 @@ void BaseGame::Upate()
 
 	std::sort(
 		drawObjects_.begin(), drawObjects_.end(),
-		[&](auto &a, auto &b)
+		[&](auto& a, auto& b)
 		{
 			Vector3 toA = a.second->GetPosition() - mainCamera_->GetPosition();
 			Vector3 toB = b.second->GetPosition() - mainCamera_->GetPosition();
@@ -217,7 +88,7 @@ void BaseGame::Draw()
 
 	object3dCommon_->PreDraw();
 
-	for (auto &obj : drawObjects_)
+	for (auto& obj : drawObjects_)
 	{
 		obj.second->Draw();
 	}
@@ -233,7 +104,28 @@ void BaseGame::Draw()
 	dxCommon_->EndRendering();
 }
 
-bool BaseGame::EndRequest()
+
+void BaseGame::DebugWindow()
 {
-	return winApp_->ProccesMessage() || input_->TriggerKey(DIK_ESCAPE);
+#ifdef _DEBUG
+#ifdef USE_IMGUI
+	ImGuiManager::Begin();
+	
+	object3d_->DebugWindow();
+	object3d2_->DebugWindow();
+	ImGui::Begin("GameDebugWinDow");
+	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
+	int eCount = static_cast<int>(emitCount_);
+	ImGui::InputInt("Emit Count", &eCount, 0, 1000);
+	emitCount_ = static_cast<uint32_t>(eCount);
+	if (ImGui::Button("Add Particle"))
+	{
+		ParticleSystem::GetInstance()->Emit(emitPosition_, emitCount_);
+	}
+
+	ImGui::End();
+	ImGuiManager::End();
+#endif
+#endif // _DEBUG
+
 }
