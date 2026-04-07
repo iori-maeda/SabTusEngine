@@ -1,7 +1,6 @@
 #include "DirectXCommon.h"
 
 // DirectX12
-#include <dxgi1_6.h>
 #pragma comment(lib, "d3d12.lib")
 
 #include <assert.h>

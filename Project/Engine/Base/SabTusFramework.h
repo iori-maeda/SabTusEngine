@@ -1,27 +1,31 @@
 #pragma once
 #include <memory>
-#include "WinApp.h"
-#include "DirectXCommon.h"
-#include "2D/SpriteCommon.h"
-#include "3D/Object3dCommon.h"
-#include "Camera/Camera.h"
-#include "IO/Input.h"
-#include "FrameRateController.h"
-#include "3D/Lights.h"
+#include "Math/Vector2.h"
+
+class WinApp;
+class DirectXCommon;
+class SpriteCommon;
+class Object3dCommon;
+class Camera;
+class Input;
+class FrameRateController;
+class Lights;
 
 class SabTusFramework
 {
-	void Initialize();
-	void Update();
-	void Finalize();
+public:
+	~SabTusFramework();
+	virtual void Initialize();
+	virtual void Update();
+	virtual void Finalize();
 
-	bool EndRequest();
+	virtual bool EndRequest();
 
-private:
-	void DebugWindow();
+protected:
+	virtual void DebugWindow();
 
 
-private:
+protected:
 #pragma region SystemVaiable
 	std::unique_ptr<WinApp> winApp_ = nullptr;
 	std::unique_ptr<DirectXCommon> dxCommon_ = nullptr;

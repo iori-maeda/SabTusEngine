@@ -3,6 +3,17 @@
 #include "TextureManager.h"
 #include "ModelManager.h"
 #include "ParticleSystem/ParticleSystem.h"
+#include "WinApp.h"
+#include "DirectXCommon.h"
+#include "2D/SpriteCommon.h"
+#include "3D/Object3dCommon.h"
+#include "Camera/Camera.h"
+#include "IO/Input.h"
+#include "FrameRateController.h"
+#include "3D/Lights.h"
+
+SabTusFramework::~SabTusFramework()
+{}
 
 void SabTusFramework::Initialize()
 {

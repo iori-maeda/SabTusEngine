@@ -1,11 +1,9 @@
 #pragma once
 #include <cstdint>
-#include <string>
 #include <memory>
 #include <d3d12.h>
 
 #include "../externals/DirectXTex/DirectXTex.h"
-#include "../externals/DirectXTex/d3dx12.h"
 
 #include "ComPtr.h"
 

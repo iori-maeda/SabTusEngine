@@ -1,10 +1,17 @@
 #include "BaseGame.h"
 
 #include <algorithm>
-
-#include "DxObjFunctions.h"
 #include "ImGuiManager.h"
 #include "ParticleSystem/ParticleSystem.h"
+#include "WinApp.h"
+#include "DirectXCommon.h"
+#include "2D/SpriteCommon.h"
+#include "3D/Object3dCommon.h"
+#include "Camera/Camera.h"
+#include "ModelManager.h"
+
+BaseGame::~BaseGame()
+{}
 
 void BaseGame::Initialize()
 {
@@ -56,7 +63,7 @@ void BaseGame::Finalize()
 	winApp_->Finalize();
 }
 
-void BaseGame::Upate()
+void BaseGame::Update()
 {
 
 	
