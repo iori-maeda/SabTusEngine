@@ -12,6 +12,9 @@
 #include "FrameRateController.h"
 #include "3D/Lights.h"
 
+SabTusFramework::SabTusFramework()
+{}
+
 SabTusFramework::~SabTusFramework()
 {}
 
@@ -93,31 +96,17 @@ void SabTusFramework::DebugWindow()
 {
 #ifdef _DEBUG
 #ifdef USE_IMGUI
-	ImGuiManager::Begin();
+	ImGui::Begin("Engine Debug Window");
 	fpsController_->DebugWindow();
 	mainCamera_->DebugWindow();
 	object3dCommon_->DebugWindow();
-	/*object3d_->DebugWindow();
-	object3d2_->DebugWindow();
-	ImGui::Begin("GameDebugWinDow");
-	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
-	int eCount = static_cast<int>(emitCount_);
-	ImGui::InputInt("Emit Count", &eCount, 0, 1000);
-	emitCount_ = static_cast<uint32_t>(eCount);
-	if (ImGui::Button("Add Particle"))
-	{
-		ParticleSystem::GetInstance()->Emit(emitPosition_, emitCount_);
-	}*/
-
 	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
 	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
 	ImGui::Text("particle count %d", ParticleSystem::GetInstance()->GetActiveParticleCount());
 	bool useBillBorad = ParticleSystem::GetInstance()->GetUseBillboard();
 	ImGui::Checkbox("use billboard", &useBillBorad);
 	ParticleSystem::GetInstance()->UseBillboard(useBillBorad);
-
 	ImGui::End();
-	ImGuiManager::End();
 #endif
 #endif // _DEBUG
 

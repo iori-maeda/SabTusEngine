@@ -3,19 +3,19 @@
 #include <algorithm>
 #include "ImGuiManager.h"
 #include "ParticleSystem/ParticleSystem.h"
-#include "WinApp.h"
 #include "DirectXCommon.h"
 #include "2D/SpriteCommon.h"
 #include "3D/Object3dCommon.h"
 #include "Camera/Camera.h"
 #include "ModelManager.h"
+#include "FrameRateController.h"
 
 BaseGame::~BaseGame()
 {}
 
 void BaseGame::Initialize()
 {
-
+	SabTusFramework::Initialize();
 
 	sprite_ = std::make_unique<Sprite>();
 	sprite_->Initiazlize(spriteCommon_.get(), "uvChecker.png");
@@ -52,21 +52,23 @@ void BaseGame::Initialize()
 	particleEmitter_->Initialize(emitPosition_, emitCount_, 0.0f);
 }
 
-void BaseGame::Finalize()
-{
-	ImGuiManager::Finalize();
-	ModelManager::GetInstace().Finalize();
-	TextureManager::GetInstace().Finalize();
-
-	ParticleSystem::GetInstance()->Finalize();
-
-	winApp_->Finalize();
-}
+//void BaseGame::Finalize()
+//{
+//	SabTusFramework::Finalize();
+//
+//	ImGuiManager::Finalize();
+//	ModelManager::GetInstace().Finalize();
+//	TextureManager::GetInstace().Finalize();
+//
+//	ParticleSystem::GetInstance()->Finalize();
+//
+//	winApp_->Finalize();
+//}
 
 void BaseGame::Update()
 {
+	SabTusFramework::Update();
 
-	
 
 	object3d_->Upadate();
 	object3d2_->Upadate();
@@ -80,7 +82,7 @@ void BaseGame::Update()
 
 	std::sort(
 		drawObjects_.begin(), drawObjects_.end(),
-		[&](auto& a, auto& b)
+		[&](auto &a, auto &b)
 		{
 			Vector3 toA = a.second->GetPosition() - mainCamera_->GetPosition();
 			Vector3 toB = b.second->GetPosition() - mainCamera_->GetPosition();
@@ -91,11 +93,12 @@ void BaseGame::Update()
 void BaseGame::Draw()
 {
 
+
 	dxCommon_->BeginRendering();
 
 	object3dCommon_->PreDraw();
 
-	for (auto& obj : drawObjects_)
+	for (auto &obj : drawObjects_)
 	{
 		obj.second->Draw();
 	}
@@ -114,13 +117,25 @@ void BaseGame::Draw()
 
 void BaseGame::DebugWindow()
 {
+
 #ifdef _DEBUG
 #ifdef USE_IMGUI
 	ImGuiManager::Begin();
-	
+
 	object3d_->DebugWindow();
 	object3d2_->DebugWindow();
+
+
 	ImGui::Begin("GameDebugWinDow");
+	fpsController_->DebugWindow();
+	mainCamera_->DebugWindow();
+	object3dCommon_->DebugWindow();
+	ImGui::Text("mouse position (x:%.1f, y:%.1f)", input_->GetMousePosition().x, input_->GetMousePosition().y);
+	ImGui::Text("delta position (x:%.3f, y:%.3f)", input_->GetDeltaMousePosition().x, input_->GetDeltaMousePosition().y);
+	ImGui::Text("particle count %d", ParticleSystem::GetInstance()->GetActiveParticleCount());
+	bool useBillBorad = ParticleSystem::GetInstance()->GetUseBillboard();
+	ImGui::Checkbox("use billboard", &useBillBorad);
+	ParticleSystem::GetInstance()->UseBillboard(useBillBorad);
 	ImGui::DragFloat3("Emit Position", &emitPosition_.x, 0.01f);
 	int eCount = static_cast<int>(emitCount_);
 	ImGui::InputInt("Emit Count", &eCount, 0, 1000);

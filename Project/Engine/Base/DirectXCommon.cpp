@@ -17,6 +17,8 @@
 
 using namespace std;
 
+DirectXCommon::DirectXCommon() = default;
+
 DirectXCommon::~DirectXCommon()
 {
 	DxShaderCompiler::Finalize();

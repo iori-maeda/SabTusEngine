@@ -26,13 +26,13 @@ public:
 	// 初期化
 	void Initialize() override;
 	// 終了
-	void Finalize() override;
+	//void Finalize() override;
 	// 更新
 	void Update() override;
 	// 描画
 	void Draw();
 	// 終了予告
-	bool EndRequest() override;
+	//bool EndRequest() override;
 
 private:
 

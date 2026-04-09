@@ -14,7 +14,9 @@ class Lights;
 class SabTusFramework
 {
 public:
-	~SabTusFramework();
+
+	SabTusFramework();
+	virtual ~SabTusFramework();
 	virtual void Initialize();
 	virtual void Update();
 	virtual void Finalize();

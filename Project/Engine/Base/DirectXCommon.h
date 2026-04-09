@@ -20,7 +20,7 @@ public:
 
 public:
 
-	DirectXCommon() = default;
+	DirectXCommon();
 	~DirectXCommon();
 	void Initialize(const WinApp& winApp);
 	void BeginRendering();
