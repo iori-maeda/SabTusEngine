@@ -6,7 +6,8 @@
 #include "Math/Vector3.h"
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
-#include "ComPtr.h"
+#include "../IO/Input.h"
+#include "../Window/WinApp.h"
 
 class Camera
 {
@@ -34,6 +35,7 @@ public:
 	void Initialize();
 	void Update();
 	void DebugWindow();
+	void DebugCameraMode();
 
 public:
 	Vector3 GetPosition()const { return transform_.translate; }
@@ -54,9 +56,13 @@ public:
 	void SetNearZ(float nearZ) { nearZ_ = nearZ; }
 	void SetFarZ(float farZ) { farZ_ = farZ; }
 	void SetProjectionMode(Camera::ProjectionMode projMode) { projMode_ = projMode; }
+	void SetWindowRect(const RECT& winRect) { winRect_ = winRect; }
+	void SetInput(Input* input) { input_ = input; }
 
 
 private:
+
+	Input* input_ = nullptr;
 
 	Transform transform_{};
 
@@ -70,6 +76,8 @@ private:
 
 	Vector3 forward_ = {};
 	Vector3 right_ = {};
+
+	RECT winRect_ = { 0,0,WinApp::sWindoWidth, WinApp::sWindoHeight };
 
 	ProjectionMode projMode_ = ProjectionMode::Perspective;
 };

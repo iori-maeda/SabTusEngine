@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <numbers>
+#include <format>
 
 #include "DirectXCommon.h"
 #include "DxCommand.h"
@@ -17,15 +18,15 @@
 #include "DxPipelineStateObjectBuilder.h"
 
 
-ParticleSystem *ParticleSystem::instance_ = nullptr;
+ParticleSystem* ParticleSystem::instance_ = nullptr;
 
-ParticleSystem *ParticleSystem::GetInstance()
+ParticleSystem* ParticleSystem::GetInstance()
 {
 	if (instance_ == nullptr) { instance_ = new ParticleSystem; }
 	return instance_;
 }
 
-void ParticleSystem::Initialize(DirectXCommon *dxCommon)
+void ParticleSystem::Initialize(DirectXCommon* dxCommon)
 {
 	assert(dxCommon);
 	dxCommon_ = dxCommon;
@@ -33,10 +34,12 @@ void ParticleSystem::Initialize(DirectXCommon *dxCommon)
 	triangle_ = new Triangle();
 	triangle_->Initialize(dxCommon);
 
+	particleEssentialResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleEssential));
+	particleEssentialResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleEssentialData_));
 	transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleForGPU) * kMaxParticles);
-	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void **>(&particleForGPUData_));
+	transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&particleForGPUData_));
 	materialResource_ = dxCommon_->CreateBufferResource(sizeof(MaterialData));
-	materialResource_->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
+	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 	materialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int i = 0; i < kMaxParticles; i++)
 	{
@@ -71,52 +74,51 @@ ParticleSystem::~ParticleSystem()
 void ParticleSystem::Update()
 {
 	//if (camera_) { triangle_->SetCamera(camera_); }
-
+	//Logger::Log(std::format("max count {}\n", kMaxParticles));
 	currentInstanceNum_ = 0;
-	for (std::list<Particle>::iterator particleIterator = particles_.begin(); particleIterator != particles_.end();)
+	for (Particle& particle : particles_)
 	{
 		float deltaTIme = 1.0f / 60.0f;
 
 		// 生存時間を過ぎていたらスキップ
-		if (particleIterator->currentTime > particleIterator->lifeTIme)
+		if (particle.currentTime > particle.lifeTIme)
 		{
 			// 削除して次のiteratorへ
-			particleIterator = particles_.erase(particleIterator);
+			//particleIterator = particles_.erase(particleIterator);
+			particle = particles_.back();
+			particles_.pop_back();
 			continue;
 		}
 
-		if (particleIterator->transform.translate.x >= accelerationField_.area.min.x && particleIterator->transform.translate.x <= accelerationField_.area.max.x
-			&& particleIterator->transform.translate.y >= accelerationField_.area.min.y && particleIterator->transform.translate.y <= accelerationField_.area.max.y
-			&& particleIterator->transform.translate.z >= accelerationField_.area.min.z && particleIterator->transform.translate.z <= accelerationField_.area.max.z
+		// 加速範囲内であれば加速
+		if (particle.transform.translate.x >= accelerationField_.area.min.x && particle.transform.translate.x <= accelerationField_.area.max.x
+			&& particle.transform.translate.y >= accelerationField_.area.min.y && particle.transform.translate.y <= accelerationField_.area.max.y
+			&& particle.transform.translate.z >= accelerationField_.area.min.z && particle.transform.translate.z <= accelerationField_.area.max.z
 			)
 		{
-			particleIterator->velocity += accelerationField_.acceleration * deltaTIme;
+			particle.velocity += accelerationField_.acceleration * deltaTIme;
 		}
 
-		particleIterator->currentTime += deltaTIme;
-		particleIterator->transform.translate += particleIterator->velocity * deltaTIme;
-		particleIterator->color.w = 1.0f - (particleIterator->currentTime / particleIterator->lifeTIme);
+		particle.currentTime += deltaTIme;
 
-		particleForGPUData_[currentInstanceNum_].world = MakeAffineMatrix(particleIterator->transform.scale, particleIterator->transform.rotate, particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].wvp = MakeIdentityMatrix();
-		particleForGPUData_[currentInstanceNum_].color = particleIterator->color;
-		if (camera_ == nullptr) { return; }
 
-		Matrix4x4 billboardMatrix = /*MakeRotateY(std::numbers::pi_v<float>) **/ camera_->GetWorldMatrix();
-		billboardMatrix.m[3][0] = 0.0f;
-		billboardMatrix.m[3][1] = 0.0f;
-		billboardMatrix.m[3][2] = 0.0f;
-		particleForGPUData_[currentInstanceNum_].world = MakeScaleMatrix(particleIterator->transform.scale) * billboardMatrix * MakeTranslateMatrix(particleIterator->transform.translate);
-		particleForGPUData_[currentInstanceNum_].wvp = particleForGPUData_[currentInstanceNum_].world * camera_->GetViewMatrix() * camera_->GetProjectionMatrix();;
+		particle.transform.translate += particle.velocity * deltaTIme;
+		particle.color.w = 1.0f - (particle.currentTime / particle.lifeTIme);
+
+		particleForGPUData_[currentInstanceNum_].transfotm = particle.transform;
+		particleForGPUData_[currentInstanceNum_].color = particle.color;
 
 		currentInstanceNum_++;
-		particleIterator++;
 	}
+	if (camera_ == nullptr) { return; }
+	particleEssentialData_->camera.position = camera_->GetPosition();
+	particleEssentialData_->camera.viewMat = camera_->GetViewMatrix();
+	particleEssentialData_->camera.projeMat = camera_->GetProjectionMatrix();
 }
 
 void ParticleSystem::Draw()
 {
-	ID3D12GraphicsCommandList *cmdList = dxCommon_->GetCommand()->GetCommandList();
+	ID3D12GraphicsCommandList* cmdList = dxCommon_->GetCommand()->GetCommandList();
 
 	cmdList->SetGraphicsRootSignature(dxRootSignature_->GetRootSignature());
 	cmdList->SetPipelineState(dxPipelineStateObject_->GetPipelineStateObject());
@@ -131,21 +133,29 @@ void ParticleSystem::Draw()
 		dxRootSignature_->GetRootParamIndex(ParamSemanticType::Texture),
 		texHandleGPU_
 	);
+
+	cmdList->SetGraphicsRootConstantBufferView(
+		dxRootSignature_->GetRootParamIndex(ParamSemanticType::CameraTransform),
+		particleEssentialResource_->GetGPUVirtualAddress()
+	);
+
 	cmdList->DrawInstanced(triangle_->GetVerticiesNum(), currentInstanceNum_, 0, 0);
 }
 
-void ParticleSystem::Emit(const Vector3 &position, uint32_t emitCount)
+void ParticleSystem::Emit(const Vector3& position, uint32_t emitCount)
 {
+	//if (particles_.size() >= kMaxParticles - 1) { return; }
+
 	for (uint32_t i = 0; i < emitCount; i++)
 	{
 		Particle newParticle = MakeParticle();
 		newParticle.transform.translate += position;
-		particles_.push_back(newParticle);
 
 		if (particles_.size() >= kMaxParticles)
 		{
-			particles_.pop_front();
+			break;
 		}
+		particles_.push_back(newParticle);
 	}
 }
 
@@ -169,7 +179,8 @@ void ParticleSystem::CreateRootSignature()
 
 
 	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::Particle, ParamType::DescriptorTable, ShaderVisibility::Vertex, 0, 1)
-		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1);
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1)
+		.AddRootParamSemantic(ParamSemanticType::CameraTransform, ParamType::CBV, ShaderVisibility::Vertex, 0, 1);
 
 	dxRootSignature_->Create(dxCommon_->GetDxDevice()->GetDevice());
 }
@@ -182,8 +193,8 @@ void ParticleSystem::CreatePipelineStateObject()
 
 	// InputLayout Settings
 	DxInputLayout dxInputLayout;
-	dxInputLayout.AddLayout(LayoutSemanthicType::Position,LayoutFormat::FLOAT4,0)
-		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2,0);
+	dxInputLayout.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
+		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0);
 
 	DxPipelineStateObjectBuilder psoBuilder;
 
@@ -193,7 +204,7 @@ void ParticleSystem::CreatePipelineStateObject()
 		.SetInputLayout(dxInputLayout.GetLayoutDesc())
 		.SetShaderGroup("BasicParticle")
 		.SetBlendMode(BlendMode::ADD)
-		.SetDepthStencilState(DepthMode::LessEqual,true,false)
+		.SetDepthStencilState(DepthMode::LessEqual, true, false)
 		.SetRasterizerState(CullingMode::Back)
 		.Build(dxCommon_->GetDxDevice()->GetDevice());
 }

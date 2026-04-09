@@ -17,6 +17,9 @@ DxInputLayout &DxInputLayout::AddLayout(LayoutSemanthicType type, LayoutFormat f
 	case LayoutSemanthicType::Texcoord:
 		newDesc.SemanticName = "TEXCOORD";
 		break;
+	case LayoutSemanthicType::Tangernt:
+		newDesc.SemanticName = "TANGENT";
+		break;
 	default:
 		break;
 	}

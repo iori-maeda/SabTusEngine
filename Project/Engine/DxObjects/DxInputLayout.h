@@ -7,7 +7,8 @@ enum class LayoutSemanthicType
 	NONE,
 	Position,
 	Normal,
-	Texcoord
+	Texcoord,
+	Tangernt
 };
 
 enum class LayoutFormat

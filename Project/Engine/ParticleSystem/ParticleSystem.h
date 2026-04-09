@@ -1,6 +1,6 @@
 #pragma once
 #include <d3d12.h>
-#include <list>
+#include <vector>
 #include <memory>
 
 #include "ComPtr.h"
@@ -18,13 +18,28 @@ class Triangle;
 class ParticleSystem
 {
 public:
-	static const int kMaxParticles = 4096;
+	static const uint32_t kMaxParticles = 1 << 16;
 
 	struct  Transform
 	{
 		Vector3 scale{ 1.0f, 1.0f, 1.0f };
 		Vector3 rotate{};
 		Vector3 translate{};
+	};
+
+	struct CameraForGPU
+	{
+		Vector3 position{};
+		float pad;
+		Matrix4x4 viewMat{};
+		Matrix4x4 projeMat{};
+	};
+
+	struct ParticleEssential
+	{
+		CameraForGPU camera{};
+		int useBillboard = 0;
+		float pads[3]{};
 	};
 
 	struct Particle
@@ -49,9 +64,10 @@ public:
 
 	struct ParticleForGPU
 	{
-		Matrix4x4 wvp{};
-		Matrix4x4 world{};
+		Transform transfotm{};
 		Vector4 color{};
+
+		int useBillboard = 0;
 	};
 
 	struct AABB
@@ -77,7 +93,11 @@ public:
 	ParticleSystem::Particle MakeParticle();
 
 public:
+	uint32_t GetActiveParticleCount()const { return currentInstanceNum_; }
+	bool GetUseBillboard()const { return particleEssentialData_->useBillboard; }
+
 	void SetCamera(Camera *camera) { camera_ = camera; }
+	void UseBillboard(bool use) { particleEssentialData_->useBillboard = use; }
 
 private:
 	ParticleSystem() = default;
@@ -94,6 +114,9 @@ private:
 	std::unique_ptr<DxRootSignature> dxRootSignature_ = nullptr;
 	std::unique_ptr<DxPipelineStateObject> dxPipelineStateObject_ = nullptr;
 
+	ComPtr<ID3D12Resource> particleEssentialResource_ = nullptr;
+	ParticleEssential *particleEssentialData_ = nullptr;
+
 	ComPtr<ID3D12Resource> transformationMatrixResource_ = nullptr;
 	ParticleForGPU *particleForGPUData_ = nullptr;
 
@@ -104,7 +127,7 @@ private:
 	//D3D12_GPU_DESCRIPTOR_HANDLE materialSrvGpuHandle_{};
 
 	Triangle *triangle_ = nullptr;
-	std::list<ParticleSystem::Particle> particles_;
+	std::vector<ParticleSystem::Particle> particles_;
 	D3D12_GPU_DESCRIPTOR_HANDLE texHandleGPU_{};
 
 	uint32_t currentInstanceNum_ = 0;

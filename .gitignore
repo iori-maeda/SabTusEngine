@@ -17,10 +17,10 @@
 
 # Build results
 
-# 自作のフォルダを除外
+# ﾅｽﾂｩﾂ催ｬ窶堙姑稚ﾆ辿ﾆ停ｹﾆ胆窶堙ｰﾂ焦毒O
 Generated/
 /Project/externals/DirectXTex/Bin/
-imgui.ini
+/Project/imgui.ini
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

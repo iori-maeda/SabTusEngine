@@ -1,7 +1,6 @@
 #include "DirectXCommon.h"
 
 // DirectX12
-#include <dxgi1_6.h>
 #pragma comment(lib, "d3d12.lib")
 
 #include <assert.h>
@@ -18,12 +17,14 @@
 
 using namespace std;
 
+DirectXCommon::DirectXCommon() = default;
+
 DirectXCommon::~DirectXCommon()
 {
 	DxShaderCompiler::Finalize();
 }
 
-void DirectXCommon::Initialize(const WinApp& winApp)
+void DirectXCommon::Initialize(const WinApp &winApp)
 {
 	device = make_unique<DxDevice>();
 	device->Initialize();
@@ -63,13 +64,13 @@ void DirectXCommon::BeginRendering()
 	// 描画先のRTｖをバックバッファのインデックスをもとに設定
 	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
 	// 画面全体をクリア
-	
+
 	command->GetCommandList()->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 
 	command->GetCommandList()->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
 	command->GetCommandList()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap.Get() };
+	ID3D12DescriptorHeap *descriptorHeaps[] = { srvDescriptorHeap.Get() };
 	command->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
 	command->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
@@ -92,14 +93,23 @@ void DirectXCommon::EndRendering()
 	command->CommandListReset();
 }
 
-void DirectXCommon::WaitForGPU()
+void DirectXCommon::ExctureCommand()
 {
 	// CommandList Close & Kick
 	command->CommandListCloseAndExecute();
+}
+
+void DirectXCommon::WaitForGPU()
+{
+
 	// Fence Wait
 	fence->IncrementFenceValue();
 	command->GetCommandQueue()->Signal(fence->GetFence(), fence->GetFenceValue());
 	fence->WaitSignalToGPU();
+}
+
+void DirectXCommon::CoomandReset()
+{
 	// commandList Reset
 	command->CommandListReset();
 }
@@ -134,14 +144,14 @@ D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetDSVDescriptorGPUHandle(uint32_t in
 	return GetGPUDescriptorHandle(dsvDescriptorHeap, dsvDescriptorSize, index);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetCPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetCPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<SIZE_T>(descriptorSize * index);
 	return result;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetGPUDescriptorHandle(const ComPtr<ID3D12DescriptorHeap> &descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
 	D3D12_GPU_DESCRIPTOR_HANDLE result = descriptorHeap->GetGPUDescriptorHandleForHeapStart();;
 	result.ptr += static_cast<UINT64>(descriptorSize * index);
@@ -151,7 +161,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetGPUDescriptorHandle(const ComPtr<I
 void DirectXCommon::CreateDescriptorHeaps()
 {
 	rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
-	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kMaxDescriptorCountSRV, true);
 	dsvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 
 	rtvDescriptorSize = device->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -283,7 +293,7 @@ ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(size_t sizeInBytes) c
 	return resource;
 }
 
-ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(const DirectX::TexMetadata& metaData)
+ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(const DirectX::TexMetadata &metaData)
 {
 	// metaDataからResourceの設定を取得
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -316,11 +326,13 @@ ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(const DirectX::TexMe
 	return resource;
 }
 
-ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImage)
+ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const ComPtr<ID3D12Resource> &texture, const DirectX::ScratchImage &mipImage)
 {
 	// 中間リソースの作成までを別関数にわかるべきか？
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-	DirectX::PrepareUpload(device->GetDevice(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
+	HRESULT hr;
+	hr = DirectX::PrepareUpload(device->GetDevice(), mipImage.GetImages(), mipImage.GetImageCount(), mipImage.GetMetadata(), subresources);
+	assert(SUCCEEDED(hr));
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, static_cast<UINT>(subresources.size()));
 	ComPtr<ID3D12Resource> intermediateResource = CreateBufferResource(intermediateSize);
 

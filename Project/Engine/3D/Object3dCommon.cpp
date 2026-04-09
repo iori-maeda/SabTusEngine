@@ -76,10 +76,10 @@ void Object3dCommon::CreateRootSignature()
 
 	dxRootSignature_->AddRootParamSemantic(ParamSemanticType::MeshMaterial, ParamType::CBV, ShaderVisibility::Pixel, 0)
 		.AddRootParamSemantic(ParamSemanticType::TransformationMatrix, ParamType::CBV, ShaderVisibility::Vertex, 0)
-		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1)
 		.AddRootParamSemantic(ParamSemanticType::ObjectEssential, ParamType::CBV, ShaderVisibility::Pixel, 1)
 		.AddRootParamSemantic(ParamSemanticType::CameraTransform, ParamType::CBV, ShaderVisibility::Pixel, 2)
-		.AddRootParamSemantic(ParamSemanticType::Lights, ParamType::DescriptorTable, ShaderVisibility::Pixel, 1, 1)
+		.AddRootParamSemantic(ParamSemanticType::Lights, ParamType::DescriptorTable, ShaderVisibility::Pixel, 0, 1)
+		.AddRootParamSemantic(ParamSemanticType::Texture, ParamType::DescriptorTable, ShaderVisibility::Pixel, 1, 4)
 		.AddRootParamSemantic(ParamSemanticType::ObjectMaterial, ParamType::CBV, ShaderVisibility::Pixel, 3)
 		.AddRootParamSemantic(ParamSemanticType::Fog, ParamType::CBV, ShaderVisibility::Pixel, 4);
 
@@ -92,7 +92,8 @@ void Object3dCommon::CreatePipelineStateObject()
 	DxInputLayout inputLayoutDesc;
 	inputLayoutDesc.AddLayout(LayoutSemanthicType::Position, LayoutFormat::FLOAT4, 0)
 		.AddLayout(LayoutSemanthicType::Texcoord, LayoutFormat::FLOAT2, 0)
-		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0);
+		.AddLayout(LayoutSemanthicType::Normal, LayoutFormat::FLOAT3, 0)
+		.AddLayout(LayoutSemanthicType::Tangernt, LayoutFormat::FLOAT4, 0);
 
 	/*DxBlendMode dxBlendModes;
 	dxBlendModes.AddUseMode(BlendMode::ALPHA);*/

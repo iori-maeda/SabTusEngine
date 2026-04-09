@@ -22,4 +22,5 @@ Vector3 operator-(const Vector3&, const Vector3&);
 Vector3 operator*(const Vector3&, float);
 
 Vector3 Normalize(const Vector3&);
-
+float Dot(const Vector3& v1, const Vector3& v2);
+Vector3 Cross(const Vector3& v1, const Vector3& v2);

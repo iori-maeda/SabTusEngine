@@ -1,11 +1,9 @@
 #pragma once
 #include <cstdint>
-#include <string>
 #include <memory>
 #include <d3d12.h>
 
 #include "../externals/DirectXTex/DirectXTex.h"
-#include "../externals/DirectXTex/d3dx12.h"
 
 #include "ComPtr.h"
 
@@ -18,14 +16,19 @@ class DxFence;
 class DirectXCommon
 {
 public:
+	static const uint32_t kMaxDescriptorCountSRV = 256;
 
-	DirectXCommon() = default;
+public:
+
+	DirectXCommon();
 	~DirectXCommon();
 	void Initialize(const WinApp& winApp);
 	void BeginRendering();
 	void EndRendering();
 
+	void ExctureCommand();
 	void WaitForGPU();
+	void CoomandReset();
 
 	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptor, bool shaderVisible);
 	ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(int32_t width, int32_t height);

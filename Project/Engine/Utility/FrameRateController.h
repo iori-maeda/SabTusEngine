@@ -1,13 +1,14 @@
 #pragma once
 #include <chrono>
-#include <cstdint>
 #include <deque>
+
 class FrameRateController
 {
 public:
 	static float sTargetFrame;
 
 public:
+	~FrameRateController();
 	void Initialize();
 	void Update();
 	void DebugWindow();

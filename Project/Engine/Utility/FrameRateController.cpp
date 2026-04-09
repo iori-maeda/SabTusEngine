@@ -10,6 +10,9 @@ using namespace std::chrono;
 
 float FrameRateController::sTargetFrame = 60.0f;
 
+FrameRateController::~FrameRateController()
+{}
+
 void FrameRateController::Initialize()
 {
 	// 現在時刻の記録

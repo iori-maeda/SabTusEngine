@@ -1,34 +1,16 @@
 #pragma once
 
-#include <Windows.h>
 #include <memory>
-#include <format>
-#include <cassert>
-#include <functional>
 #include <vector>
 
-#include "ComPtr.h"
 #include "Window/WinApp.h"
-#include "DxDevice.h"
-#include "DxCommand.h"
-#include "DxSwapChain.h"
-#include "DxFence.h"
-#include "DxShader.h"
-#include "DirectXCommon.h"
 #include "TextureManager.h"
-#include "2D/SpriteCommon.h"
 #include "2D/Sprite.h"
-#include "3D/Object3dCommon.h"
 #include "3D/Object3d.h"
-#include "ModelManager.h"
-#include "Camera/Camera.h"
-#include "IO/Input.h"
-//#include "BasicShapes/Triangle.h"
 #include "ParticleSystem/ParticleEmitter.h"
-#include "FrameRateController.h"
-#include "3D/Lights.h"
+#include "../Base/SabTusFramework.h"
 
-class BaseGame
+class BaseGame : public SabTusFramework
 {
 public:
 
@@ -39,32 +21,26 @@ public:
 		Vector3 translate{};
 	};
 
+	~BaseGame();
+
 	// 初期化
-	void Initialize();
+	void Initialize() override;
 	// 終了
-	void Finalize();
+	//void Finalize() override;
 	// 更新
-	void Upate();
+	void Update() override;
 	// 描画
 	void Draw();
 	// 終了予告
-	bool EndRequest();
+	//bool EndRequest() override;
+
+private:
+
+	void DebugWindow() override;
 
 
 private:
-#pragma region SystemVaiable
-	std::unique_ptr<WinApp> winApp_ = nullptr;
-	std::unique_ptr<DirectXCommon> dxCommon_ = nullptr;
-	std::unique_ptr<SpriteCommon> spriteCommon_ = nullptr;
-	std::unique_ptr<Object3dCommon> object3dCommon_ = nullptr;
-	std::unique_ptr<Camera> mainCamera_ = nullptr;
-	std::unique_ptr<Input> input_ = nullptr;
-	std::unique_ptr<FrameRateController>fpsController_ = nullptr;
-	std::unique_ptr<Lights> lights_ = nullptr;
 
-	Camera::Transform cameraTransform_ = { .scale{1.0f,1.0f,1.0f},.rotate{}, .translate{} };
-	Vector2 clickPosition_ = Vector2();
-#pragma endregion
 	std::vector<std::pair<std::string, Object3d *>> drawObjects_;
 
 
