@@ -51,6 +51,7 @@ jobs:
           # 2. 不要なディレクトリの検索(-type d)、発見したパスを出力(-print)、中身を枝刈り(-prune)
           # 3. 不要なファイルの検索(-type f)、ディレクトリ同様パスの出力(-print)
           UNWANTED_LIST=$(find . -path "./.git" -prune -o \
+            -path "./External/*" -prune -o \
             \( \( "${DIR_CONDITIONS[@]}" \) -a -type d -print -prune \) -o \
             \( \( "${NAME_CONDITIONS[@]}" \) -a -type f -print \) \
           )
