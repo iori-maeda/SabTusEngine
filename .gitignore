@@ -20,7 +20,7 @@
 # 自作のフォルダを除外
 Generated/
 /Project/externals/DirectXTex/Bin/
-/.ini
+/Project/imgui.ini
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
