@@ -52,7 +52,7 @@ jobs:
           # 3. 不要なファイルの検索(-type f)、ディレクトリ同様パスの出力(-print)
           UNWANTED_LIST=$(find . -path "./.git" -prune -o \
             \( \( "${DIR_CONDITIONS[@]}" \) -a -type d -print -prune \) -o \
-            \( \( "${NAME_CONDITIONS[@]}" \) -a -type f -print \) \
+            \( \( "${NAME_CONDITIONS[@]}" \) -a -type f -not -iname "*assimp*" -print \) \
           )
 
           if [ -n "$UNWANTED_LIST" ]; then
