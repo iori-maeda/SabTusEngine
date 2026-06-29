@@ -22,6 +22,7 @@ void Camera::Update()
 
 	forward_ = Normalize(ConvertToTransform(Vector3(0.0f, 0.0f, 1.0f), MakeRotationMatrix3x3(worldMatrix_)));
 	right_ = Normalize(ConvertToTransform(Vector3(1.0f, 0.0f, 0.0f), MakeRotationMatrix3x3(worldMatrix_)));
+	top_ = Normalize(ConvertToTransform(Vector3(0.0f, 1.0f, 0.0f), MakeRotationMatrix3x3(worldMatrix_)));
 	switch (projMode_)
 	{
 	case Camera::ProjectionMode::Perspective:
@@ -43,7 +44,7 @@ void Camera::DebugWindow()
 	ImGui::DragFloat("fovAngleY", &fovAngleY_, 0.01f, 0.1f, 3.14f);
 	ImGui::DragFloat("nearZ", &nearZ_, 0.01f, 0.01f, 100.0f);
 	ImGui::DragFloat("farZ", &farZ_, 0.1f, 10.0f, 1000.0f);
-	static const char* projStr[] = { "Perspective", "Orthographic" };
+	static const char *projStr[] = { "Perspective", "Orthographic" };
 	static ProjectionMode projMode = projMode_;
 	if (ImGui::BeginCombo("ProjectionMode", projStr[static_cast<int>(projMode)]))
 	{
@@ -70,7 +71,7 @@ void Camera::DebugCameraMode()
 {
 #ifdef _DEBUG
 	const float kCameraMoveSpeed = 0.05f;
-	
+
 	if (input_->PushKey(DIK_W))
 	{
 		transform_.translate.x += forward_.x * kCameraMoveSpeed;
@@ -119,8 +120,8 @@ void Camera::DebugCameraMode()
 			input_->SetCursorVisible(false);
 			input_->SetMouseControll(false);
 			Vector2 dir = input_->GetDeltaMousePosition();
-			transform_.translate.x += -dir.x * 0.005f;
-			transform_.translate.y += dir.y * 0.005f;
+			transform_.translate += right_ * -dir.x * 0.005f;
+			transform_.translate += top_ * dir.y * 0.005f;
 		}
 	}
 #endif // DEBUG

@@ -76,6 +76,7 @@ private:
 
 	Vector3 forward_ = {};
 	Vector3 right_ = {};
+	Vector3 top_ = {};
 
 	RECT winRect_ = { 0,0,WinApp::sWindoWidth, WinApp::sWindoHeight };
 

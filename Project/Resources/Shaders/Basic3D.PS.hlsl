@@ -128,7 +128,7 @@ Output main(VertexOutput input)
     const float kBaseMetallic = gMeshMaterial.isUseArmTex ? pbrTextureData[gMeshMaterial.metallicChannel] : gMetallicTexture.Sample(gSampler, input.uv)[gMeshMaterial.metallicChannel];
     
     PBR_SurfaceStatus pbrSurface;
-    pbrSurface.albedo = albedoColor;
+    pbrSurface.albedo = albedoColor * gObjectMaterial.color;
     pbrSurface.normal = kNormal;
     pbrSurface.roughness = saturate(pbrTextureData[gMeshMaterial.roughnessChannel] + gObjectMaterial.roughness);
     pbrSurface.metallic = saturate(kBaseMetallic + gObjectMaterial.metallic);
