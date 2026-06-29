@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false # 片方の環境が落ちても、もう片方のビルドを中断せず最後まで実行する
       matrix:
-        os: [windows-2022, windows-2026]
+        os: [windows-2022, windows-latest]
 
     steps:
       - name: Checkout
